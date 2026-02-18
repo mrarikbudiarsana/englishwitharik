@@ -30,7 +30,7 @@ export default function ContactPage() {
                 <span className="text-xl">✉️</span>
                 <div>
                   <p className="font-medium text-gray-800">Email</p>
-                  <a href="mailto:hello@englishwitharik.id" className="text-[#08507f] hover:underline">hello@englishwitharik.id</a>
+                  <a href="mailto:hello@englishwitharik.com" className="text-[#08507f] hover:underline">hello@englishwitharik.com</a>
                 </div>
               </li>
               <li className="flex items-start gap-3">

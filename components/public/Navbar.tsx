@@ -72,11 +72,10 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setProgrammesOpen(false)}
-                    className={`block px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${
-                      link.accent
-                        ? 'text-[#e07b39] hover:text-[#c4622a]'
-                        : 'text-gray-700 hover:text-[#08507f]'
-                    }`}
+                    className={`block px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${link.accent
+                      ? 'text-[#e07b39] hover:text-[#c4622a]'
+                      : 'text-gray-700 hover:text-[#08507f]'
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -110,7 +109,7 @@ export default function Navbar() {
         {/* CTA */}
         <div className="hidden lg:flex items-center gap-3">
           <a
-            href="https://learnenglishwitharik.online"
+            href="https://portal.englishwitharik.com"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#08507f] hover:bg-[#063a5c] text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
@@ -159,9 +158,8 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`block px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-50 ${
-                      link.accent ? 'text-[#e07b39]' : 'text-gray-700 hover:text-[#08507f]'
-                    }`}
+                    className={`block px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-50 ${link.accent ? 'text-[#e07b39]' : 'text-gray-700 hover:text-[#08507f]'
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -195,7 +193,7 @@ export default function Navbar() {
           </Link>
 
           <a
-            href="https://learnenglishwitharik.online"
+            href="https://portal.englishwitharik.com"
             target="_blank"
             rel="noopener noreferrer"
             className="block bg-[#08507f] text-white text-sm font-medium py-2.5 px-3 rounded-lg text-center mt-2"

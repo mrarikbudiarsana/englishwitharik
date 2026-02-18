@@ -51,8 +51,8 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-sm mb-3">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="mailto:hello@englishwitharik.id" className="hover:text-[#08507f]">
-                  hello@englishwitharik.id
+                <a href="mailto:hello@englishwitharik.com" className="hover:text-[#08507f]">
+                  hello@englishwitharik.com
                 </a>
               </li>
               <li>

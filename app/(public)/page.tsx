@@ -129,7 +129,7 @@ export default async function HomePage() {
               Free Consultation
             </a>
             <a
-              href="https://rates.englishwitharik.id"
+              href="https://rates.englishwitharik.com"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#08507f] hover:bg-[#063a5c] text-white font-bold py-2.5 px-6 md:py-3 md:px-8 rounded transition-colors uppercase text-sm md:text-base tracking-wide"
@@ -292,7 +292,7 @@ export default async function HomePage() {
               </div>
 
               <a
-                href="https://tests.englishwitharik.id"
+                href="https://tests.englishwitharik.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center bg-white text-indigo-900 font-bold py-4 px-8 rounded-xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20"
@@ -502,7 +502,7 @@ export default async function HomePage() {
               </div>
             </a>
             <a
-              href="https://rates.englishwitharik.id"
+              href="https://rates.englishwitharik.com"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-transparent hover:bg-white/10 text-white font-bold py-4 px-10 rounded-xl transition-all border border-white/30"

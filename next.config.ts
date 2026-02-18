@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'i1.wp.com' },
       { protocol: 'https', hostname: 'i2.wp.com' },
       { protocol: 'https', hostname: 'englishwitharik.wordpress.com' },
-      { protocol: 'https', hostname: 'englishwitharik.id' },
+      { protocol: 'https', hostname: 'englishwitharik.com' },
     ],
   },
 };
