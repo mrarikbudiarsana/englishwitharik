@@ -1,8 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
-import AboutHero from './_components/AboutHero'
-import AboutStats from './_components/AboutStats'
-import AboutBio from './_components/AboutBio'
+import AboutVision from './_components/AboutVision'
+import AboutStory from './_components/AboutStory'
+import AboutWhyChooseUs from './_components/AboutWhyChooseUs'
 import AboutCTA from './_components/AboutCTA'
 
 export const metadata: Metadata = {
@@ -12,20 +11,12 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600
 
-export default async function AboutPage() {
-  const supabase = await createClient()
-  const { data: page } = await supabase
-    .from('blog_pages')
-    .select('content')
-    .eq('slug', 'about')
-    .eq('status', 'published')
-    .single()
-
+export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-gray-50/50">
-      <AboutHero />
-      <AboutStats />
-      <AboutBio content={page?.content} />
+    <main className="min-h-screen bg-white">
+      <AboutVision />
+      <AboutWhyChooseUs />
+      <AboutStory />
       <AboutCTA />
     </main>
   )

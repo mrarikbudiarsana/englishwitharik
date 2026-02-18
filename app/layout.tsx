@@ -8,7 +8,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "English with Arik — Learn English with the Best!",
   description: "Professional English tutoring for IELTS, PTE Academic, TOEFL iBT/ITP, Business English and General English. Based in Bali, Indonesia.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://englishwitharik.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL
+      ? process.env.NEXT_PUBLIC_SITE_URL.startsWith("http")
+        ? process.env.NEXT_PUBLIC_SITE_URL
+        : `https://${process.env.NEXT_PUBLIC_SITE_URL}`
+      : "https://englishwitharik.com"
+  ),
 };
 
 export default function RootLayout({
