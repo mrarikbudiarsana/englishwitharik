@@ -14,6 +14,7 @@ import {
   PenSquare,
   BarChart2,
   Layers,
+  Inbox,
 } from 'lucide-react'
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/stats',      label: 'Stats',      icon: BarChart2 },
   { href: '/admin/posts',      label: 'Posts',      icon: FileText },
   { href: '/admin/pages',      label: 'Pages',      icon: Layers },
+  { href: '/admin/leads',      label: 'Leads',      icon: Inbox },
   { href: '/admin/media',      label: 'Media',      icon: Image },
   { href: '/admin/categories', label: 'Categories', icon: Tag },
   { href: '/admin/settings',   label: 'Settings',   icon: Settings },

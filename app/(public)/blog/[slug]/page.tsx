@@ -6,11 +6,17 @@ import type { Metadata } from 'next'
 import PageViewTracker from '@/components/public/PageViewTracker'
 import { ArrowLeft, Calendar, User, Clock, Share2, Bookmark } from 'lucide-react'
 import PostCard from '@/components/public/PostCard'
+import InteractivePostContent from '@/components/public/blog/InteractivePostContent'
 
 export const revalidate = 60
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+interface PostCategoryRow {
+  category_id: string
+  categories: unknown
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -81,9 +87,9 @@ export default async function BlogPostPage({ params }: Props) {
     : ''
 
   // Fetch related posts
-  const categoryIds = (post.post_categories ?? []).map((pc: any) => pc.category_id)
+  const categoryIds = (post.post_categories ?? []).map((pc: PostCategoryRow) => pc.category_id)
 
-  let relatedPosts: any[] = []
+  let relatedPosts: Parameters<typeof PostCard>[0]['post'][] = []
 
   if (categoryIds.length > 0) {
     const { data } = await supabase
@@ -207,8 +213,9 @@ export default async function BlogPostPage({ params }: Props) {
             prose-a:text-[#08507f] prose-a:no-underline prose-a:font-medium hover:prose-a:underline
             prose-img:rounded-xl prose-img:shadow-lg
             prose-blockquote:border-l-4 prose-blockquote:border-[#08507f] prose-blockquote:bg-slate-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:rounded-r-lg"
-            dangerouslySetInnerHTML={{ __html: post.content ?? '' }}
-          />
+          >
+            <InteractivePostContent html={post.content ?? ''} postId={post.id} postSlug={post.slug} />
+          </div>
 
           {/* Tags & Share */}
           <div className="mt-16 pt-8 border-t border-slate-200">
