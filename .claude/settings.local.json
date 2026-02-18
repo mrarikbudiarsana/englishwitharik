@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(robocopy:*)",
+      "Bash(echo:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''D:\\\\Website\\\\English with Arik\\\\englishwitharik-web'' -Force | Move-Item -Destination ''D:\\\\Website\\\\English with Arik\\\\'' -Force; Remove-Item -Path ''D:\\\\Website\\\\English with Arik\\\\englishwitharik-web'' -Recurse -Force; Write-Host ''Done''\")",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "WebFetch(domain:englishwitharik.id)",
+      "Bash(test:*)",
+      "Bash(npm run import:wp:*)",
+      "Bash(node -e:*)",
+      "Bash(node scripts/debug-xml.mjs:*)",
+      "Bash(node scripts/debug-xml2.mjs:*)",
+      "Bash(node scripts/debug-xml3.mjs:*)",
+      "Bash(del \"d:\\\\Website\\\\English with Arik\\\\middleware.ts\")"
+    ]
+  }
+}
