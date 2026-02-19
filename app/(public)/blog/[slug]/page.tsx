@@ -85,6 +85,35 @@ export default async function BlogPostPage({ params }: Props) {
   const date = post.published_at
     ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : ''
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    ? (process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : `https://${process.env.NEXT_PUBLIC_SITE_URL}`)
+    : 'https://englishwitharik.com'
+  const postUrl = `${siteUrl}/blog/${post.slug}`
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.seo_title ?? post.title,
+    description: post.seo_description ?? post.excerpt ?? '',
+    image: post.featured_image_url ? [post.featured_image_url] : [],
+    datePublished: post.published_at ?? post.created_at,
+    dateModified: post.updated_at ?? post.published_at ?? post.created_at,
+    author: {
+      '@type': 'Person',
+      name: 'Arik Budiarsana',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'English with Arik',
+      url: siteUrl,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': postUrl,
+    },
+    url: postUrl,
+  }
 
   // Fetch related posts
   const categoryIds = (post.post_categories ?? []).map((pc: PostCategoryRow) => pc.category_id)
@@ -116,6 +145,10 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PageViewTracker path={`/blog/${post.slug}`} postId={post.id} />
 
       <main className="bg-white min-h-screen pb-20">

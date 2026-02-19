@@ -55,6 +55,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showDropdownGapsModal, setShowDropdownGapsModal] = useState(false)
   const [showTrueFalseModal, setShowTrueFalseModal] = useState(false)
   const [showMatchingModal, setShowMatchingModal] = useState(false)
+  const [showCtaModal, setShowCtaModal] = useState(false)
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -80,6 +81,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [matchingPrompt, setMatchingPrompt] = useState('')
   const [matchingRows, setMatchingRows] = useState<Array<{ left: string; right: string }>>([{ left: '', right: '' }, { left: '', right: '' }])
   const [matchingExplanation, setMatchingExplanation] = useState('')
+  const [ctaTitle, setCtaTitle] = useState('Need help with IELTS or PTE?')
+  const [ctaDescription, setCtaDescription] = useState('Leave your contact and we will reach out shortly.')
+  const [ctaSubmitLabel, setCtaSubmitLabel] = useState('Get Free Consultation')
+  const [ctaSource, setCtaSource] = useState('blog-cta')
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null)
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
@@ -188,28 +193,27 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
   function insertCtaBlock() {
     if (!editor) return
+    if (!ctaTitle.trim()) {
+      window.alert('CTA title is required.')
+      return
+    }
 
-    const title = window.prompt('CTA title', 'Need help with IELTS or PTE?')
-    if (!title?.trim()) return
-
-    const description = window.prompt('CTA description', 'Leave your contact and we will reach out shortly.') ?? ''
-    const submitLabel = window.prompt('Button label', 'Get Free Consultation') ?? 'Get Free Consultation'
-    const source = window.prompt('Lead source label', 'blog-cta') ?? 'blog-cta'
-    const blockId = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
+    const blockId = `${ctaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
 
     const config = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-      submitLabel: submitLabel.trim() || undefined,
-      source: source.trim() || undefined,
+      title: ctaTitle.trim(),
+      description: ctaDescription.trim() || undefined,
+      submitLabel: ctaSubmitLabel.trim() || undefined,
+      source: ctaSource.trim() || undefined,
       blockId,
       collectName: true,
       collectEmail: true,
       collectWhatsapp: true,
     }
 
-    const shortcode = `[block:cta:${encodeURIComponent(JSON.stringify(config))}]`
-    editor.chain().focus().insertContent(`<p>${shortcode}</p>`).run()
+    insertShortcodeBlock('cta', config)
+    resetCtaForm()
+    setShowCtaModal(false)
   }
 
   function insertShortcodeBlock(blockType: string, config: Record<string, unknown>) {
@@ -258,6 +262,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setMatchingPrompt('')
     setMatchingRows([{ left: '', right: '' }, { left: '', right: '' }])
     setMatchingExplanation('')
+    setEditingShortcode(null)
+  }
+
+  function resetCtaForm() {
+    setCtaTitle('Need help with IELTS or PTE?')
+    setCtaDescription('Leave your contact and we will reach out shortly.')
+    setCtaSubmitLabel('Get Free Consultation')
+    setCtaSource('blog-cta')
     setEditingShortcode(null)
   }
 
@@ -358,13 +370,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setShowBlockPicker(false)
     setShowFloatingBlockPicker(false)
     prepareModalForType(type)
-    if (type === 'mcq') openModalNearCursor(() => setShowMcqModal(true), 640)
-    if (type === 'audio') openModalNearCursor(() => setShowAudioModal(true), 640)
-    if (type === 'fill') openModalNearCursor(() => setShowFillGapsModal(true), 768)
-    if (type === 'dropdown') openModalNearCursor(() => setShowDropdownGapsModal(true), 768)
-    if (type === 'truefalse') openModalNearCursor(() => setShowTrueFalseModal(true), 768)
-    if (type === 'matching') openModalNearCursor(() => setShowMatchingModal(true), 768)
-    if (type === 'cta') insertCtaBlock()
+    if (type === 'mcq') openModalNearCursor(() => setShowMcqModal(true), 640, 620)
+    if (type === 'audio') openModalNearCursor(() => setShowAudioModal(true), 640, 560)
+    if (type === 'fill') openModalNearCursor(() => setShowFillGapsModal(true), 768, 760)
+    if (type === 'dropdown') openModalNearCursor(() => setShowDropdownGapsModal(true), 768, 760)
+    if (type === 'truefalse') openModalNearCursor(() => setShowTrueFalseModal(true), 768, 760)
+    if (type === 'matching') openModalNearCursor(() => setShowMatchingModal(true), 768, 760)
+    if (type === 'cta') openModalNearCursor(() => setShowCtaModal(true), 640, 520)
   }
 
   function parseShortcodeConfig(encoded: string) {
@@ -502,7 +514,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     }
   }
 
-  function computeModalPosition(panelWidth: number) {
+  function computeModalPosition(panelWidth: number, panelHeight: number) {
     const viewportPadding = 16
     if (!editor) {
       return {
@@ -515,8 +527,12 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       const pos = editor.state.selection.from
       const coords = editor.view.coordsAtPos(pos)
       const maxLeft = window.innerWidth - panelWidth - viewportPadding
+      const maxTop = Math.max(viewportPadding, window.innerHeight - panelHeight - viewportPadding)
       const left = Math.min(Math.max(viewportPadding, coords.left), Math.max(viewportPadding, maxLeft))
-      const top = Math.min(Math.max(viewportPadding, coords.bottom + 12), window.innerHeight - 140)
+      const preferredBelow = coords.bottom + 12
+      const preferredAbove = coords.top - panelHeight - 12
+      const targetTop = preferredBelow <= maxTop ? preferredBelow : Math.max(viewportPadding, preferredAbove)
+      const top = Math.min(Math.max(viewportPadding, targetTop), maxTop)
       return { top, left }
     } catch {
       return {
@@ -526,8 +542,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     }
   }
 
-  function openModalNearCursor(open: () => void, panelWidth: number) {
-    setModalPosition(computeModalPosition(panelWidth))
+  function openModalNearCursor(open: () => void, panelWidth: number, panelHeight: number) {
+    setModalPosition(computeModalPosition(panelWidth, panelHeight))
     open()
   }
 
@@ -635,7 +651,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {showMcqModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
@@ -714,7 +730,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {showAudioModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
@@ -769,7 +785,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {showFillGapsModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
@@ -866,7 +882,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {showDropdownGapsModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
@@ -963,7 +979,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {showTrueFalseModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
@@ -1052,10 +1068,88 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         </div>
       )}
 
+      {showCtaModal && (
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Insert CTA Block</h3>
+              <p className="text-xs text-gray-500 mt-1">Creates a lead form block inside your article.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={ctaTitle}
+                  onChange={e => setCtaTitle(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                  placeholder="Need help with IELTS or PTE?"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                <textarea
+                  value={ctaDescription}
+                  onChange={e => setCtaDescription(e.target.value)}
+                  rows={3}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f] resize-y"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Button label</label>
+                  <input
+                    type="text"
+                    value={ctaSubmitLabel}
+                    onChange={e => setCtaSubmitLabel(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Get Free Consultation"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Source tag</label>
+                  <input
+                    type="text"
+                    value={ctaSource}
+                    onChange={e => setCtaSource(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="blog-cta"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  resetCtaForm()
+                  setShowCtaModal(false)
+                }}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={insertCtaBlock}
+                className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
+              >
+                Insert block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showMatchingModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
           <div
-            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
             style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
           >
             <div>
