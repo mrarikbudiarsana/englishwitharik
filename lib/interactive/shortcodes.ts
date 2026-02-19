@@ -105,6 +105,20 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'missing_letters') {
+    const items = Array.isArray(config.items) ? config.items : []
+    if (items.length === 0) return 'Missing letters needs at least 1 item.'
+    if (items.some(item => typeof item !== 'string')) return 'Missing letters items are malformed.'
+
+    const rows = items.map(item => item.trim()).filter(Boolean)
+    if (rows.length === 0) return 'Missing letters needs at least 1 non-empty item.'
+
+    if (rows.some(item => !FILL_GAP_TOKEN_REGEX.test(item))) {
+      return 'Missing letters items must include at least one [[letters]] placeholder.'
+    }
+    return null
+  }
+
   return `Unsupported block type: ${blockType}`
 }
 
