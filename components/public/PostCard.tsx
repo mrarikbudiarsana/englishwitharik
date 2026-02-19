@@ -1,9 +1,18 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import type { Post, Category } from '@/lib/types'
+import type { Category } from '@/lib/types'
 
 interface PostCardProps {
-  post: Post & { categories?: Category[] }
+  post: {
+    id: string
+    title: string
+    slug: string
+    excerpt: string | null
+    featured_image_url: string | null
+    published_at: string | null
+    created_at: string
+    categories?: Category[]
+  }
 }
 
 export default function PostCard({ post }: PostCardProps) {
