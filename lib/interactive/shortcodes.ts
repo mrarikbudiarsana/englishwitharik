@@ -6,6 +6,9 @@ export interface InteractiveValidationIssue {
   message: string
 }
 
+const FILL_GAP_TOKEN_REGEX = /\[\[[^[\]]+\]\]/
+const DROPDOWN_GAP_TOKEN_REGEX = /\[\[[^[\]|]+\|[^[\]]+\]\]/
+
 function parseConfig(encoded: string): Record<string, unknown> | null {
   try {
     return JSON.parse(decodeURIComponent(encoded)) as Record<string, unknown>
@@ -47,6 +50,17 @@ export function validateShortcode(shortcode: string): string | null {
     const items = Array.isArray(config.items) ? config.items : []
     if (mode !== 'paragraph' && mode !== 'sentences') return `${blockType} mode must be paragraph or sentences.`
     if (items.length === 0) return `${blockType} needs at least 1 item.`
+    if (items.some(item => typeof item !== 'string')) return `${blockType} items are malformed.`
+
+    const rows = items.map(item => item.trim()).filter(Boolean)
+    if (rows.length === 0) return `${blockType} needs at least 1 non-empty item.`
+
+    if (blockType === 'fill_gaps' && rows.some(item => !FILL_GAP_TOKEN_REGEX.test(item))) {
+      return 'fill_gaps rows must include at least one [[answer]] placeholder.'
+    }
+    if (blockType === 'dropdown_gaps' && rows.some(item => !DROPDOWN_GAP_TOKEN_REGEX.test(item))) {
+      return 'dropdown_gaps rows must include at least one [[correct|option]] placeholder.'
+    }
     return null
   }
 

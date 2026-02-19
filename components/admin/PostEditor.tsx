@@ -11,6 +11,7 @@ import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
+  ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
@@ -33,6 +34,13 @@ interface CtaTemplate {
 
 const CTA_TEMPLATES_KEY = 'post-editor-cta-templates-v1'
 const BLOCK_TEMPLATES_KEY = 'post-editor-block-templates-v1'
+const BLOCKS_PANEL_COLLAPSED_KEY = 'post-editor-blocks-panel-collapsed-v1'
+const BLOCK_TEMPLATES_PANEL_COLLAPSED_KEY = 'post-editor-block-templates-panel-collapsed-v1'
+const DEFAULT_CTA_TITLE = 'Need help with IELTS or PTE?'
+const DEFAULT_CTA_DESCRIPTION = 'Leave your contact and we will reach out shortly.'
+const DEFAULT_CTA_SUBMIT_LABEL = 'Get Free Consultation'
+const DEFAULT_CTA_SOURCE = 'blog-cta'
+
 interface BlockTemplate {
   id: string
   name: string
@@ -138,10 +146,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [matchingPrompt, setMatchingPrompt] = useState('')
   const [matchingRows, setMatchingRows] = useState<Array<{ left: string; right: string }>>([{ left: '', right: '' }, { left: '', right: '' }])
   const [matchingExplanation, setMatchingExplanation] = useState('')
-  const [ctaTitle, setCtaTitle] = useState('Need help with IELTS or PTE?')
-  const [ctaDescription, setCtaDescription] = useState('Leave your contact and we will reach out shortly.')
-  const [ctaSubmitLabel, setCtaSubmitLabel] = useState('Get Free Consultation')
-  const [ctaSource, setCtaSource] = useState('blog-cta')
+  const [ctaTitle, setCtaTitle] = useState(DEFAULT_CTA_TITLE)
+  const [ctaDescription, setCtaDescription] = useState(DEFAULT_CTA_DESCRIPTION)
+  const [ctaSubmitLabel, setCtaSubmitLabel] = useState(DEFAULT_CTA_SUBMIT_LABEL)
+  const [ctaSource, setCtaSource] = useState(DEFAULT_CTA_SOURCE)
+  const [ctaBlockId, setCtaBlockId] = useState('')
+  const [ctaCollectName, setCtaCollectName] = useState(true)
+  const [ctaCollectEmail, setCtaCollectEmail] = useState(true)
+  const [ctaCollectWhatsapp, setCtaCollectWhatsapp] = useState(true)
   const [ctaTemplateName, setCtaTemplateName] = useState('')
   const [ctaTemplates, setCtaTemplates] = useState<CtaTemplate[]>([])
   const [selectedCtaTemplateId, setSelectedCtaTemplateId] = useState('')
@@ -151,6 +163,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [blockTemplateQuery, setBlockTemplateQuery] = useState('')
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null)
   const [blockEntries, setBlockEntries] = useState<ShortcodeEntry[]>([])
+  const [showBlocksPanel, setShowBlocksPanel] = useState(true)
+  const [showBlockTemplatesPanel, setShowBlockTemplatesPanel] = useState(true)
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
   const floatingPickerRef = useRef<HTMLDivElement | null>(null)
@@ -180,6 +194,26 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       },
     },
   })
+
+  useEffect(() => {
+    try {
+      const blocksCollapsed = window.localStorage.getItem(BLOCKS_PANEL_COLLAPSED_KEY)
+      const templatesCollapsed = window.localStorage.getItem(BLOCK_TEMPLATES_PANEL_COLLAPSED_KEY)
+      if (blocksCollapsed === 'true') setShowBlocksPanel(false)
+      if (templatesCollapsed === 'true') setShowBlockTemplatesPanel(false)
+    } catch {
+      // Ignore storage errors and keep defaults.
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(BLOCKS_PANEL_COLLAPSED_KEY, showBlocksPanel ? 'false' : 'true')
+      window.localStorage.setItem(BLOCK_TEMPLATES_PANEL_COLLAPSED_KEY, showBlockTemplatesPanel ? 'false' : 'true')
+    } catch {
+      // Ignore storage errors and continue.
+    }
+  }, [showBlocksPanel, showBlockTemplatesPanel])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -289,6 +323,17 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     let cancelled = false
 
     async function loadTemplates() {
+      const localTemplates = (() => {
+        try {
+          const raw = window.localStorage.getItem(BLOCK_TEMPLATES_KEY)
+          if (!raw) return [] as BlockTemplate[]
+          const parsed = JSON.parse(raw) as BlockTemplate[]
+          return Array.isArray(parsed) ? parsed : []
+        } catch {
+          return [] as BlockTemplate[]
+        }
+      })()
+
       const supabase = createClient()
       const { data, error } = await supabase
         .from('interactive_block_templates')
@@ -303,19 +348,27 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           shortcode: item.shortcode,
           remote: true,
         }))
-        setBlockTemplates(mapped)
-        window.localStorage.setItem(BLOCK_TEMPLATES_KEY, JSON.stringify(mapped))
+        const merged = [...mapped]
+        for (const localTemplate of localTemplates) {
+          const hasSameRemoteId = localTemplate.remote && isUuid(localTemplate.id)
+            ? mapped.some(template => template.id === localTemplate.id)
+            : false
+          const duplicateByContent = mapped.some(template =>
+            template.blockType === localTemplate.blockType
+            && template.shortcode === localTemplate.shortcode
+            && template.name === localTemplate.name
+          )
+          if (!hasSameRemoteId && !duplicateByContent) {
+            merged.push({ ...localTemplate, remote: false })
+          }
+        }
+
+        setBlockTemplates(merged)
+        window.localStorage.setItem(BLOCK_TEMPLATES_KEY, JSON.stringify(merged))
         return
       }
 
-      try {
-        const raw = window.localStorage.getItem(BLOCK_TEMPLATES_KEY)
-        if (!raw || cancelled) return
-        const parsed = JSON.parse(raw) as BlockTemplate[]
-        if (Array.isArray(parsed)) setBlockTemplates(parsed)
-      } catch {
-        // Ignore malformed local storage and continue with empty templates.
-      }
+      if (!cancelled && localTemplates.length > 0) setBlockTemplates(localTemplates)
     }
 
     loadTemplates()
@@ -385,38 +438,36 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       return
     }
 
-    const blockId = `${ctaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
-
-    const config = {
-      title: ctaTitle.trim(),
-      description: ctaDescription.trim() || undefined,
-      submitLabel: ctaSubmitLabel.trim() || undefined,
-      source: ctaSource.trim() || undefined,
-      blockId,
-      collectName: true,
-      collectEmail: true,
-      collectWhatsapp: true,
-    }
-
+    const { config, blockId } = getCtaConfig()
+    setCtaBlockId(blockId)
     insertShortcodeBlock('cta', config)
     resetCtaForm()
     setShowCtaModal(false)
   }
 
+  function getCtaConfig() {
+    const normalizedTitle = ctaTitle.trim()
+    const slugBase = normalizedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'cta'
+    const blockId = ctaBlockId.trim() || `${slugBase}-${Date.now()}`
+    return {
+      blockId,
+      config: {
+        title: normalizedTitle,
+        description: ctaDescription.trim() || undefined,
+        submitLabel: ctaSubmitLabel.trim() || undefined,
+        source: ctaSource.trim() || undefined,
+        blockId,
+        collectName: ctaCollectName,
+        collectEmail: ctaCollectEmail,
+        collectWhatsapp: ctaCollectWhatsapp,
+      },
+    }
+  }
+
   function getCtaShortcode() {
     if (!ctaTitle.trim()) return ''
 
-    const blockId = `${ctaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
-    const config = {
-      title: ctaTitle.trim(),
-      description: ctaDescription.trim() || undefined,
-      submitLabel: ctaSubmitLabel.trim() || undefined,
-      source: ctaSource.trim() || undefined,
-      blockId,
-      collectName: true,
-      collectEmail: true,
-      collectWhatsapp: true,
-    }
+    const { config } = getCtaConfig()
 
     return `[block:cta:${encodeURIComponent(JSON.stringify(config))}]`
   }
@@ -486,10 +537,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   }
 
   function resetCtaForm() {
-    setCtaTitle('Need help with IELTS or PTE?')
-    setCtaDescription('Leave your contact and we will reach out shortly.')
-    setCtaSubmitLabel('Get Free Consultation')
-    setCtaSource('blog-cta')
+    setCtaTitle(DEFAULT_CTA_TITLE)
+    setCtaDescription(DEFAULT_CTA_DESCRIPTION)
+    setCtaSubmitLabel(DEFAULT_CTA_SUBMIT_LABEL)
+    setCtaSource(DEFAULT_CTA_SOURCE)
+    setCtaBlockId('')
+    setCtaCollectName(true)
+    setCtaCollectEmail(true)
+    setCtaCollectWhatsapp(true)
     setCtaTemplateName('')
     setEditingShortcode(null)
   }
@@ -541,6 +596,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setCtaDescription(template.description)
     setCtaSubmitLabel(template.submitLabel)
     setCtaSource(template.source)
+    setCtaBlockId('')
+    setCtaCollectName(true)
+    setCtaCollectEmail(true)
+    setCtaCollectWhatsapp(true)
   }
 
   function deleteSelectedCtaTemplate() {
@@ -698,8 +757,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   }
 
   function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta') {
-    if (type === 'cta') return
-
     const context = getActiveShortcodeContext()
     if (!context) {
       if (type === 'mcq') resetMcqForm()
@@ -708,16 +765,18 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'dropdown') resetDropdownForm()
       if (type === 'truefalse') resetTrueFalseForm()
       if (type === 'matching') resetMatchingForm()
+      if (type === 'cta') resetCtaForm()
       return
     }
 
-    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching', string> = {
+    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta', string> = {
       mcq: 'mcq',
       audio: 'audio',
       fill: 'fill_gaps',
       dropdown: 'dropdown_gaps',
       truefalse: 'true_false',
       matching: 'matching',
+      cta: 'cta',
     }
 
     if (context.blockType !== typeMap[type] || !context.config) {
@@ -727,6 +786,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'dropdown') resetDropdownForm()
       if (type === 'truefalse') resetTrueFalseForm()
       if (type === 'matching') resetMatchingForm()
+      if (type === 'cta') resetCtaForm()
       return
     }
 
@@ -793,6 +853,17 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       setMatchingPrompt(typeof c.prompt === 'string' ? c.prompt : '')
       setMatchingRows(pairs.length > 0 ? pairs : [{ left: '', right: '' }, { left: '', right: '' }])
       setMatchingExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'cta') {
+      setCtaTitle(typeof c.title === 'string' ? c.title : DEFAULT_CTA_TITLE)
+      setCtaDescription(typeof c.description === 'string' ? c.description : DEFAULT_CTA_DESCRIPTION)
+      setCtaSubmitLabel(typeof c.submitLabel === 'string' ? c.submitLabel : DEFAULT_CTA_SUBMIT_LABEL)
+      setCtaSource(typeof c.source === 'string' ? c.source : DEFAULT_CTA_SOURCE)
+      setCtaBlockId(typeof c.blockId === 'string' ? c.blockId : '')
+      setCtaCollectName(typeof c.collectName === 'boolean' ? c.collectName : true)
+      setCtaCollectEmail(typeof c.collectEmail === 'boolean' ? c.collectEmail : true)
+      setCtaCollectWhatsapp(typeof c.collectWhatsapp === 'boolean' ? c.collectWhatsapp : true)
     }
   }
 
@@ -1123,107 +1194,138 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       </div>
 
       <div className="border-b border-gray-200 bg-gray-50/70 px-3 py-2 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-600">Blocks</span>
-          {blockEntries.length === 0 && <span className="text-xs text-gray-500">No interactive blocks yet.</span>}
-          {blockEntries.map((entry, index) => (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => focusShortcode(entry)}
-              className={cn(
-                'inline-flex items-center rounded-full border bg-white px-2.5 py-1 text-xs hover:bg-gray-100',
-                entry.validationError ? 'border-amber-300 text-amber-800' : 'border-gray-300 text-gray-700'
-              )}
-            >
-              {index + 1}. {entry.blockType.replaceAll('_', ' ')}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowBlocksPanel(prev => !prev)}
+          className="w-full flex items-center justify-between rounded-md px-1 py-1 text-left hover:bg-gray-100/70"
+          aria-expanded={showBlocksPanel}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-gray-600">Blocks</span>
+            {blockEntries.length === 0 && <span className="text-xs text-gray-500">No interactive blocks yet.</span>}
+            {blockEntries.length > 0 && (
+              <span className="text-xs text-gray-500">{blockEntries.length} block{blockEntries.length > 1 ? 's' : ''}</span>
+            )}
+          </div>
+          {showBlocksPanel ? <ChevronDown size={14} className="text-gray-500" /> : <ChevronRight size={14} className="text-gray-500" />}
+        </button>
 
-        {blockEntries.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white p-2">
-            <div className="max-h-36 overflow-y-auto space-y-1">
+        {showBlocksPanel && (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
               {blockEntries.map((entry, index) => (
-                <div key={`row-${entry.id}`} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
-                  <div>
-                    <p className="text-xs text-gray-700">
-                      {index + 1}. {entry.blockType.replaceAll('_', ' ')}
-                    </p>
-                    {entry.validationError && (
-                      <p className="text-[11px] text-amber-700">{entry.validationError}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button type="button" onClick={() => focusShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Go</button>
-                    <button type="button" onClick={() => editShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Edit</button>
-                    <button type="button" onClick={() => duplicateShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Duplicate</button>
-                    <button type="button" onClick={() => saveBlockTemplate(entry, `${entry.blockType.replaceAll('_', ' ')} ${index + 1}`)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Save tpl</button>
-                    <button type="button" onClick={() => moveShortcode(index, -1)} disabled={index === 0} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Up</button>
-                    <button type="button" onClick={() => moveShortcode(index, 1)} disabled={index === blockEntries.length - 1} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Down</button>
-                    <button type="button" onClick={() => deleteShortcode(entry)} className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50">Delete</button>
-                  </div>
-                </div>
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => focusShortcode(entry)}
+                  className={cn(
+                    'inline-flex items-center rounded-full border bg-white px-2.5 py-1 text-xs hover:bg-gray-100',
+                    entry.validationError ? 'border-amber-300 text-amber-800' : 'border-gray-300 text-gray-700'
+                  )}
+                >
+                  {index + 1}. {entry.blockType.replaceAll('_', ' ')}
+                </button>
               ))}
+            </div>
+
+            {blockEntries.length > 0 && (
+              <div className="rounded-lg border border-gray-200 bg-white p-2">
+                <div className="max-h-36 overflow-y-auto space-y-1">
+                  {blockEntries.map((entry, index) => (
+                    <div key={`row-${entry.id}`} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
+                      <div>
+                        <p className="text-xs text-gray-700">
+                          {index + 1}. {entry.blockType.replaceAll('_', ' ')}
+                        </p>
+                        {entry.validationError && (
+                          <p className="text-[11px] text-amber-700">{entry.validationError}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button type="button" onClick={() => focusShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Go</button>
+                        <button type="button" onClick={() => editShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Edit</button>
+                        <button type="button" onClick={() => duplicateShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Duplicate</button>
+                        <button type="button" onClick={() => saveBlockTemplate(entry, `${entry.blockType.replaceAll('_', ' ')} ${index + 1}`)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Save tpl</button>
+                        <button type="button" onClick={() => moveShortcode(index, -1)} disabled={index === 0} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Up</button>
+                        <button type="button" onClick={() => moveShortcode(index, 1)} disabled={index === blockEntries.length - 1} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Down</button>
+                        <button type="button" onClick={() => deleteShortcode(entry)} className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="h-px bg-gray-200" />
+
+        <button
+          type="button"
+          onClick={() => setShowBlockTemplatesPanel(prev => !prev)}
+          className="w-full flex items-center justify-between rounded-md px-1 py-1 text-left hover:bg-gray-100/70"
+          aria-expanded={showBlockTemplatesPanel}
+        >
+          <span className="text-xs font-semibold text-gray-700">Block Templates</span>
+          {showBlockTemplatesPanel ? <ChevronDown size={14} className="text-gray-500" /> : <ChevronRight size={14} className="text-gray-500" />}
+        </button>
+
+        {showBlockTemplatesPanel && (
+          <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+            <input
+              type="text"
+              value={blockTemplateQuery}
+              onChange={e => setBlockTemplateQuery(e.target.value)}
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+              placeholder="Search templates"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
+              <select
+                value={selectedBlockTemplateId}
+                onChange={e => setSelectedBlockTemplateId(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+              >
+                <option value="">Select saved block template</option>
+                {filteredBlockTemplates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} ({template.blockType.replaceAll('_', ' ')})
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={insertSelectedBlockTemplate} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+                Insert
+              </button>
+              <button type="button" onClick={deleteSelectedBlockTemplate} className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">
+                Delete
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={exportBlockTemplates} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+                Export
+              </button>
+              <button type="button" onClick={() => blockTemplatesFileInputRef.current?.click()} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+                Import
+              </button>
+              <input
+                ref={blockTemplatesFileInputRef}
+                type="file"
+                accept="application/json"
+                onChange={importBlockTemplates}
+                className="hidden"
+              />
+            </div>
+            <div className="space-y-1">
+              <input
+                type="text"
+                value={blockTemplateName}
+                onChange={e => setBlockTemplateName(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                placeholder="Template name (used by Save tpl)"
+              />
+              <p className="text-xs text-gray-500">Set a name, then click `Save tpl` on any block row.</p>
             </div>
           </div>
         )}
-
-        <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
-          <p className="text-xs font-semibold text-gray-700">Block Templates</p>
-          <input
-            type="text"
-            value={blockTemplateQuery}
-            onChange={e => setBlockTemplateQuery(e.target.value)}
-            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
-            placeholder="Search templates"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
-            <select
-              value={selectedBlockTemplateId}
-              onChange={e => setSelectedBlockTemplateId(e.target.value)}
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
-            >
-              <option value="">Select saved block template</option>
-              {filteredBlockTemplates.map(template => (
-                <option key={template.id} value={template.id}>
-                  {template.name} ({template.blockType.replaceAll('_', ' ')})
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={insertSelectedBlockTemplate} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
-              Insert
-            </button>
-            <button type="button" onClick={deleteSelectedBlockTemplate} className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">
-              Delete
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={exportBlockTemplates} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
-              Export
-            </button>
-            <button type="button" onClick={() => blockTemplatesFileInputRef.current?.click()} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
-              Import
-            </button>
-            <input
-              ref={blockTemplatesFileInputRef}
-              type="file"
-              accept="application/json"
-              onChange={importBlockTemplates}
-              className="hidden"
-            />
-          </div>
-          <div className="space-y-1">
-            <input
-              type="text"
-              value={blockTemplateName}
-              onChange={e => setBlockTemplateName(e.target.value)}
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
-              placeholder="Template name (used by Save tpl)"
-            />
-            <p className="text-xs text-gray-500">Set a name, then click `Save tpl` on any block row.</p>
-          </div>
-        </div>
       </div>
 
       {/* Editor Content */}
