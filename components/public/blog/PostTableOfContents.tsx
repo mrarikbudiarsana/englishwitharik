@@ -46,26 +46,25 @@ export default function PostTableOfContents({ headings }: PostTableOfContentsPro
   if (!validHeadings.length) return null
 
   return (
-    <aside className="hidden md:block md:sticky md:top-24 md:self-start md:z-20 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-[0_8px_24px_-12px_rgba(2,6,23,0.35)] backdrop-blur">
-      <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Table of Contents</h2>
-      <nav aria-label="Table of contents" className="max-h-[calc(100vh-8rem)] overflow-auto pr-1">
-        <ul className="space-y-1">
+    <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-auto">
+      <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">On this page</h2>
+      <nav aria-label="Table of contents">
+        <ul className="space-y-3 relative border-l border-slate-200">
           {validHeadings.map(heading => (
-            <li key={heading.id}>
+            <li key={heading.id} className="relative pl-4">
+              <div
+                className={`absolute left-[-1px] top-1.5 h-full w-[2px] transition-colors duration-300 ${activeId === heading.id ? 'bg-[#08507f] h-[1em]' : 'bg-transparent'
+                  }`}
+                style={{ height: 'calc(1em + 4px)', top: '2px' }}
+              />
               <a
                 href={`#${heading.id}`}
                 aria-current={activeId === heading.id ? 'location' : undefined}
-                className={`group relative block rounded-lg py-1.5 text-[13px] leading-6 transition-all ${heading.level === 3 ? 'pl-8 pr-2' : 'pl-3 pr-2'} ${activeId === heading.id
-                  ? 'bg-[#08507f]/12 font-semibold text-[#08507f] ring-1 ring-[#08507f]/25'
-                  : 'text-slate-600 hover:bg-slate-100/90 hover:text-slate-900'
-                  }`}
+                className={`block text-sm leading-relaxed transition-colors ${activeId === heading.id
+                    ? 'font-semibold text-[#08507f]'
+                    : 'text-slate-500 hover:text-slate-800'
+                  } ${heading.level === 3 ? 'ml-3' : ''}`}
               >
-                <span
-                  className={`absolute left-0 top-1/2 h-6 -translate-y-1/2 rounded-r-full transition-all ${activeId === heading.id
-                    ? 'w-1.5 bg-[#08507f]'
-                    : 'w-0 bg-transparent group-hover:w-1 group-hover:bg-slate-300'
-                    }`}
-                />
                 {heading.text}
               </a>
             </li>
