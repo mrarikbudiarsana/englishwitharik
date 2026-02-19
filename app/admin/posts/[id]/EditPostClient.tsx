@@ -8,6 +8,7 @@ import { Save, Eye, Trash2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Post, Category, Tag } from '@/lib/types'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
+import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
 
 interface Props {
   post: Post
@@ -26,7 +27,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(post.title)
   const [slug, setSlug] = useState(post.slug)
-  const [content, setContent] = useState(post.content ?? '')
+  const [content, setContent] = useState(sanitizeEditorArtifacts(post.content ?? ''))
   const [excerpt, setExcerpt] = useState(post.excerpt ?? '')
   const [featuredImage, setFeaturedImage] = useState(post.featured_image_url ?? '')
   const [seoTitle, setSeoTitle] = useState(post.seo_title ?? '')
@@ -41,7 +42,8 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
 
   const handleSave = useCallback(async (saveStatus: 'draft' | 'published') => {
     if (!title) return alert('Title is required')
-    const issues = validateInteractiveShortcodes(content)
+    const cleanContent = sanitizeEditorArtifacts(content)
+    const issues = validateInteractiveShortcodes(cleanContent)
     if (issues.length > 0) {
       const preview = issues.slice(0, 3).map(issue => `#${issue.index} ${issue.blockType}: ${issue.message}`).join('\n')
       alert(`Fix interactive block errors before saving:\n${preview}${issues.length > 3 ? `\n...and ${issues.length - 3} more.` : ''}`)
@@ -53,7 +55,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
     await supabase.from('posts').update({
       title,
       slug,
-      content,
+      content: cleanContent,
       excerpt: excerpt || null,
       featured_image_url: featuredImage || null,
       seo_title: seoTitle || null,

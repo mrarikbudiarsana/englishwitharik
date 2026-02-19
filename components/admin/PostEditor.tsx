@@ -15,6 +15,7 @@ import {
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
 
 interface PostEditorProps {
   content: string
@@ -170,7 +171,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     ],
     content,
     onUpdate({ editor }) {
-      onChange(editor.getHTML())
+      onChange(sanitizeEditorArtifacts(editor.getHTML()))
       setBlockEntries(getShortcodeEntries(editor))
     },
     editorProps: {
@@ -220,7 +221,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       paragraph.removeAttribute('role')
       paragraph.removeAttribute('tabindex')
       paragraph.removeAttribute('title')
-      paragraph.querySelector('.shortcode-actions')?.remove()
 
       const text = paragraph.textContent?.trim() ?? ''
       const match = text.match(/^\[block:([a-z0-9_-]+):[^\]]+\]$/)
@@ -235,32 +235,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       paragraph.setAttribute('role', 'button')
       paragraph.setAttribute('tabindex', '0')
       paragraph.setAttribute('title', 'Click to edit this block')
-
-      if (entry) {
-        const actions = document.createElement('div')
-        actions.className = 'shortcode-actions'
-        actions.setAttribute('contenteditable', 'false')
-
-        const buttonSpecs = [
-          { action: 'edit', label: 'Edit' },
-          { action: 'duplicate', label: 'Duplicate' },
-          { action: 'up', label: 'Up' },
-          { action: 'down', label: 'Down' },
-          { action: 'delete', label: 'Delete' },
-        ]
-
-        buttonSpecs.forEach(spec => {
-          const button = document.createElement('button')
-          button.type = 'button'
-          button.className = 'shortcode-action-btn'
-          button.textContent = spec.label
-          button.setAttribute('data-action', spec.action)
-          button.setAttribute('data-block-id', entry.id)
-          actions.appendChild(button)
-        })
-
-        paragraph.appendChild(actions)
-      }
     })
   }, [blockEntries, content])
 
@@ -270,29 +244,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
     function handleInteractiveBlockClick(event: Event) {
       const target = event.target as HTMLElement | null
-      const actionButton = target?.closest('[data-action]') as HTMLElement | null
-      if (actionButton) {
-        const blockId = actionButton.getAttribute('data-block-id')
-        const action = actionButton.getAttribute('data-action')
-        if (!blockId || !action) return
-        const entry = blockEntries.find(item => item.id === blockId)
-        if (!entry) return
-        event.preventDefault()
-
-        if (action === 'edit') editShortcode(entry)
-        if (action === 'duplicate') duplicateShortcode(entry)
-        if (action === 'up') {
-          const index = blockEntries.findIndex(item => item.id === blockId)
-          if (index > 0) moveShortcode(index, -1)
-        }
-        if (action === 'down') {
-          const index = blockEntries.findIndex(item => item.id === blockId)
-          if (index >= 0 && index < blockEntries.length - 1) moveShortcode(index, 1)
-        }
-        if (action === 'delete') deleteShortcode(entry)
-        return
-      }
-
       const block = target?.closest('p.shortcode-mask') as HTMLElement | null
       if (!block) return
       const blockId = block.getAttribute('data-block-id')
@@ -2014,7 +1965,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           position: relative;
           user-select: none;
           cursor: pointer;
-          padding-right: 18rem;
         }
 
         .ProseMirror p.shortcode-mask::before {
@@ -2038,31 +1988,6 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           outline-offset: 1px;
         }
 
-        .ProseMirror p.shortcode-mask .shortcode-actions {
-          position: absolute;
-          right: 0.7rem;
-          top: 0.44rem;
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-          z-index: 2;
-        }
-
-        .ProseMirror p.shortcode-mask .shortcode-action-btn {
-          border: 1px solid #cbd5e1;
-          border-radius: 0.45rem;
-          background: #ffffff;
-          color: #334155;
-          font-size: 0.7rem;
-          line-height: 1;
-          padding: 0.35rem 0.45rem;
-          cursor: pointer;
-        }
-
-        .ProseMirror p.shortcode-mask .shortcode-action-btn:hover {
-          background: #f8fafc;
-          border-color: #94a3b8;
-        }
       `}</style>
     </div>
   )

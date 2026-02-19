@@ -7,6 +7,7 @@ import PostEditor from '@/components/admin/PostEditor'
 import { Save, Eye, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
+import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
 
 function generateSlug(title: string) {
   return title
@@ -36,7 +37,8 @@ export default function NewPostPage() {
 
   const handleSave = useCallback(async (saveStatus: 'draft' | 'published') => {
     if (!title) return alert('Title is required')
-    const issues = validateInteractiveShortcodes(content)
+    const cleanContent = sanitizeEditorArtifacts(content)
+    const issues = validateInteractiveShortcodes(cleanContent)
     if (issues.length > 0) {
       const preview = issues.slice(0, 3).map(issue => `#${issue.index} ${issue.blockType}: ${issue.message}`).join('\n')
       alert(`Fix interactive block errors before saving:\n${preview}${issues.length > 3 ? `\n...and ${issues.length - 3} more.` : ''}`)
@@ -49,7 +51,7 @@ export default function NewPostPage() {
     const { data, error } = await supabase.from('posts').insert({
       title,
       slug,
-      content,
+      content: cleanContent,
       excerpt,
       featured_image_url: featuredImage || null,
       seo_title: seoTitle || null,
