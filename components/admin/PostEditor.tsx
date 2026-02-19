@@ -11,7 +11,7 @@ import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
-  ChevronDown, ChevronRight, Mail,
+  ChevronDown, ChevronRight, Mail, AlignJustify, Type, X,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
@@ -163,7 +163,9 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showMatchingModal, setShowMatchingModal] = useState(false)
   const [showCtaModal, setShowCtaModal] = useState(false)
   const [showEmailWritingModal, setShowEmailWritingModal] = useState(false)
+  const [showMissingLettersModal, setShowMissingLettersModal] = useState(false)
   const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
+  const [showFormattingToolbar, setShowFormattingToolbar] = useState(false)
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -213,6 +215,9 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [emailWritingCollectName, setEmailWritingCollectName] = useState(true)
   const [emailWritingCollectEmail, setEmailWritingCollectEmail] = useState(true)
   const [emailWritingCollectWhatsapp, setEmailWritingCollectWhatsapp] = useState(true)
+  const [missingLettersTitle, setMissingLettersTitle] = useState('')
+  const [missingLettersItems, setMissingLettersItems] = useState<string[]>([''])
+  const [missingLettersExplanation, setMissingLettersExplanation] = useState('')
   const [blockTemplateName, setBlockTemplateName] = useState('')
   const [blockTemplates, setBlockTemplates] = useState<BlockTemplate[]>([])
   const [selectedBlockTemplateId, setSelectedBlockTemplateId] = useState('')
@@ -653,6 +658,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setEditingShortcode(null)
   }
 
+  function resetMissingLettersForm() {
+    setMissingLettersTitle('')
+    setMissingLettersItems([''])
+    setMissingLettersExplanation('')
+    setEditingShortcode(null)
+  }
+
   function saveTemplates(next: CtaTemplate[]) {
     setCtaTemplates(next)
     window.localStorage.setItem(CTA_TEMPLATES_KEY, JSON.stringify(next))
@@ -854,7 +866,24 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setShowEmailWritingModal(false)
   }
 
-  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting') {
+  function insertMissingLettersBlock() {
+    const items = missingLettersItems.map(item => item.trim()).filter(Boolean)
+    if (items.length === 0 || !items.some(item => item.includes('[[') && item.includes(']]'))) {
+      window.alert('Add at least one item with [[missing]] letters.')
+      return
+    }
+
+    insertShortcodeBlock('missing_letters', {
+      items,
+      title: missingLettersTitle.trim() || undefined,
+      explanation: missingLettersExplanation.trim() || undefined,
+    })
+
+    resetMissingLettersForm()
+    setShowMissingLettersModal(false)
+  }
+
+  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters') {
     setShowBlockPicker(false)
     setShowFloatingBlockPicker(false)
     prepareModalForType(type)
@@ -866,6 +895,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (type === 'matching') openModalNearCursor(() => setShowMatchingModal(true), 768, 760)
     if (type === 'cta') openModalNearCursor(() => setShowCtaModal(true), 640, 520)
     if (type === 'emailwriting') openModalNearCursor(() => setShowEmailWritingModal(true), 900, 760)
+    if (type === 'missingletters') openModalNearCursor(() => setShowMissingLettersModal(true), 768, 760)
   }
 
   function parseShortcodeConfig(encoded: string) {
@@ -904,7 +934,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     return null
   }
 
-  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting') {
+  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters') {
     const context = getActiveShortcodeContext()
     if (!context) {
       if (type === 'mcq') resetMcqForm()
@@ -915,10 +945,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'matching') resetMatchingForm()
       if (type === 'cta') resetCtaForm()
       if (type === 'emailwriting') resetEmailWritingForm()
+      if (type === 'missingletters') resetMissingLettersForm()
       return
     }
 
-    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting', string> = {
+    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters', string> = {
       mcq: 'mcq',
       audio: 'audio',
       fill: 'fill_gaps',
@@ -927,6 +958,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       matching: 'matching',
       cta: 'cta',
       emailwriting: 'email_writing',
+      missingletters: 'missing_letters',
     }
 
     if (context.blockType !== typeMap[type] || !context.config) {
@@ -938,6 +970,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'matching') resetMatchingForm()
       if (type === 'cta') resetCtaForm()
       if (type === 'emailwriting') resetEmailWritingForm()
+      if (type === 'missingletters') resetMissingLettersForm()
       return
     }
 
@@ -1033,6 +1066,12 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       setEmailWritingCollectEmail(typeof c.collectEmail === 'boolean' ? c.collectEmail : true)
       setEmailWritingCollectWhatsapp(typeof c.collectWhatsapp === 'boolean' ? c.collectWhatsapp : true)
     }
+
+    if (type === 'missingletters') {
+      setMissingLettersTitle(typeof c.title === 'string' ? c.title : '')
+      setMissingLettersItems(Array.isArray(c.items) ? c.items.map(item => String(item)) : [''])
+      setMissingLettersExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
   }
 
   function computeModalPosition(panelWidth: number, panelHeight: number) {
@@ -1073,7 +1112,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     editor.chain().focus().setTextSelection({ from: entry.from, to: entry.to }).run()
   }
 
-  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | null {
+  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | null {
     if (blockType === 'mcq') return 'mcq'
     if (blockType === 'audio') return 'audio'
     if (blockType === 'fill_gaps') return 'fill'
@@ -1082,6 +1121,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (blockType === 'matching') return 'matching'
     if (blockType === 'cta') return 'cta'
     if (blockType === 'email_writing') return 'emailwriting'
+    if (blockType === 'missing_letters') return 'missingletters'
     return null
   }
 
@@ -1374,6 +1414,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
               <button type="button" onClick={() => openBlockModal('dropdown')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ListChecks size={14} />Dropdown Gaps</button>
               <button type="button" onClick={() => openBlockModal('truefalse')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ToggleLeft size={14} />True / False</button>
               <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
+              <button type="button" onClick={() => openBlockModal('missingletters')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><AlignJustify size={14} />Missing Letters</button>
               <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
               <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
             </div>
@@ -1519,63 +1560,76 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {/* Editor Content */}
       <EditorContent editor={editor} />
 
-      <div className="fixed bottom-6 left-6 z-20 max-w-[calc(100vw-8rem)] overflow-x-auto rounded-2xl border border-gray-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur">
-        <div className="flex items-center gap-0.5">
-          <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
-            <Bold size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
-            <Italic size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
-            <UnderlineIcon size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
-            <Strikethrough size={15} />
-          </ToolbarButton>
+      <div className="fixed bottom-6 left-6 z-20 flex items-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowFormattingToolbar(prev => !prev)}
+          className="rounded-full bg-white border border-gray-200 p-3 shadow-lg hover:bg-gray-50 text-gray-700 transition-colors"
+          title="Toggle formatting toolbar"
+        >
+          {showFormattingToolbar ? <X size={20} /> : <Type size={20} />}
+        </button>
 
-          <div className="w-px h-5 bg-gray-300 mx-1" />
+        {showFormattingToolbar && (
+          <div className="max-w-[calc(100vw-12rem)] overflow-x-auto rounded-2xl border border-gray-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="flex items-center gap-0.5">
+              <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
+                <Bold size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
+                <Italic size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
+                <UnderlineIcon size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
+                <Strikethrough size={15} />
+              </ToolbarButton>
 
-          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">
-            <Heading2 size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">
-            <Heading3 size={15} />
-          </ToolbarButton>
+              <div className="w-px h-5 bg-gray-300 mx-1" />
 
-          <div className="w-px h-5 bg-gray-300 mx-1" />
+              <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">
+                <Heading2 size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">
+                <Heading3 size={15} />
+              </ToolbarButton>
 
-          <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List">
-            <List size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
-            <ListOrdered size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
-            <Quote size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">
-            <Minus size={15} />
-          </ToolbarButton>
+              <div className="w-px h-5 bg-gray-300 mx-1" />
 
-          <div className="w-px h-5 bg-gray-300 mx-1" />
+              <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List">
+                <List size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
+                <ListOrdered size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
+                <Quote size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">
+                <Minus size={15} />
+              </ToolbarButton>
 
-          <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Add Link">
-            <LinkIcon size={15} />
-          </ToolbarButton>
-          <ToolbarButton onClick={addImage} active={false} title="Add Image">
-            <ImageIcon size={15} />
-          </ToolbarButton>
+              <div className="w-px h-5 bg-gray-300 mx-1" />
 
-          {editor.isActive('image') && (
-            <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
-              <button type="button" onClick={() => setSelectedImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
-              <button type="button" onClick={() => setSelectedImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
-              <button type="button" onClick={() => setSelectedImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
-              <button type="button" onClick={() => setSelectedImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+              <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Add Link">
+                <LinkIcon size={15} />
+              </ToolbarButton>
+              <ToolbarButton onClick={addImage} active={false} title="Add Image">
+                <ImageIcon size={15} />
+              </ToolbarButton>
+
+              {editor.isActive('image') && (
+                <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
+                  <button type="button" onClick={() => setSelectedImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
+                  <button type="button" onClick={() => setSelectedImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
+                  <button type="button" onClick={() => setSelectedImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
+                  <button type="button" onClick={() => setSelectedImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="fixed bottom-6 right-6 z-20" ref={floatingPickerRef}>
@@ -1587,6 +1641,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             <button type="button" onClick={() => openBlockModal('dropdown')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ListChecks size={14} />Dropdown Gaps</button>
             <button type="button" onClick={() => openBlockModal('truefalse')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ToggleLeft size={14} />True / False</button>
             <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
+            <button type="button" onClick={() => openBlockModal('missingletters')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><AlignJustify size={14} />Missing Letters</button>
             <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
             <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
           </div>
@@ -2403,6 +2458,96 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
               <button
                 type="button"
                 onClick={insertEmailWritingBlock}
+                className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
+              >
+                Insert block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMissingLettersModal && (
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Insert Missing Letters Block</h3>
+              <p className="text-xs text-gray-500 mt-1">Use one line per item. Wrap missing letters in [[letters]].</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title (optional)</label>
+                <input
+                  type="text"
+                  value={missingLettersTitle}
+                  onChange={e => setMissingLettersTitle(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                  placeholder="Complete the words"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Items</label>
+                <div className="space-y-2">
+                  {missingLettersItems.map((row, index) => (
+                    <div key={`missing-row-${index}`} className="flex items-start gap-2">
+                      <input
+                        type="text"
+                        value={row}
+                        onChange={e => setMissingLettersItems(prev => prev.map((item, i) => (i === index ? e.target.value : item)))}
+                        className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                        placeholder="Archaeologists deter[[mined]] that..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMissingLettersItems(prev => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev))}
+                        className="px-2 py-2 text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        title="Remove row"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setMissingLettersItems(prev => [...prev, ''])}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-white transition-colors"
+                  >
+                    <Plus size={14} />
+                    Add item
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Explanation (optional)</label>
+                <textarea
+                  value={missingLettersExplanation}
+                  onChange={e => setMissingLettersExplanation(e.target.value)}
+                  rows={2}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f] resize-y"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  resetMissingLettersForm()
+                  setShowMissingLettersModal(false)
+                }}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={insertMissingLettersBlock}
                 className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
               >
                 Insert block
