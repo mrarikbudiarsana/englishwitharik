@@ -3,6 +3,11 @@
 import { Fragment, useMemo } from 'react'
 import McqBlock, { type McqConfig } from './McqBlock'
 import CtaBlock, { type CtaConfig } from './CtaBlock'
+import AudioBlock, { type AudioConfig } from './AudioBlock'
+import FillGapsBlock, { type FillGapsConfig } from './FillGapsBlock'
+import DropdownGapsBlock, { type DropdownGapsConfig } from './DropdownGapsBlock'
+import TrueFalseBlock, { type TrueFalseConfig } from './TrueFalseBlock'
+import MatchingBlock, { type MatchingConfig } from './MatchingBlock'
 
 interface InteractivePostContentProps {
   html: string
@@ -109,6 +114,54 @@ function isCtaConfig(config: unknown): config is CtaConfig {
   return typeof c.title === 'string'
 }
 
+function isAudioConfig(config: unknown): config is AudioConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return typeof c.src === 'string'
+}
+
+function isFillGapsConfig(config: unknown): config is FillGapsConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return (
+    (c.mode === 'paragraph' || c.mode === 'sentences')
+    && Array.isArray(c.items)
+    && c.items.every(item => typeof item === 'string')
+  )
+}
+
+function isDropdownGapsConfig(config: unknown): config is DropdownGapsConfig {
+  return isFillGapsConfig(config)
+}
+
+function isTrueFalseConfig(config: unknown): config is TrueFalseConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return (
+    Array.isArray(c.statements)
+    && c.statements.every(statement => (
+      !!statement
+      && typeof statement === 'object'
+      && typeof (statement as { text?: unknown }).text === 'string'
+      && typeof (statement as { answer?: unknown }).answer === 'boolean'
+    ))
+  )
+}
+
+function isMatchingConfig(config: unknown): config is MatchingConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return (
+    Array.isArray(c.pairs)
+    && c.pairs.every(pair => (
+      !!pair
+      && typeof pair === 'object'
+      && typeof (pair as { left?: unknown }).left === 'string'
+      && typeof (pair as { right?: unknown }).right === 'string'
+    ))
+  )
+}
+
 function UnknownBlock({ blockType }: { blockType: string }) {
   return (
     <div className="my-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -142,6 +195,26 @@ export default function InteractivePostContent({ html, postId, postSlug }: Inter
               postSlug={postSlug}
             />
           )
+        }
+
+        if (segment.blockType === 'audio' && isAudioConfig(segment.config)) {
+          return <AudioBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'fill_gaps' && isFillGapsConfig(segment.config)) {
+          return <FillGapsBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'dropdown_gaps' && isDropdownGapsConfig(segment.config)) {
+          return <DropdownGapsBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'true_false' && isTrueFalseConfig(segment.config)) {
+          return <TrueFalseBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'matching' && isMatchingConfig(segment.config)) {
+          return <MatchingBlock key={`block-${index}`} config={segment.config} />
         }
 
         return <UnknownBlock key={`block-${index}`} blockType={segment.blockType} />

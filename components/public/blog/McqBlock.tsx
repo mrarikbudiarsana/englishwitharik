@@ -40,7 +40,7 @@ export default function McqBlock({ config }: McqBlockProps) {
               key={`${option}-${index}`}
               type="button"
               onClick={() => setSelectedIndex(index)}
-              className={`w-full rounded-xl border px-4 py-3 text-left text-sm sm:text-base transition-colors ${
+              className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm sm:text-base transition-colors ${
                 showCorrect
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
                   : showIncorrectSelected
