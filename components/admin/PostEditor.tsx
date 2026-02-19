@@ -48,6 +48,7 @@ function ToolbarButton({
 
 export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showBlockPicker, setShowBlockPicker] = useState(false)
+  const [showFloatingBlockPicker, setShowFloatingBlockPicker] = useState(false)
   const [showMcqModal, setShowMcqModal] = useState(false)
   const [showAudioModal, setShowAudioModal] = useState(false)
   const [showFillGapsModal, setShowFillGapsModal] = useState(false)
@@ -79,7 +80,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [matchingPrompt, setMatchingPrompt] = useState('')
   const [matchingRows, setMatchingRows] = useState<Array<{ left: string; right: string }>>([{ left: '', right: '' }, { left: '', right: '' }])
   const [matchingExplanation, setMatchingExplanation] = useState('')
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null)
+  const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
+  const floatingPickerRef = useRef<HTMLDivElement | null>(null)
   const editorShellRef = useRef<HTMLDivElement | null>(null)
 
   const editor = useEditor({
@@ -107,18 +111,24 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!pickerRef.current) return
-      if (!pickerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      const clickedToolbarPicker = pickerRef.current?.contains(target)
+      const clickedFloatingPicker = floatingPickerRef.current?.contains(target)
+
+      if (!clickedToolbarPicker) {
         setShowBlockPicker(false)
+      }
+      if (!clickedFloatingPicker) {
+        setShowFloatingBlockPicker(false)
       }
     }
 
-    if (showBlockPicker) {
+    if (showBlockPicker || showFloatingBlockPicker) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showBlockPicker])
+  }, [showBlockPicker, showFloatingBlockPicker])
 
   if (!editor) return null
 
@@ -142,6 +152,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setMcqOptionD('')
     setMcqCorrectIndex(0)
     setMcqExplanation('')
+    setEditingShortcode(null)
   }
 
   function insertMcqBlock() {
@@ -204,6 +215,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   function insertShortcodeBlock(blockType: string, config: Record<string, unknown>) {
     if (!editor) return
     const shortcode = `[block:${blockType}:${encodeURIComponent(JSON.stringify(config))}]`
+    if (editingShortcode && editingShortcode.blockType === blockType) {
+      editor.chain().focus().insertContentAt({ from: editingShortcode.from, to: editingShortcode.to }, shortcode).run()
+      setEditingShortcode(null)
+      return
+    }
     editor.chain().focus().insertContent(`<p>${shortcode}</p>`).run()
   }
 
@@ -211,6 +227,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setAudioSrc('')
     setAudioTitle('')
     setAudioTranscript('')
+    setEditingShortcode(null)
   }
 
   function resetFillForm() {
@@ -218,6 +235,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setFillRows([''])
     setFillExplanation('')
     setFillMode('sentences')
+    setEditingShortcode(null)
   }
 
   function resetDropdownForm() {
@@ -225,12 +243,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setDropdownRows([''])
     setDropdownExplanation('')
     setDropdownMode('sentences')
+    setEditingShortcode(null)
   }
 
   function resetTrueFalseForm() {
     setTrueFalseTitle('')
     setTrueFalseRows([{ text: '', answer: true }])
     setTrueFalseExplanation('')
+    setEditingShortcode(null)
   }
 
   function resetMatchingForm() {
@@ -238,6 +258,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setMatchingPrompt('')
     setMatchingRows([{ left: '', right: '' }, { left: '', right: '' }])
     setMatchingExplanation('')
+    setEditingShortcode(null)
   }
 
   function insertAudioBlock() {
@@ -335,18 +356,179 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
   function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta') {
     setShowBlockPicker(false)
-    if (type === 'mcq') setShowMcqModal(true)
-    if (type === 'audio') setShowAudioModal(true)
-    if (type === 'fill') setShowFillGapsModal(true)
-    if (type === 'dropdown') setShowDropdownGapsModal(true)
-    if (type === 'truefalse') setShowTrueFalseModal(true)
-    if (type === 'matching') setShowMatchingModal(true)
+    setShowFloatingBlockPicker(false)
+    prepareModalForType(type)
+    if (type === 'mcq') openModalNearCursor(() => setShowMcqModal(true), 640)
+    if (type === 'audio') openModalNearCursor(() => setShowAudioModal(true), 640)
+    if (type === 'fill') openModalNearCursor(() => setShowFillGapsModal(true), 768)
+    if (type === 'dropdown') openModalNearCursor(() => setShowDropdownGapsModal(true), 768)
+    if (type === 'truefalse') openModalNearCursor(() => setShowTrueFalseModal(true), 768)
+    if (type === 'matching') openModalNearCursor(() => setShowMatchingModal(true), 768)
     if (type === 'cta') insertCtaBlock()
   }
 
-  function jumpToToolbarAndOpenPicker() {
-    editorShellRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setTimeout(() => setShowBlockPicker(true), 200)
+  function parseShortcodeConfig(encoded: string) {
+    try {
+      return JSON.parse(decodeURIComponent(encoded)) as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }
+
+  function getActiveShortcodeContext() {
+    if (!editor) return null
+    const { $from } = editor.state.selection
+    const parent = $from.parent
+    const text = parent.textContent ?? ''
+    if (!text) return null
+
+    const regex = /\[block:([a-z0-9_-]+):([^\]]+)\]/g
+    const offset = $from.parentOffset
+
+    for (const match of text.matchAll(regex)) {
+      const start = match.index ?? 0
+      const end = start + match[0].length
+      if (offset >= start && offset <= end) {
+        const from = $from.start() + start
+        const to = from + match[0].length
+        return {
+          blockType: match[1],
+          from,
+          to,
+          config: parseShortcodeConfig(match[2]),
+        }
+      }
+    }
+
+    return null
+  }
+
+  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta') {
+    if (type === 'cta') return
+
+    const context = getActiveShortcodeContext()
+    if (!context) {
+      if (type === 'mcq') resetMcqForm()
+      if (type === 'audio') resetAudioForm()
+      if (type === 'fill') resetFillForm()
+      if (type === 'dropdown') resetDropdownForm()
+      if (type === 'truefalse') resetTrueFalseForm()
+      if (type === 'matching') resetMatchingForm()
+      return
+    }
+
+    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching', string> = {
+      mcq: 'mcq',
+      audio: 'audio',
+      fill: 'fill_gaps',
+      dropdown: 'dropdown_gaps',
+      truefalse: 'true_false',
+      matching: 'matching',
+    }
+
+    if (context.blockType !== typeMap[type] || !context.config) {
+      if (type === 'mcq') resetMcqForm()
+      if (type === 'audio') resetAudioForm()
+      if (type === 'fill') resetFillForm()
+      if (type === 'dropdown') resetDropdownForm()
+      if (type === 'truefalse') resetTrueFalseForm()
+      if (type === 'matching') resetMatchingForm()
+      return
+    }
+
+    setEditingShortcode({ from: context.from, to: context.to, blockType: context.blockType })
+    const c = context.config
+
+    if (type === 'mcq') {
+      const options = Array.isArray(c.options) ? c.options.map(item => String(item)) : []
+      setMcqQuestion(typeof c.question === 'string' ? c.question : '')
+      setMcqOptionA(options[0] ?? '')
+      setMcqOptionB(options[1] ?? '')
+      setMcqOptionC(options[2] ?? '')
+      setMcqOptionD(options[3] ?? '')
+      setMcqCorrectIndex(typeof c.answer === 'number' ? c.answer : 0)
+      setMcqExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'audio') {
+      setAudioSrc(typeof c.src === 'string' ? c.src : '')
+      setAudioTitle(typeof c.title === 'string' ? c.title : '')
+      setAudioTranscript(typeof c.transcript === 'string' ? c.transcript : '')
+    }
+
+    if (type === 'fill') {
+      setFillMode(c.mode === 'paragraph' ? 'paragraph' : 'sentences')
+      setFillTitle(typeof c.title === 'string' ? c.title : '')
+      setFillRows(Array.isArray(c.items) ? c.items.map(item => String(item)) : [''])
+      setFillExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'dropdown') {
+      setDropdownMode(c.mode === 'paragraph' ? 'paragraph' : 'sentences')
+      setDropdownTitle(typeof c.title === 'string' ? c.title : '')
+      setDropdownRows(Array.isArray(c.items) ? c.items.map(item => String(item)) : [''])
+      setDropdownExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'truefalse') {
+      const statements = Array.isArray(c.statements)
+        ? c.statements
+          .filter(item => item && typeof item === 'object')
+          .map(item => ({
+            text: String((item as { text?: unknown }).text ?? ''),
+            answer: Boolean((item as { answer?: unknown }).answer),
+          }))
+          .filter(item => item.text.trim().length > 0)
+        : []
+      setTrueFalseTitle(typeof c.title === 'string' ? c.title : '')
+      setTrueFalseRows(statements.length > 0 ? statements : [{ text: '', answer: true }])
+      setTrueFalseExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'matching') {
+      const pairs = Array.isArray(c.pairs)
+        ? c.pairs
+          .filter(item => item && typeof item === 'object')
+          .map(item => ({
+            left: String((item as { left?: unknown }).left ?? ''),
+            right: String((item as { right?: unknown }).right ?? ''),
+          }))
+          .filter(item => item.left.trim().length > 0 || item.right.trim().length > 0)
+        : []
+      setMatchingTitle(typeof c.title === 'string' ? c.title : '')
+      setMatchingPrompt(typeof c.prompt === 'string' ? c.prompt : '')
+      setMatchingRows(pairs.length > 0 ? pairs : [{ left: '', right: '' }, { left: '', right: '' }])
+      setMatchingExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+  }
+
+  function computeModalPosition(panelWidth: number) {
+    const viewportPadding = 16
+    if (!editor) {
+      return {
+        top: 80,
+        left: Math.max(viewportPadding, (window.innerWidth - panelWidth) / 2),
+      }
+    }
+
+    try {
+      const pos = editor.state.selection.from
+      const coords = editor.view.coordsAtPos(pos)
+      const maxLeft = window.innerWidth - panelWidth - viewportPadding
+      const left = Math.min(Math.max(viewportPadding, coords.left), Math.max(viewportPadding, maxLeft))
+      const top = Math.min(Math.max(viewportPadding, coords.bottom + 12), window.innerHeight - 140)
+      return { top, left }
+    } catch {
+      return {
+        top: 80,
+        left: Math.max(viewportPadding, (window.innerWidth - panelWidth) / 2),
+      }
+    }
+  }
+
+  function openModalNearCursor(open: () => void, panelWidth: number) {
+    setModalPosition(computeModalPosition(panelWidth))
+    open()
   }
 
   return (
@@ -428,10 +610,21 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       {/* Editor Content */}
       <EditorContent editor={editor} />
 
-      <div className="fixed bottom-6 right-6 z-20">
+      <div className="fixed bottom-6 right-6 z-20" ref={floatingPickerRef}>
+        {showFloatingBlockPicker && (
+          <div className="mb-2 w-64 rounded-lg border border-gray-200 bg-white shadow-lg p-2 space-y-1">
+            <button type="button" onClick={() => openBlockModal('mcq')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><SquarePlus size={14} />MCQ</button>
+            <button type="button" onClick={() => openBlockModal('audio')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Headphones size={14} />Audio Player</button>
+            <button type="button" onClick={() => openBlockModal('fill')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><FileQuestion size={14} />Fill In The Gaps</button>
+            <button type="button" onClick={() => openBlockModal('dropdown')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ListChecks size={14} />Dropdown Gaps</button>
+            <button type="button" onClick={() => openBlockModal('truefalse')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ToggleLeft size={14} />True / False</button>
+            <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
+            <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
+          </div>
+        )}
         <button
           type="button"
-          onClick={jumpToToolbarAndOpenPicker}
+          onClick={() => setShowFloatingBlockPicker(prev => !prev)}
           className="inline-flex items-center gap-2 rounded-full bg-[#08507f] px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-[#063a5c]"
         >
           <SquarePlus size={16} />
@@ -440,8 +633,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       </div>
 
       {showMcqModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert MCQ Block</h3>
               <p className="text-xs text-gray-500 mt-1">Creates a shortcode that hydrates on the blog page.</p>
@@ -516,8 +712,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       )}
 
       {showAudioModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert Audio Block</h3>
               <p className="text-xs text-gray-500 mt-1">Embed an audio player with optional title and transcript.</p>
@@ -568,8 +767,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       )}
 
       {showFillGapsModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert Fill In The Gaps Block</h3>
               <p className="text-xs text-gray-500 mt-1">Use one line per item. Write gaps as [[answer]].</p>
@@ -662,8 +864,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       )}
 
       {showDropdownGapsModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert Dropdown Gaps Block</h3>
               <p className="text-xs text-gray-500 mt-1">Use one line per item. Write gaps as [[correct|option2|option3]].</p>
@@ -756,8 +961,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       )}
 
       {showTrueFalseModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert True / False Block</h3>
               <p className="text-xs text-gray-500 mt-1">Use one line per statement: sentence :: true or false</p>
@@ -845,8 +1053,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       )}
 
       {showMatchingModal && (
-        <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
             <div>
               <h3 className="text-base font-semibold text-gray-900">Insert Matching Block</h3>
               <p className="text-xs text-gray-500 mt-1">Use one line per pair: left :: right</p>
