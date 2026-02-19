@@ -15,6 +15,7 @@ interface LeadRow {
   whatsapp: string | null
   source: string | null
   block_id: string | null
+  submission: string | null
   status: 'new' | 'contacted' | 'closed'
   post_id: string | null
   created_at: string
@@ -37,7 +38,7 @@ export default async function AdminLeadsPage({
   let query = supabase
     .from('leads')
     .select(`
-      id, name, email, whatsapp, source, block_id, status, post_id, created_at,
+      id, name, email, whatsapp, source, block_id, submission, status, post_id, created_at,
       posts(title, slug)
     `)
     .order('created_at', { ascending: false })
@@ -57,7 +58,7 @@ export default async function AdminLeadsPage({
   }
 
   if (q) {
-    query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,whatsapp.ilike.%${q}%,source.ilike.%${q}%`)
+    query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,whatsapp.ilike.%${q}%,source.ilike.%${q}%,submission.ilike.%${q}%`)
   }
 
   const { data: leads } = await query
@@ -198,6 +199,12 @@ export default async function AdminLeadsPage({
                         <a href={`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="block text-xs text-green-700 hover:underline">
                           {lead.whatsapp}
                         </a>
+                      )}
+                      {lead.submission && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">View submission</summary>
+                          <pre className="mt-1 max-h-28 overflow-y-auto whitespace-pre-wrap rounded-md bg-gray-50 p-2 text-[11px] text-gray-700">{lead.submission}</pre>
+                        </details>
                       )}
                     </td>
                     <td className="px-6 py-3">

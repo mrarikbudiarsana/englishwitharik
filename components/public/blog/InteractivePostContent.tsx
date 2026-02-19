@@ -8,6 +8,7 @@ import FillGapsBlock, { type FillGapsConfig } from './FillGapsBlock'
 import DropdownGapsBlock, { type DropdownGapsConfig } from './DropdownGapsBlock'
 import TrueFalseBlock, { type TrueFalseConfig } from './TrueFalseBlock'
 import MatchingBlock, { type MatchingConfig } from './MatchingBlock'
+import EmailWritingBlock, { type EmailWritingConfig } from './EmailWritingBlock'
 
 interface InteractivePostContentProps {
   html: string
@@ -162,6 +163,12 @@ function isMatchingConfig(config: unknown): config is MatchingConfig {
   )
 }
 
+function isEmailWritingConfig(config: unknown): config is EmailWritingConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return typeof c.prompt === 'string' && c.prompt.trim().length > 0
+}
+
 function UnknownBlock({ blockType }: { blockType: string }) {
   return (
     <div className="my-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -215,6 +222,17 @@ export default function InteractivePostContent({ html, postId, postSlug }: Inter
 
         if (segment.blockType === 'matching' && isMatchingConfig(segment.config)) {
           return <MatchingBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'email_writing' && isEmailWritingConfig(segment.config)) {
+          return (
+            <EmailWritingBlock
+              key={`block-${index}`}
+              config={segment.config}
+              postId={postId}
+              postSlug={postSlug}
+            />
+          )
         }
 
         return <UnknownBlock key={`block-${index}`} blockType={segment.blockType} />

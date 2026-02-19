@@ -8,6 +8,7 @@ interface LeadPayload {
   source?: string | null
   block_id?: string | null
   post_id?: string | null
+  submission?: string | null
 }
 
 function sanitize(input: string | null | undefined, maxLength: number) {
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     const blockId = sanitize(body.block_id, 120)
     const rawPostId = sanitize(body.post_id, 64)
     const postId = rawPostId && isUuid(rawPostId) ? rawPostId : null
+    const submission = sanitize(body.submission, 8000)
 
     if (!email && !whatsapp) {
       return NextResponse.json({ error: 'Email or WhatsApp is required.' }, { status: 400 })
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       source,
       block_id: blockId,
       post_id: postId,
+      submission,
       status: 'new',
     })
 

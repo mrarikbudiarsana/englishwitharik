@@ -11,7 +11,7 @@ import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, Mail,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
@@ -40,6 +40,9 @@ const DEFAULT_CTA_TITLE = 'Need help with IELTS or PTE?'
 const DEFAULT_CTA_DESCRIPTION = 'Leave your contact and we will reach out shortly.'
 const DEFAULT_CTA_SUBMIT_LABEL = 'Get Free Consultation'
 const DEFAULT_CTA_SOURCE = 'blog-cta'
+const DEFAULT_EMAIL_WRITING_SUBMIT_LABEL = 'Submit response'
+const DEFAULT_EMAIL_WRITING_SUCCESS_MESSAGE = 'Thanks. Your response has been submitted.'
+const DEFAULT_EMAIL_WRITING_SOURCE = 'blog-email-writing'
 
 interface BlockTemplate {
   id: string
@@ -111,6 +114,34 @@ function ToolbarButton({
   )
 }
 
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: '100%',
+        parseHTML: element => {
+          const dataWidth = element.getAttribute('data-width')
+          if (dataWidth) return dataWidth
+          const styleWidth = (element as HTMLElement).style?.width
+          if (styleWidth) return styleWidth
+          const widthAttr = element.getAttribute('width')
+          return widthAttr ? `${widthAttr}px` : '100%'
+        },
+        renderHTML: attributes => {
+          const width = typeof attributes.width === 'string' && attributes.width.trim()
+            ? attributes.width.trim()
+            : '100%'
+          return {
+            'data-width': width,
+            style: `width:${width};height:auto;`,
+          }
+        },
+      },
+    }
+  },
+})
+
 export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showBlockPicker, setShowBlockPicker] = useState(false)
   const [showFloatingBlockPicker, setShowFloatingBlockPicker] = useState(false)
@@ -121,6 +152,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showTrueFalseModal, setShowTrueFalseModal] = useState(false)
   const [showMatchingModal, setShowMatchingModal] = useState(false)
   const [showCtaModal, setShowCtaModal] = useState(false)
+  const [showEmailWritingModal, setShowEmailWritingModal] = useState(false)
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -157,6 +189,19 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [ctaTemplateName, setCtaTemplateName] = useState('')
   const [ctaTemplates, setCtaTemplates] = useState<CtaTemplate[]>([])
   const [selectedCtaTemplateId, setSelectedCtaTemplateId] = useState('')
+  const [emailWritingTitle, setEmailWritingTitle] = useState('Email Writing Practice')
+  const [emailWritingPrompt, setEmailWritingPrompt] = useState('')
+  const [emailWritingRecipient, setEmailWritingRecipient] = useState('')
+  const [emailWritingSubject, setEmailWritingSubject] = useState('')
+  const [emailWritingInstructions, setEmailWritingInstructions] = useState<string[]>([''])
+  const [emailWritingPlaceholder, setEmailWritingPlaceholder] = useState('Write your email response here...')
+  const [emailWritingSubmitLabel, setEmailWritingSubmitLabel] = useState(DEFAULT_EMAIL_WRITING_SUBMIT_LABEL)
+  const [emailWritingSuccessMessage, setEmailWritingSuccessMessage] = useState(DEFAULT_EMAIL_WRITING_SUCCESS_MESSAGE)
+  const [emailWritingSource, setEmailWritingSource] = useState(DEFAULT_EMAIL_WRITING_SOURCE)
+  const [emailWritingBlockId, setEmailWritingBlockId] = useState('')
+  const [emailWritingCollectName, setEmailWritingCollectName] = useState(true)
+  const [emailWritingCollectEmail, setEmailWritingCollectEmail] = useState(true)
+  const [emailWritingCollectWhatsapp, setEmailWritingCollectWhatsapp] = useState(true)
   const [blockTemplateName, setBlockTemplateName] = useState('')
   const [blockTemplates, setBlockTemplates] = useState<BlockTemplate[]>([])
   const [selectedBlockTemplateId, setSelectedBlockTemplateId] = useState('')
@@ -180,7 +225,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       }),
       Underline,
       Link.configure({ openOnClick: false }),
-      Image.configure({ HTMLAttributes: { class: 'rounded-lg max-w-full' } }),
+      ResizableImage.configure({ HTMLAttributes: { class: 'rounded-lg max-w-full' } }),
       Placeholder.configure({ placeholder: 'Start writing your post…' }),
     ],
     content,
@@ -386,7 +431,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   function addImage() {
     if (!editor) return
     const url = window.prompt('Enter image URL')
-    if (url) editor.chain().focus().setImage({ src: url }).run()
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).updateAttributes('image', { width: '100%' }).run()
+    }
+  }
+
+  function setSelectedImageWidth(width: string) {
+    if (!editor || !editor.isActive('image')) return
+    editor.chain().focus().updateAttributes('image', { width }).run()
   }
 
   function resetMcqForm() {
@@ -549,6 +601,23 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setEditingShortcode(null)
   }
 
+  function resetEmailWritingForm() {
+    setEmailWritingTitle('Email Writing Practice')
+    setEmailWritingPrompt('')
+    setEmailWritingRecipient('')
+    setEmailWritingSubject('')
+    setEmailWritingInstructions([''])
+    setEmailWritingPlaceholder('Write your email response here...')
+    setEmailWritingSubmitLabel(DEFAULT_EMAIL_WRITING_SUBMIT_LABEL)
+    setEmailWritingSuccessMessage(DEFAULT_EMAIL_WRITING_SUCCESS_MESSAGE)
+    setEmailWritingSource(DEFAULT_EMAIL_WRITING_SOURCE)
+    setEmailWritingBlockId('')
+    setEmailWritingCollectName(true)
+    setEmailWritingCollectEmail(true)
+    setEmailWritingCollectWhatsapp(true)
+    setEditingShortcode(null)
+  }
+
   function saveTemplates(next: CtaTemplate[]) {
     setCtaTemplates(next)
     window.localStorage.setItem(CTA_TEMPLATES_KEY, JSON.stringify(next))
@@ -707,7 +776,50 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setShowMatchingModal(false)
   }
 
-  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta') {
+  function getEmailWritingConfig() {
+    const prompt = emailWritingPrompt.trim()
+    const title = emailWritingTitle.trim() || undefined
+    const slugBase = (title ?? 'email-writing').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'email-writing'
+    const blockId = emailWritingBlockId.trim() || `${slugBase}-${Date.now()}`
+    const instructions = emailWritingInstructions.map(item => item.trim()).filter(Boolean)
+    return {
+      blockId,
+      config: {
+        title,
+        prompt,
+        recipient: emailWritingRecipient.trim() || undefined,
+        subject: emailWritingSubject.trim() || undefined,
+        instructions: instructions.length > 0 ? instructions : undefined,
+        placeholder: emailWritingPlaceholder.trim() || undefined,
+        submitLabel: emailWritingSubmitLabel.trim() || undefined,
+        successMessage: emailWritingSuccessMessage.trim() || undefined,
+        source: emailWritingSource.trim() || undefined,
+        blockId,
+        collectName: emailWritingCollectName,
+        collectEmail: emailWritingCollectEmail,
+        collectWhatsapp: emailWritingCollectWhatsapp,
+      },
+    }
+  }
+
+  function insertEmailWritingBlock() {
+    if (!emailWritingPrompt.trim()) {
+      window.alert('Prompt is required.')
+      return
+    }
+    if (!emailWritingCollectEmail && !emailWritingCollectWhatsapp) {
+      window.alert('Enable at least Email or WhatsApp collection.')
+      return
+    }
+
+    const { config, blockId } = getEmailWritingConfig()
+    setEmailWritingBlockId(blockId)
+    insertShortcodeBlock('email_writing', config)
+    resetEmailWritingForm()
+    setShowEmailWritingModal(false)
+  }
+
+  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting') {
     setShowBlockPicker(false)
     setShowFloatingBlockPicker(false)
     prepareModalForType(type)
@@ -718,6 +830,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (type === 'truefalse') openModalNearCursor(() => setShowTrueFalseModal(true), 768, 760)
     if (type === 'matching') openModalNearCursor(() => setShowMatchingModal(true), 768, 760)
     if (type === 'cta') openModalNearCursor(() => setShowCtaModal(true), 640, 520)
+    if (type === 'emailwriting') openModalNearCursor(() => setShowEmailWritingModal(true), 900, 760)
   }
 
   function parseShortcodeConfig(encoded: string) {
@@ -756,7 +869,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     return null
   }
 
-  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta') {
+  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting') {
     const context = getActiveShortcodeContext()
     if (!context) {
       if (type === 'mcq') resetMcqForm()
@@ -766,10 +879,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'truefalse') resetTrueFalseForm()
       if (type === 'matching') resetMatchingForm()
       if (type === 'cta') resetCtaForm()
+      if (type === 'emailwriting') resetEmailWritingForm()
       return
     }
 
-    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta', string> = {
+    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting', string> = {
       mcq: 'mcq',
       audio: 'audio',
       fill: 'fill_gaps',
@@ -777,6 +891,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       truefalse: 'true_false',
       matching: 'matching',
       cta: 'cta',
+      emailwriting: 'email_writing',
     }
 
     if (context.blockType !== typeMap[type] || !context.config) {
@@ -787,6 +902,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'truefalse') resetTrueFalseForm()
       if (type === 'matching') resetMatchingForm()
       if (type === 'cta') resetCtaForm()
+      if (type === 'emailwriting') resetEmailWritingForm()
       return
     }
 
@@ -865,6 +981,23 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       setCtaCollectEmail(typeof c.collectEmail === 'boolean' ? c.collectEmail : true)
       setCtaCollectWhatsapp(typeof c.collectWhatsapp === 'boolean' ? c.collectWhatsapp : true)
     }
+
+    if (type === 'emailwriting') {
+      const instructions = Array.isArray(c.instructions) ? c.instructions.map(item => String(item)) : []
+      setEmailWritingTitle(typeof c.title === 'string' ? c.title : 'Email Writing Practice')
+      setEmailWritingPrompt(typeof c.prompt === 'string' ? c.prompt : '')
+      setEmailWritingRecipient(typeof c.recipient === 'string' ? c.recipient : '')
+      setEmailWritingSubject(typeof c.subject === 'string' ? c.subject : '')
+      setEmailWritingInstructions(instructions.length > 0 ? instructions : [''])
+      setEmailWritingPlaceholder(typeof c.placeholder === 'string' ? c.placeholder : 'Write your email response here...')
+      setEmailWritingSubmitLabel(typeof c.submitLabel === 'string' ? c.submitLabel : DEFAULT_EMAIL_WRITING_SUBMIT_LABEL)
+      setEmailWritingSuccessMessage(typeof c.successMessage === 'string' ? c.successMessage : DEFAULT_EMAIL_WRITING_SUCCESS_MESSAGE)
+      setEmailWritingSource(typeof c.source === 'string' ? c.source : DEFAULT_EMAIL_WRITING_SOURCE)
+      setEmailWritingBlockId(typeof c.blockId === 'string' ? c.blockId : '')
+      setEmailWritingCollectName(typeof c.collectName === 'boolean' ? c.collectName : true)
+      setEmailWritingCollectEmail(typeof c.collectEmail === 'boolean' ? c.collectEmail : true)
+      setEmailWritingCollectWhatsapp(typeof c.collectWhatsapp === 'boolean' ? c.collectWhatsapp : true)
+    }
   }
 
   function computeModalPosition(panelWidth: number, panelHeight: number) {
@@ -905,7 +1038,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     editor.chain().focus().setTextSelection({ from: entry.from, to: entry.to }).run()
   }
 
-  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | null {
+  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | null {
     if (blockType === 'mcq') return 'mcq'
     if (blockType === 'audio') return 'audio'
     if (blockType === 'fill_gaps') return 'fill'
@@ -913,6 +1046,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (blockType === 'true_false') return 'truefalse'
     if (blockType === 'matching') return 'matching'
     if (blockType === 'cta') return 'cta'
+    if (blockType === 'email_writing') return 'emailwriting'
     return null
   }
 
@@ -1023,11 +1157,12 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     const blockType = match[1]
     const rawConfig = match[2]
 
-    if (blockType !== 'cta') return shortcode
+    if (blockType !== 'cta' && blockType !== 'email_writing') return shortcode
 
     try {
       const config = JSON.parse(decodeURIComponent(rawConfig)) as Record<string, unknown>
-      const title = typeof config.title === 'string' ? config.title : 'cta'
+      const fallbackTitle = blockType === 'email_writing' ? 'email-writing' : 'cta'
+      const title = typeof config.title === 'string' ? config.title : fallbackTitle
       config.blockId = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
       return `[block:${blockType}:${encodeURIComponent(JSON.stringify(config))}]`
     } catch {
@@ -1167,6 +1302,15 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           <ImageIcon size={15} />
         </ToolbarButton>
 
+        {editor.isActive('image') && (
+          <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
+            <button type="button" onClick={() => setSelectedImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
+            <button type="button" onClick={() => setSelectedImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
+            <button type="button" onClick={() => setSelectedImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
+            <button type="button" onClick={() => setSelectedImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+          </div>
+        )}
+
         <div className="w-px h-5 bg-gray-300 mx-1" />
 
         <div className="relative ml-1" ref={pickerRef}>
@@ -1187,6 +1331,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
               <button type="button" onClick={() => openBlockModal('dropdown')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ListChecks size={14} />Dropdown Gaps</button>
               <button type="button" onClick={() => openBlockModal('truefalse')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ToggleLeft size={14} />True / False</button>
               <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
+              <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
               <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
             </div>
           )}
@@ -1378,6 +1523,15 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           <ToolbarButton onClick={addImage} active={false} title="Add Image">
             <ImageIcon size={15} />
           </ToolbarButton>
+
+          {editor.isActive('image') && (
+            <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
+              <button type="button" onClick={() => setSelectedImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
+              <button type="button" onClick={() => setSelectedImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
+              <button type="button" onClick={() => setSelectedImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
+              <button type="button" onClick={() => setSelectedImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1390,6 +1544,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             <button type="button" onClick={() => openBlockModal('dropdown')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ListChecks size={14} />Dropdown Gaps</button>
             <button type="button" onClick={() => openBlockModal('truefalse')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><ToggleLeft size={14} />True / False</button>
             <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
+            <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
             <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
           </div>
         )}
@@ -1945,6 +2100,178 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
               <button
                 type="button"
                 onClick={insertCtaBlock}
+                className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
+              >
+                Insert block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEmailWritingModal && (
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Insert Email Writing Block</h3>
+              <p className="text-xs text-gray-500 mt-1">Creates a writing task and collects contact details before sending the response.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Block title (optional)</label>
+                <input
+                  type="text"
+                  value={emailWritingTitle}
+                  onChange={e => setEmailWritingTitle(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                  placeholder="Email Writing Practice"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Prompt</label>
+                <textarea
+                  value={emailWritingPrompt}
+                  onChange={e => setEmailWritingPrompt(e.target.value)}
+                  rows={4}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f] resize-y"
+                  placeholder="Write an email to explain your issue and ask for clarification."
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">To (optional)</label>
+                  <input
+                    type="text"
+                    value={emailWritingRecipient}
+                    onChange={e => setEmailWritingRecipient(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="editor@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Subject (optional)</label>
+                  <input
+                    type="text"
+                    value={emailWritingSubject}
+                    onChange={e => setEmailWritingSubject(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Problem using submission form"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Instructions (optional)</label>
+                <div className="space-y-2">
+                  {emailWritingInstructions.map((item, index) => (
+                    <div key={`email-writing-instruction-${index}`} className="flex items-start gap-2">
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={e => setEmailWritingInstructions(prev => prev.map((row, i) => (i === index ? e.target.value : row)))}
+                        className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                        placeholder="Tell the editor what you like about the magazine."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEmailWritingInstructions(prev => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev))}
+                        className="px-2 py-2 text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        title="Remove instruction"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setEmailWritingInstructions(prev => [...prev, ''])}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-white transition-colors"
+                  >
+                    <Plus size={14} />
+                    Add instruction
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Textarea placeholder</label>
+                  <input
+                    type="text"
+                    value={emailWritingPlaceholder}
+                    onChange={e => setEmailWritingPlaceholder(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Write your email response here..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Source tag</label>
+                  <input
+                    type="text"
+                    value={emailWritingSource}
+                    onChange={e => setEmailWritingSource(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="blog-email-writing"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">First button label</label>
+                  <input
+                    type="text"
+                    value={emailWritingSubmitLabel}
+                    onChange={e => setEmailWritingSubmitLabel(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Submit response"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Success message</label>
+                  <input
+                    type="text"
+                    value={emailWritingSuccessMessage}
+                    onChange={e => setEmailWritingSuccessMessage(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Thanks. Your response has been submitted."
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-600">Collect contact fields on submit</p>
+                <div className="flex flex-wrap gap-3 text-sm text-gray-700">
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" checked={emailWritingCollectName} onChange={e => setEmailWritingCollectName(e.target.checked)} />
+                    Name
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" checked={emailWritingCollectEmail} onChange={e => setEmailWritingCollectEmail(e.target.checked)} />
+                    Email
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" checked={emailWritingCollectWhatsapp} onChange={e => setEmailWritingCollectWhatsapp(e.target.checked)} />
+                    WhatsApp
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  resetEmailWritingForm()
+                  setShowEmailWritingModal(false)
+                }}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={insertEmailWritingBlock}
                 className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
               >
                 Insert block

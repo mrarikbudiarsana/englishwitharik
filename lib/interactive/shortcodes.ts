@@ -94,6 +94,17 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'email_writing') {
+    const prompt = typeof config.prompt === 'string' ? config.prompt.trim() : ''
+    if (!prompt) return 'Email writing prompt is required.'
+    if (config.instructions !== undefined) {
+      if (!Array.isArray(config.instructions) || config.instructions.some(item => typeof item !== 'string')) {
+        return 'Email writing instructions are malformed.'
+      }
+    }
+    return null
+  }
+
   return `Unsupported block type: ${blockType}`
 }
 

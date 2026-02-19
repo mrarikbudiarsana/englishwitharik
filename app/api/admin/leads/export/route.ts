@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('leads')
     .select(`
-      id, name, email, whatsapp, source, block_id, status, created_at,
+      id, name, email, whatsapp, source, block_id, submission, status, created_at,
       posts(title, slug)
     `)
     .order('created_at', { ascending: false })
@@ -45,12 +45,12 @@ export async function GET(req: NextRequest) {
   if (status && status !== 'all') query = query.eq('status', status)
   if (from) query = query.gte('created_at', `${from}T00:00:00.000Z`)
   if (to) query = query.lte('created_at', `${to}T23:59:59.999Z`)
-  if (q) query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,whatsapp.ilike.%${q}%,source.ilike.%${q}%`)
+  if (q) query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,whatsapp.ilike.%${q}%,source.ilike.%${q}%,submission.ilike.%${q}%`)
 
   const { data } = await query
   const rows = data ?? []
 
-  const headers = ['id', 'name', 'email', 'whatsapp', 'source', 'block_id', 'status', 'post_title', 'post_slug', 'created_at']
+  const headers = ['id', 'name', 'email', 'whatsapp', 'source', 'block_id', 'submission', 'status', 'post_title', 'post_slug', 'created_at']
   const lines = [headers.join(',')]
 
   for (const lead of rows) {
@@ -62,6 +62,7 @@ export async function GET(req: NextRequest) {
       escapeCsv(lead.whatsapp),
       escapeCsv(lead.source),
       escapeCsv(lead.block_id),
+      escapeCsv(lead.submission),
       escapeCsv(lead.status),
       escapeCsv(post?.title ?? null),
       escapeCsv(post?.slug ?? null),
