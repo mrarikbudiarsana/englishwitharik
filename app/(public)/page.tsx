@@ -159,7 +159,7 @@ export default async function HomePage() {
                   Whether you're aiming for global opportunities, academic success, or professional growth, we provide a personalized learning experience that sticks.
                 </p>
                 <p>
-                  With extensive expertise in <strong>IELTS, TOEFL, PTE, and Business English</strong>, Arik brings a communicative approach
+                  With extensive expertise in <strong>IELTS, TOEFL, PTE, General English, English for Tourism, Business English, and English for Other Purposes</strong>, Arik brings a communicative approach
                   to every lesson, ensuring you not only learn the rules but gaining the confidence to use them.
                 </p>
               </div>

@@ -4,9 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import PageViewTracker from '@/components/public/PageViewTracker'
-import { ArrowLeft, Calendar, User, Clock, Share2, Bookmark } from 'lucide-react'
+import { ArrowLeft, Calendar, User, Clock } from 'lucide-react'
 import PostCard from '@/components/public/PostCard'
 import InteractivePostContent from '@/components/public/blog/InteractivePostContent'
+import ShareActions from '@/components/public/blog/ShareActions'
+import ReadingProgressBar from '@/components/public/blog/ReadingProgressBar'
+import PostTableOfContents from '@/components/public/blog/PostTableOfContents'
+import PostRating from '@/components/public/blog/PostRating'
 
 export const revalidate = 60
 
@@ -17,6 +21,68 @@ interface Props {
 interface PostCategoryRow {
   category_id: string
   categories: unknown
+}
+
+interface TocHeading {
+  id: string
+  text: string
+  level: 2 | 3
+}
+
+function decodeHtmlEntities(input: string) {
+  return input
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+}
+
+function stripHtml(input: string) {
+  return decodeHtmlEntities(input.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+}
+
+function slugifyHeading(text: string) {
+  const normalized = text
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+  return normalized || 'section'
+}
+
+function enhancePostHtml(rawHtml: string) {
+  const headings: TocHeading[] = []
+  const usedIds = new Set<string>()
+  const source = rawHtml ?? ''
+
+  const html = source.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/gi, (full, levelRaw, attrs, inner) => {
+    const level = Number(levelRaw) as 2 | 3
+    const text = stripHtml(inner)
+    if (!text) return full
+
+    const existingIdMatch = attrs.match(/\sid=(["'])([^"']+)\1/i)
+    let id = existingIdMatch?.[2] ?? slugifyHeading(text)
+    let suffix = 2
+    while (usedIds.has(id)) {
+      id = `${id}-${suffix}`
+      suffix += 1
+    }
+    usedIds.add(id)
+    headings.push({ id, text, level })
+
+    if (existingIdMatch) return full
+    return `<h${level}${attrs} id="${id}">${inner}</h${level}>`
+  })
+
+  const plainText = stripHtml(html)
+  const words = plainText ? plainText.split(/\s+/).length : 0
+  const readMinutes = Math.max(1, Math.ceil(words / 220))
+
+  return { html, headings, readMinutes }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -91,6 +157,7 @@ export default async function BlogPostPage({ params }: Props) {
       : `https://${process.env.NEXT_PUBLIC_SITE_URL}`)
     : 'https://englishwitharik.com'
   const postUrl = `${siteUrl}/blog/${post.slug}`
+  const enhancedContent = enhancePostHtml(post.content ?? '')
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -119,7 +186,6 @@ export default async function BlogPostPage({ params }: Props) {
   const categoryIds = (post.post_categories ?? []).map((pc: PostCategoryRow) => pc.category_id)
 
   let relatedPosts: Parameters<typeof PostCard>[0]['post'][] = []
-
   if (categoryIds.length > 0) {
     const { data } = await supabase
       .from('posts')
@@ -152,6 +218,8 @@ export default async function BlogPostPage({ params }: Props) {
       <PageViewTracker path={`/blog/${post.slug}`} postId={post.id} />
 
       <main className="bg-white min-h-screen pb-20">
+        <ReadingProgressBar />
+
         {/* Header Section */}
         <header className="pt-8 pb-10 bg-gradient-to-b from-slate-50 to-white">
           <div className="container max-w-4xl mx-auto px-4 sm:px-6">
@@ -195,7 +263,7 @@ export default async function BlogPostPage({ params }: Props) {
                 )}
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2 text-[#08507f]" />
-                  <span>5 min read</span>
+                  <span>{enhancedContent.readMinutes} min read</span>
                 </div>
               </div>
             </div>
@@ -239,15 +307,19 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Content */}
         <article className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div
-            className="prose prose-lg prose-slate max-w-none
-            prose-headings:font-bold prose-headings:text-slate-900
-            prose-p:text-slate-700 prose-p:leading-relaxed
-            prose-a:text-[#08507f] prose-a:no-underline prose-a:font-medium hover:prose-a:underline
-            prose-img:rounded-xl prose-img:shadow-lg
-            prose-blockquote:border-l-4 prose-blockquote:border-[#08507f] prose-blockquote:bg-slate-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:rounded-r-lg"
-          >
-            <InteractivePostContent html={post.content ?? ''} postId={post.id} postSlug={post.slug} />
+          <div className="grid grid-cols-1 lg:grid-cols-[240px,1fr] gap-8">
+            <PostTableOfContents headings={enhancedContent.headings} />
+
+            <div
+              className="prose prose-lg prose-slate max-w-none
+              prose-headings:font-bold prose-headings:text-slate-900 prose-headings:scroll-mt-24
+              prose-p:text-slate-700 prose-p:leading-relaxed
+              prose-a:text-[#08507f] prose-a:no-underline prose-a:font-medium hover:prose-a:underline
+              prose-img:rounded-xl prose-img:shadow-lg
+              prose-blockquote:border-l-4 prose-blockquote:border-[#08507f] prose-blockquote:bg-slate-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:rounded-r-lg"
+            >
+              <InteractivePostContent html={enhancedContent.html} postId={post.id} postSlug={post.slug} />
+            </div>
           </div>
 
           {/* Tags & Share */}
@@ -261,17 +333,11 @@ export default async function BlogPostPage({ params }: Props) {
                 ))}
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-slate-500">Share this:</span>
-                <button className="p-2 rounded-full hover:bg-slate-100 text-slate-600 hover:text-[#08507f] transition-colors" title="Share">
-                  <Share2 className="w-5 h-5" />
-                </button>
-                <button className="p-2 rounded-full hover:bg-slate-100 text-slate-600 hover:text-[#08507f] transition-colors" title="Save for later">
-                  <Bookmark className="w-5 h-5" />
-                </button>
-              </div>
+              <ShareActions postUrl={postUrl} title={post.title} />
             </div>
           </div>
+
+          <PostRating postId={post.id} />
 
           {/* Author Bio */}
           <div className="mt-12 bg-slate-50 rounded-xl p-8 flex items-center gap-6">

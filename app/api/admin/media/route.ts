@@ -11,14 +11,14 @@ async function checkAdmin() {
   return profile && (profile.role === 'admin' || profile.is_admin)
 }
 
-// GET — list images from Cloudinary
+// GET - list media from Cloudinary
 export async function GET() {
   if (!await checkAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const resources = await listImages(BLOG_FOLDER, 100)
   return NextResponse.json({ resources })
 }
 
-// POST — upload image
+// POST - upload media
 export async function POST(req: NextRequest) {
   if (!await checkAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -30,9 +30,11 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`
+    const isVideoOrAudio = file.type.startsWith('video/') || file.type.startsWith('audio/')
 
     const result = await cloudinary.uploader.upload(base64, {
       folder: BLOG_FOLDER,
+      resource_type: isVideoOrAudio ? 'video' : 'image',
       transformation: [{ quality: 'auto', fetch_format: 'auto' }],
     })
     results.push(result)
@@ -41,10 +43,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ results })
 }
 
-// DELETE — remove image
+// DELETE - remove media
 export async function DELETE(req: NextRequest) {
   if (!await checkAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { public_id } = await req.json()
-  await deleteImage(public_id)
+  const { public_id, resource_type } = await req.json()
+  await deleteImage(public_id, resource_type === 'video' || resource_type === 'raw' ? resource_type : 'image')
   return NextResponse.json({ success: true })
 }
