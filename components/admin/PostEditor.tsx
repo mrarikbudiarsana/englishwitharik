@@ -61,6 +61,16 @@ interface ShortcodeEntry {
   validationError?: string
 }
 
+interface CloudinaryResource {
+  public_id: string
+  secure_url: string
+  width: number
+  height: number
+  format: string
+  bytes: number
+  created_at: string
+}
+
 function getShortcodeEntries(editor: NonNullable<ReturnType<typeof useEditor>>): ShortcodeEntry[] {
   const entries: ShortcodeEntry[] = []
 
@@ -153,6 +163,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showMatchingModal, setShowMatchingModal] = useState(false)
   const [showCtaModal, setShowCtaModal] = useState(false)
   const [showEmailWritingModal, setShowEmailWritingModal] = useState(false)
+  const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -210,6 +221,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [blockEntries, setBlockEntries] = useState<ShortcodeEntry[]>([])
   const [showBlocksPanel, setShowBlocksPanel] = useState(true)
   const [showBlockTemplatesPanel, setShowBlockTemplatesPanel] = useState(true)
+  const [mediaResources, setMediaResources] = useState<CloudinaryResource[]>([])
+  const [mediaLoading, setMediaLoading] = useState(false)
+  const [mediaQuery, setMediaQuery] = useState('')
+  const [mediaError, setMediaError] = useState<string | null>(null)
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
   const floatingPickerRef = useRef<HTMLDivElement | null>(null)
@@ -430,15 +445,35 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
   function addImage() {
     if (!editor) return
-    const url = window.prompt('Enter image URL')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).updateAttributes('image', { width: '100%' }).run()
+    openModalNearCursor(() => setShowImageLibraryModal(true), 900, 680)
+    void loadMediaResources()
+  }
+
+  async function loadMediaResources() {
+    setMediaLoading(true)
+    setMediaError(null)
+    try {
+      const response = await fetch('/api/admin/media')
+      if (!response.ok) throw new Error('failed')
+      const data = await response.json()
+      setMediaResources(Array.isArray(data.resources) ? data.resources : [])
+    } catch {
+      setMediaError('Could not load media library.')
+      setMediaResources([])
+    } finally {
+      setMediaLoading(false)
     }
   }
 
   function setSelectedImageWidth(width: string) {
     if (!editor || !editor.isActive('image')) return
     editor.chain().focus().updateAttributes('image', { width }).run()
+  }
+
+  function insertImageFromMedia(url: string) {
+    if (!editor || !url.trim()) return
+    editor.chain().focus().setImage({ src: url.trim() }).updateAttributes('image', { width: '100%' }).run()
+    setShowImageLibraryModal(false)
   }
 
   function resetMcqForm() {
@@ -1094,6 +1129,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       || template.blockType.toLowerCase().includes(query)
     )
   })
+  const filteredMediaResources = mediaResources.filter(resource => {
+    if (!mediaQuery.trim()) return true
+    const query = mediaQuery.trim().toLowerCase()
+    return (
+      resource.public_id.toLowerCase().includes(query)
+      || resource.secure_url.toLowerCase().includes(query)
+    )
+  })
 
   function saveBlockTemplates(next: BlockTemplate[]) {
     setBlockTemplates(next)
@@ -1557,6 +1600,94 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           Insert Block
         </button>
       </div>
+
+      {showImageLibraryModal && (
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Insert Image From Media</h3>
+                <p className="text-xs text-gray-500 mt-1">Select an existing image from your media library.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = window.prompt('Enter image URL')
+                    if (url) insertImageFromMedia(url)
+                  }}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Use URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImageLibraryModal(false)
+                    setMediaQuery('')
+                  }}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={mediaQuery}
+                onChange={e => setMediaQuery(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                placeholder="Search by filename..."
+              />
+              <button
+                type="button"
+                onClick={() => { void loadMediaResources() }}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {mediaError && (
+              <p className="text-sm text-red-700">{mediaError}</p>
+            )}
+
+            {mediaLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div key={`media-skeleton-${index}`} className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
+                ))}
+              </div>
+            ) : filteredMediaResources.length === 0 ? (
+              <p className="text-sm text-gray-500 py-8 text-center">No images found.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {filteredMediaResources.map(resource => (
+                  <button
+                    key={resource.public_id}
+                    type="button"
+                    onClick={() => insertImageFromMedia(resource.secure_url)}
+                    className="group text-left rounded-lg border border-gray-200 overflow-hidden hover:border-[#08507f]/50 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    title="Insert this image"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={resource.secure_url} alt={resource.public_id} className="w-full aspect-square object-cover bg-gray-100" />
+                    <div className="px-2 py-1.5 bg-white">
+                      <p className="text-[11px] text-gray-600 truncate">{resource.public_id.split('/').pop()}</p>
+                      <p className="text-[10px] text-gray-400">{resource.width}x{resource.height}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {showMcqModal && (
         <div className="fixed inset-0 z-30 bg-black/30 p-4">
