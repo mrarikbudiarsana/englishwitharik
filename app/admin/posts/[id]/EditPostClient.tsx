@@ -7,6 +7,7 @@ import PostEditor from '@/components/admin/PostEditor'
 import { Save, Eye, Trash2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Post, Category, Tag } from '@/lib/types'
+import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
 
 interface Props {
   post: Post
@@ -40,6 +41,12 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
 
   const handleSave = useCallback(async (saveStatus: 'draft' | 'published') => {
     if (!title) return alert('Title is required')
+    const issues = validateInteractiveShortcodes(content)
+    if (issues.length > 0) {
+      const preview = issues.slice(0, 3).map(issue => `#${issue.index} ${issue.blockType}: ${issue.message}`).join('\n')
+      alert(`Fix interactive block errors before saving:\n${preview}${issues.length > 3 ? `\n...and ${issues.length - 3} more.` : ''}`)
+      return
+    }
     setSaving(true)
     const supabase = createClient()
 

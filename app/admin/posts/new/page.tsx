@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
 import { Save, Eye, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
 
 function generateSlug(title: string) {
   return title
@@ -35,6 +36,12 @@ export default function NewPostPage() {
 
   const handleSave = useCallback(async (saveStatus: 'draft' | 'published') => {
     if (!title) return alert('Title is required')
+    const issues = validateInteractiveShortcodes(content)
+    if (issues.length > 0) {
+      const preview = issues.slice(0, 3).map(issue => `#${issue.index} ${issue.blockType}: ${issue.message}`).join('\n')
+      alert(`Fix interactive block errors before saving:\n${preview}${issues.length > 3 ? `\n...and ${issues.length - 3} more.` : ''}`)
+      return
+    }
     setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()

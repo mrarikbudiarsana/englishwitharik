@@ -13,10 +13,66 @@ import {
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
+import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
+import { createClient } from '@/lib/supabase/client'
 
 interface PostEditorProps {
   content: string
   onChange: (html: string) => void
+}
+
+interface CtaTemplate {
+  id: string
+  name: string
+  title: string
+  description: string
+  submitLabel: string
+  source: string
+}
+
+const CTA_TEMPLATES_KEY = 'post-editor-cta-templates-v1'
+const BLOCK_TEMPLATES_KEY = 'post-editor-block-templates-v1'
+interface BlockTemplate {
+  id: string
+  name: string
+  blockType: string
+  shortcode: string
+  remote?: boolean
+}
+
+interface ShortcodeEntry {
+  id: string
+  blockType: string
+  shortcode: string
+  from: number
+  to: number
+  validationError?: string
+}
+
+function getShortcodeEntries(editor: NonNullable<ReturnType<typeof useEditor>>): ShortcodeEntry[] {
+  const entries: ShortcodeEntry[] = []
+
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) return
+
+    for (const match of node.text.matchAll(SHORTCODE_REGEX)) {
+      const matchIndex = match.index ?? 0
+      const shortcode = match[0]
+      const from = pos + matchIndex + 1
+      const to = from + shortcode.length
+
+      entries.push({
+        id: `${from}-${to}-${entries.length}`,
+        blockType: match[1] ?? 'unknown',
+        shortcode,
+        from,
+        to,
+        validationError: validateShortcode(shortcode) ?? undefined,
+      })
+    }
+  })
+
+  return entries
 }
 
 function ToolbarButton({
@@ -85,11 +141,20 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [ctaDescription, setCtaDescription] = useState('Leave your contact and we will reach out shortly.')
   const [ctaSubmitLabel, setCtaSubmitLabel] = useState('Get Free Consultation')
   const [ctaSource, setCtaSource] = useState('blog-cta')
+  const [ctaTemplateName, setCtaTemplateName] = useState('')
+  const [ctaTemplates, setCtaTemplates] = useState<CtaTemplate[]>([])
+  const [selectedCtaTemplateId, setSelectedCtaTemplateId] = useState('')
+  const [blockTemplateName, setBlockTemplateName] = useState('')
+  const [blockTemplates, setBlockTemplates] = useState<BlockTemplate[]>([])
+  const [selectedBlockTemplateId, setSelectedBlockTemplateId] = useState('')
+  const [blockTemplateQuery, setBlockTemplateQuery] = useState('')
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null)
+  const [blockEntries, setBlockEntries] = useState<ShortcodeEntry[]>([])
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
   const floatingPickerRef = useRef<HTMLDivElement | null>(null)
   const editorShellRef = useRef<HTMLDivElement | null>(null)
+  const blockTemplatesFileInputRef = useRef<HTMLInputElement | null>(null)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -106,6 +171,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     content,
     onUpdate({ editor }) {
       onChange(editor.getHTML())
+      setBlockEntries(getShortcodeEntries(editor))
     },
     editorProps: {
       attributes: {
@@ -134,6 +200,176 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
 
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showBlockPicker, showFloatingBlockPicker])
+
+  useEffect(() => {
+    if (!editor) return
+    setBlockEntries(getShortcodeEntries(editor))
+  }, [editor])
+
+  useEffect(() => {
+    const root = editorShellRef.current?.querySelector('.ProseMirror')
+    if (!root) return
+
+    const paragraphs = root.querySelectorAll('p')
+    let blockIndex = 0
+
+    paragraphs.forEach(paragraph => {
+      paragraph.classList.remove('shortcode-mask')
+      paragraph.removeAttribute('data-block-label')
+      paragraph.removeAttribute('data-block-id')
+      paragraph.removeAttribute('role')
+      paragraph.removeAttribute('tabindex')
+      paragraph.removeAttribute('title')
+      paragraph.querySelector('.shortcode-actions')?.remove()
+
+      const text = paragraph.textContent?.trim() ?? ''
+      const match = text.match(/^\[block:([a-z0-9_-]+):[^\]]+\]$/)
+      if (!match) return
+
+      blockIndex += 1
+      const label = `Interactive block ${blockIndex}: ${match[1].replaceAll('_', ' ')}`
+      const entry = blockEntries[blockIndex - 1]
+      paragraph.classList.add('shortcode-mask')
+      paragraph.setAttribute('data-block-label', label)
+      if (entry) paragraph.setAttribute('data-block-id', entry.id)
+      paragraph.setAttribute('role', 'button')
+      paragraph.setAttribute('tabindex', '0')
+      paragraph.setAttribute('title', 'Click to edit this block')
+
+      if (entry) {
+        const actions = document.createElement('div')
+        actions.className = 'shortcode-actions'
+        actions.setAttribute('contenteditable', 'false')
+
+        const buttonSpecs = [
+          { action: 'edit', label: 'Edit' },
+          { action: 'duplicate', label: 'Duplicate' },
+          { action: 'up', label: 'Up' },
+          { action: 'down', label: 'Down' },
+          { action: 'delete', label: 'Delete' },
+        ]
+
+        buttonSpecs.forEach(spec => {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = 'shortcode-action-btn'
+          button.textContent = spec.label
+          button.setAttribute('data-action', spec.action)
+          button.setAttribute('data-block-id', entry.id)
+          actions.appendChild(button)
+        })
+
+        paragraph.appendChild(actions)
+      }
+    })
+  }, [blockEntries, content])
+
+  useEffect(() => {
+    const root = editorShellRef.current?.querySelector('.ProseMirror') as HTMLElement | null
+    if (!root) return
+
+    function handleInteractiveBlockClick(event: Event) {
+      const target = event.target as HTMLElement | null
+      const actionButton = target?.closest('[data-action]') as HTMLElement | null
+      if (actionButton) {
+        const blockId = actionButton.getAttribute('data-block-id')
+        const action = actionButton.getAttribute('data-action')
+        if (!blockId || !action) return
+        const entry = blockEntries.find(item => item.id === blockId)
+        if (!entry) return
+        event.preventDefault()
+
+        if (action === 'edit') editShortcode(entry)
+        if (action === 'duplicate') duplicateShortcode(entry)
+        if (action === 'up') {
+          const index = blockEntries.findIndex(item => item.id === blockId)
+          if (index > 0) moveShortcode(index, -1)
+        }
+        if (action === 'down') {
+          const index = blockEntries.findIndex(item => item.id === blockId)
+          if (index >= 0 && index < blockEntries.length - 1) moveShortcode(index, 1)
+        }
+        if (action === 'delete') deleteShortcode(entry)
+        return
+      }
+
+      const block = target?.closest('p.shortcode-mask') as HTMLElement | null
+      if (!block) return
+      const blockId = block.getAttribute('data-block-id')
+      if (!blockId) return
+      const entry = blockEntries.find(item => item.id === blockId)
+      if (!entry) return
+      event.preventDefault()
+      editShortcode(entry)
+    }
+
+    function handleInteractiveBlockKeydown(event: KeyboardEvent) {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      const target = event.target as HTMLElement | null
+      if (!target?.classList.contains('shortcode-mask')) return
+      const blockId = target.getAttribute('data-block-id')
+      if (!blockId) return
+      const entry = blockEntries.find(item => item.id === blockId)
+      if (!entry) return
+      event.preventDefault()
+      editShortcode(entry)
+    }
+
+    root.addEventListener('click', handleInteractiveBlockClick)
+    root.addEventListener('keydown', handleInteractiveBlockKeydown)
+    return () => {
+      root.removeEventListener('click', handleInteractiveBlockClick)
+      root.removeEventListener('keydown', handleInteractiveBlockKeydown)
+    }
+  }, [blockEntries])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CTA_TEMPLATES_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as CtaTemplate[]
+      if (Array.isArray(parsed)) setCtaTemplates(parsed)
+    } catch {
+      // Ignore malformed local storage and continue with empty templates.
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTemplates() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('interactive_block_templates')
+        .select('id, name, block_type, shortcode')
+        .order('created_at', { ascending: false })
+
+      if (!cancelled && !error && Array.isArray(data)) {
+        const mapped = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          blockType: item.block_type,
+          shortcode: item.shortcode,
+          remote: true,
+        }))
+        setBlockTemplates(mapped)
+        window.localStorage.setItem(BLOCK_TEMPLATES_KEY, JSON.stringify(mapped))
+        return
+      }
+
+      try {
+        const raw = window.localStorage.getItem(BLOCK_TEMPLATES_KEY)
+        if (!raw || cancelled) return
+        const parsed = JSON.parse(raw) as BlockTemplate[]
+        if (Array.isArray(parsed)) setBlockTemplates(parsed)
+      } catch {
+        // Ignore malformed local storage and continue with empty templates.
+      }
+    }
+
+    loadTemplates()
+    return () => { cancelled = true }
+  }, [])
 
   if (!editor) return null
 
@@ -216,6 +452,39 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setShowCtaModal(false)
   }
 
+  function getCtaShortcode() {
+    if (!ctaTitle.trim()) return ''
+
+    const blockId = `${ctaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
+    const config = {
+      title: ctaTitle.trim(),
+      description: ctaDescription.trim() || undefined,
+      submitLabel: ctaSubmitLabel.trim() || undefined,
+      source: ctaSource.trim() || undefined,
+      blockId,
+      collectName: true,
+      collectEmail: true,
+      collectWhatsapp: true,
+    }
+
+    return `[block:cta:${encodeURIComponent(JSON.stringify(config))}]`
+  }
+
+  async function copyCtaShortcode() {
+    const shortcode = getCtaShortcode()
+    if (!shortcode) {
+      window.alert('CTA title is required.')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(shortcode)
+      window.alert('CTA shortcode copied. You can paste it in another blog post.')
+    } catch {
+      window.alert('Could not copy automatically. Please insert and copy manually.')
+    }
+  }
+
   function insertShortcodeBlock(blockType: string, config: Record<string, unknown>) {
     if (!editor) return
     const shortcode = `[block:${blockType}:${encodeURIComponent(JSON.stringify(config))}]`
@@ -270,7 +539,69 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setCtaDescription('Leave your contact and we will reach out shortly.')
     setCtaSubmitLabel('Get Free Consultation')
     setCtaSource('blog-cta')
+    setCtaTemplateName('')
     setEditingShortcode(null)
+  }
+
+  function saveTemplates(next: CtaTemplate[]) {
+    setCtaTemplates(next)
+    window.localStorage.setItem(CTA_TEMPLATES_KEY, JSON.stringify(next))
+  }
+
+  function saveCurrentCtaTemplate() {
+    const name = ctaTemplateName.trim()
+    if (!name) {
+      window.alert('Template name is required.')
+      return
+    }
+    if (!ctaTitle.trim()) {
+      window.alert('CTA title is required.')
+      return
+    }
+
+    const existing = ctaTemplates.find(template => template.name.toLowerCase() === name.toLowerCase())
+    const nextTemplate: CtaTemplate = {
+      id: existing?.id ?? `${Date.now()}`,
+      name,
+      title: ctaTitle,
+      description: ctaDescription,
+      submitLabel: ctaSubmitLabel,
+      source: ctaSource,
+    }
+
+    const next = existing
+      ? ctaTemplates.map(template => (template.id === existing.id ? nextTemplate : template))
+      : [nextTemplate, ...ctaTemplates]
+
+    saveTemplates(next)
+    setSelectedCtaTemplateId(nextTemplate.id)
+    window.alert('CTA template saved.')
+  }
+
+  function loadSelectedCtaTemplate() {
+    const template = ctaTemplates.find(item => item.id === selectedCtaTemplateId)
+    if (!template) {
+      window.alert('Select a template first.')
+      return
+    }
+
+    setCtaTemplateName(template.name)
+    setCtaTitle(template.title)
+    setCtaDescription(template.description)
+    setCtaSubmitLabel(template.submitLabel)
+    setCtaSource(template.source)
+  }
+
+  function deleteSelectedCtaTemplate() {
+    const template = ctaTemplates.find(item => item.id === selectedCtaTemplateId)
+    if (!template) {
+      window.alert('Select a template first.')
+      return
+    }
+    const next = ctaTemplates.filter(item => item.id !== selectedCtaTemplateId)
+    saveTemplates(next)
+    setSelectedCtaTemplateId('')
+    window.alert(`Deleted template "${template.name}".`)
   }
 
   function insertAudioBlock() {
@@ -547,6 +878,223 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     open()
   }
 
+  function focusShortcode(entry: ShortcodeEntry) {
+    if (!editor) return
+    editor.chain().focus().setTextSelection({ from: entry.from, to: entry.to }).run()
+  }
+
+  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | null {
+    if (blockType === 'mcq') return 'mcq'
+    if (blockType === 'audio') return 'audio'
+    if (blockType === 'fill_gaps') return 'fill'
+    if (blockType === 'dropdown_gaps') return 'dropdown'
+    if (blockType === 'true_false') return 'truefalse'
+    if (blockType === 'matching') return 'matching'
+    if (blockType === 'cta') return 'cta'
+    return null
+  }
+
+  function editShortcode(entry: ShortcodeEntry) {
+    const targetModal = blockTypeToModal(entry.blockType)
+    if (!targetModal) {
+      window.alert(`Unsupported block type: ${entry.blockType}`)
+      return
+    }
+    focusShortcode(entry)
+    openBlockModal(targetModal)
+  }
+
+  function duplicateShortcode(entry: ShortcodeEntry) {
+    if (!editor) return
+    editor.chain().focus().insertContentAt(entry.to, `<p>${entry.shortcode}</p>`).run()
+  }
+
+  function moveShortcode(index: number, direction: -1 | 1) {
+    if (!editor) return
+    const source = blockEntries[index]
+    const target = blockEntries[index + direction]
+    if (!source || !target) return
+
+    const tr = editor.state.tr
+    tr.insertText(source.shortcode, target.from, target.to)
+    const mappedFrom = tr.mapping.map(source.from)
+    const mappedTo = tr.mapping.map(source.to)
+    tr.insertText(target.shortcode, mappedFrom, mappedTo)
+    editor.view.dispatch(tr)
+  }
+
+  function deleteShortcode(entry: ShortcodeEntry) {
+    if (!editor) return
+    const ok = window.confirm(`Delete this ${entry.blockType.replaceAll('_', ' ')} block?`)
+    if (!ok) return
+    editor.chain().focus().insertContentAt({ from: entry.from, to: entry.to }, '').run()
+  }
+
+  const filteredBlockTemplates = blockTemplates.filter(template => {
+    if (!blockTemplateQuery.trim()) return true
+    const query = blockTemplateQuery.toLowerCase()
+    return (
+      template.name.toLowerCase().includes(query)
+      || template.blockType.toLowerCase().includes(query)
+    )
+  })
+
+  function saveBlockTemplates(next: BlockTemplate[]) {
+    setBlockTemplates(next)
+    window.localStorage.setItem(BLOCK_TEMPLATES_KEY, JSON.stringify(next))
+  }
+
+  function isUuid(value: string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  }
+
+  async function saveBlockTemplate(entry: ShortcodeEntry, fallbackName?: string) {
+    const name = blockTemplateName.trim() || fallbackName || ''
+    if (!name) {
+      window.alert('Template name is required.')
+      return
+    }
+
+    const supabase = createClient()
+    const { data: authData } = await supabase.auth.getUser()
+    const createdBy = authData.user?.id ?? null
+    const { data, error } = await supabase
+      .from('interactive_block_templates')
+      .insert({
+        name,
+        block_type: entry.blockType,
+        shortcode: entry.shortcode,
+        created_by: createdBy,
+      })
+      .select('id, name, block_type, shortcode')
+      .single()
+
+    const nextTemplate: BlockTemplate = data && !error
+      ? {
+        id: data.id,
+        name: data.name,
+        blockType: data.block_type,
+        shortcode: data.shortcode,
+        remote: true,
+      }
+      : {
+        id: `local-${Date.now()}`,
+        name,
+        blockType: entry.blockType,
+        shortcode: entry.shortcode,
+        remote: false,
+      }
+
+    saveBlockTemplates([nextTemplate, ...blockTemplates])
+    setSelectedBlockTemplateId(nextTemplate.id)
+    setBlockTemplateName('')
+    if (error) {
+      window.alert('Saved locally. Supabase sync failed.')
+    } else {
+      window.alert('Block template saved.')
+    }
+  }
+
+  function normalizeTemplateShortcode(shortcode: string) {
+    const match = shortcode.match(/^\[block:([a-z0-9_-]+):([^\]]+)\]$/)
+    if (!match) return shortcode
+    const blockType = match[1]
+    const rawConfig = match[2]
+
+    if (blockType !== 'cta') return shortcode
+
+    try {
+      const config = JSON.parse(decodeURIComponent(rawConfig)) as Record<string, unknown>
+      const title = typeof config.title === 'string' ? config.title : 'cta'
+      config.blockId = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`
+      return `[block:${blockType}:${encodeURIComponent(JSON.stringify(config))}]`
+    } catch {
+      return shortcode
+    }
+  }
+
+  function insertSelectedBlockTemplate() {
+    if (!editor) return
+    const template = blockTemplates.find(item => item.id === selectedBlockTemplateId)
+    if (!template) {
+      window.alert('Select a block template first.')
+      return
+    }
+
+    const shortcode = normalizeTemplateShortcode(template.shortcode)
+    editor.chain().focus().insertContent(`<p>${shortcode}</p>`).run()
+  }
+
+  async function deleteSelectedBlockTemplate() {
+    const template = blockTemplates.find(item => item.id === selectedBlockTemplateId)
+    if (!template) {
+      window.alert('Select a block template first.')
+      return
+    }
+
+    if (template.remote && isUuid(template.id)) {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('interactive_block_templates')
+        .delete()
+        .eq('id', template.id)
+      if (error) {
+        window.alert('Could not delete on Supabase.')
+        return
+      }
+    }
+
+    const next = blockTemplates.filter(item => item.id !== selectedBlockTemplateId)
+    saveBlockTemplates(next)
+    setSelectedBlockTemplateId('')
+    window.alert(`Deleted template "${template.name}".`)
+  }
+
+  function exportBlockTemplates() {
+    if (blockTemplates.length === 0) {
+      window.alert('No block templates to export.')
+      return
+    }
+    const blob = new Blob([JSON.stringify(blockTemplates, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `block-templates-${Date.now()}.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function importBlockTemplates(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as BlockTemplate[]
+        if (!Array.isArray(parsed)) throw new Error('invalid-format')
+
+        const sanitized = parsed
+          .filter(item => item && typeof item === 'object')
+          .map(item => ({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            name: String((item as { name?: unknown }).name ?? 'Imported template'),
+            blockType: String((item as { blockType?: unknown }).blockType ?? 'unknown'),
+            shortcode: String((item as { shortcode?: unknown }).shortcode ?? ''),
+          }))
+          .filter(item => item.shortcode.startsWith('[block:'))
+
+        saveBlockTemplates([...sanitized, ...blockTemplates])
+        window.alert(`Imported ${sanitized.length} templates.`)
+      } catch {
+        window.alert('Invalid template file.')
+      } finally {
+        event.target.value = ''
+      }
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <div ref={editorShellRef} className="border border-gray-200 rounded-xl overflow-hidden bg-white relative">
       {/* Toolbar */}
@@ -623,8 +1171,162 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         </div>
       </div>
 
+      <div className="border-b border-gray-200 bg-gray-50/70 px-3 py-2 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-gray-600">Blocks</span>
+          {blockEntries.length === 0 && <span className="text-xs text-gray-500">No interactive blocks yet.</span>}
+          {blockEntries.map((entry, index) => (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => focusShortcode(entry)}
+              className={cn(
+                'inline-flex items-center rounded-full border bg-white px-2.5 py-1 text-xs hover:bg-gray-100',
+                entry.validationError ? 'border-amber-300 text-amber-800' : 'border-gray-300 text-gray-700'
+              )}
+            >
+              {index + 1}. {entry.blockType.replaceAll('_', ' ')}
+            </button>
+          ))}
+        </div>
+
+        {blockEntries.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-2">
+            <div className="max-h-36 overflow-y-auto space-y-1">
+              {blockEntries.map((entry, index) => (
+                <div key={`row-${entry.id}`} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
+                  <div>
+                    <p className="text-xs text-gray-700">
+                      {index + 1}. {entry.blockType.replaceAll('_', ' ')}
+                    </p>
+                    {entry.validationError && (
+                      <p className="text-[11px] text-amber-700">{entry.validationError}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => focusShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Go</button>
+                    <button type="button" onClick={() => editShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Edit</button>
+                    <button type="button" onClick={() => duplicateShortcode(entry)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Duplicate</button>
+                    <button type="button" onClick={() => saveBlockTemplate(entry, `${entry.blockType.replaceAll('_', ' ')} ${index + 1}`)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white">Save tpl</button>
+                    <button type="button" onClick={() => moveShortcode(index, -1)} disabled={index === 0} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Up</button>
+                    <button type="button" onClick={() => moveShortcode(index, 1)} disabled={index === blockEntries.length - 1} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-white disabled:opacity-40">Down</button>
+                    <button type="button" onClick={() => deleteShortcode(entry)} className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+          <p className="text-xs font-semibold text-gray-700">Block Templates</p>
+          <input
+            type="text"
+            value={blockTemplateQuery}
+            onChange={e => setBlockTemplateQuery(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+            placeholder="Search templates"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
+            <select
+              value={selectedBlockTemplateId}
+              onChange={e => setSelectedBlockTemplateId(e.target.value)}
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+            >
+              <option value="">Select saved block template</option>
+              {filteredBlockTemplates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.name} ({template.blockType.replaceAll('_', ' ')})
+                </option>
+              ))}
+            </select>
+            <button type="button" onClick={insertSelectedBlockTemplate} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+              Insert
+            </button>
+            <button type="button" onClick={deleteSelectedBlockTemplate} className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">
+              Delete
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={exportBlockTemplates} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+              Export
+            </button>
+            <button type="button" onClick={() => blockTemplatesFileInputRef.current?.click()} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+              Import
+            </button>
+            <input
+              ref={blockTemplatesFileInputRef}
+              type="file"
+              accept="application/json"
+              onChange={importBlockTemplates}
+              className="hidden"
+            />
+          </div>
+          <div className="space-y-1">
+            <input
+              type="text"
+              value={blockTemplateName}
+              onChange={e => setBlockTemplateName(e.target.value)}
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+              placeholder="Template name (used by Save tpl)"
+            />
+            <p className="text-xs text-gray-500">Set a name, then click `Save tpl` on any block row.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Editor Content */}
       <EditorContent editor={editor} />
+
+      <div className="fixed bottom-6 left-6 z-20 max-w-[calc(100vw-8rem)] overflow-x-auto rounded-2xl border border-gray-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur">
+        <div className="flex items-center gap-0.5">
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
+            <Bold size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
+            <Italic size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
+            <UnderlineIcon size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
+            <Strikethrough size={15} />
+          </ToolbarButton>
+
+          <div className="w-px h-5 bg-gray-300 mx-1" />
+
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">
+            <Heading2 size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">
+            <Heading3 size={15} />
+          </ToolbarButton>
+
+          <div className="w-px h-5 bg-gray-300 mx-1" />
+
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List">
+            <List size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
+            <ListOrdered size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
+            <Quote size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">
+            <Minus size={15} />
+          </ToolbarButton>
+
+          <div className="w-px h-5 bg-gray-300 mx-1" />
+
+          <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Add Link">
+            <LinkIcon size={15} />
+          </ToolbarButton>
+          <ToolbarButton onClick={addImage} active={false} title="Add Image">
+            <ImageIcon size={15} />
+          </ToolbarButton>
+        </div>
+      </div>
 
       <div className="fixed bottom-6 right-6 z-20" ref={floatingPickerRef}>
         {showFloatingBlockPicker && (
@@ -1080,6 +1782,52 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             </div>
 
             <div className="space-y-3">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                <p className="text-xs font-semibold text-gray-700">CTA Templates</p>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2">
+                  <select
+                    value={selectedCtaTemplateId}
+                    onChange={e => setSelectedCtaTemplateId(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                  >
+                    <option value="">Select saved template</option>
+                    {ctaTemplates.map(template => (
+                      <option key={template.id} value={template.id}>{template.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={loadSelectedCtaTemplate}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white"
+                  >
+                    Load
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deleteSelectedCtaTemplate}
+                    className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                  <input
+                    type="text"
+                    value={ctaTemplateName}
+                    onChange={e => setCtaTemplateName(e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                    placeholder="Template name (e.g., IELTS Free Trial CTA)"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveCurrentCtaTemplate}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white"
+                  >
+                    Save template
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
                 <input
@@ -1124,6 +1872,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={copyCtaShortcode}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Copy shortcode
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -1246,6 +2001,69 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        .ProseMirror p.shortcode-mask {
+          color: transparent !important;
+          background: #eef6fc;
+          border: 1px solid #bfdaf1;
+          border-radius: 0.75rem;
+          padding: 0.65rem 0.8rem;
+          margin: 0.75rem 0;
+          min-height: 2.6rem;
+          position: relative;
+          user-select: none;
+          cursor: pointer;
+          padding-right: 18rem;
+        }
+
+        .ProseMirror p.shortcode-mask::before {
+          content: attr(data-block-label);
+          color: #08507f;
+          font-size: 0.875rem;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          position: absolute;
+          left: 0.8rem;
+          top: 0.62rem;
+        }
+
+        .ProseMirror p.shortcode-mask:hover {
+          background: #e3f1fb;
+          border-color: #8fbfe3;
+        }
+
+        .ProseMirror p.shortcode-mask:focus {
+          outline: 2px solid #08507f;
+          outline-offset: 1px;
+        }
+
+        .ProseMirror p.shortcode-mask .shortcode-actions {
+          position: absolute;
+          right: 0.7rem;
+          top: 0.44rem;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          z-index: 2;
+        }
+
+        .ProseMirror p.shortcode-mask .shortcode-action-btn {
+          border: 1px solid #cbd5e1;
+          border-radius: 0.45rem;
+          background: #ffffff;
+          color: #334155;
+          font-size: 0.7rem;
+          line-height: 1;
+          padding: 0.35rem 0.45rem;
+          cursor: pointer;
+        }
+
+        .ProseMirror p.shortcode-mask .shortcode-action-btn:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+        }
+      `}</style>
     </div>
   )
 }
