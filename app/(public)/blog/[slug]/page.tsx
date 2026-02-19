@@ -306,8 +306,8 @@ export default async function BlogPostPage({ params }: Props) {
         )}
 
         {/* Content */}
-        <article className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[240px,1fr] gap-8">
+        <article className="container max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[250px_minmax(0,1fr)] md:gap-10">
             <PostTableOfContents headings={enhancedContent.headings} />
 
             <div

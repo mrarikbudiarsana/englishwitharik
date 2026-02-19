@@ -46,19 +46,26 @@ export default function PostTableOfContents({ headings }: PostTableOfContentsPro
   if (!validHeadings.length) return null
 
   return (
-    <aside className="mb-8 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 lg:sticky lg:top-24">
-      <h2 className="text-sm font-semibold text-slate-800 mb-3">Table of Contents</h2>
-      <nav aria-label="Table of contents">
-        <ul className="space-y-2">
+    <aside className="hidden md:block md:sticky md:top-24 md:self-start md:z-20 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-[0_8px_24px_-12px_rgba(2,6,23,0.35)] backdrop-blur">
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Table of Contents</h2>
+      <nav aria-label="Table of contents" className="max-h-[calc(100vh-8rem)] overflow-auto pr-1">
+        <ul className="space-y-1">
           {validHeadings.map(heading => (
             <li key={heading.id}>
               <a
                 href={`#${heading.id}`}
-                className={`block text-sm transition-colors ${heading.level === 3 ? 'pl-4' : ''} ${activeId === heading.id
-                  ? 'text-[#08507f] font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                aria-current={activeId === heading.id ? 'location' : undefined}
+                className={`group relative block rounded-lg py-1.5 text-[13px] leading-6 transition-all ${heading.level === 3 ? 'pl-8 pr-2' : 'pl-3 pr-2'} ${activeId === heading.id
+                  ? 'bg-[#08507f]/12 font-semibold text-[#08507f] ring-1 ring-[#08507f]/25'
+                  : 'text-slate-600 hover:bg-slate-100/90 hover:text-slate-900'
                   }`}
               >
+                <span
+                  className={`absolute left-0 top-1/2 h-6 -translate-y-1/2 rounded-r-full transition-all ${activeId === heading.id
+                    ? 'w-1.5 bg-[#08507f]'
+                    : 'w-0 bg-transparent group-hover:w-1 group-hover:bg-slate-300'
+                    }`}
+                />
                 {heading.text}
               </a>
             </li>

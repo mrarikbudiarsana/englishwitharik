@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -55,6 +55,27 @@ function getFilename(publicId: string) {
   return publicId.split('/').pop() ?? publicId
 }
 
+function getTypeStyles(type: Exclude<MediaTypeFilter, 'all'>) {
+  switch (type) {
+    case 'image':
+      return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+    case 'audio':
+      return 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'
+    case 'video':
+      return 'bg-violet-50 text-violet-700 ring-1 ring-violet-200'
+    case 'other':
+    default:
+      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
+  }
+}
+
+function getMediaIcon(type: Exclude<MediaTypeFilter, 'all'>, size = 16) {
+  if (type === 'image') return <ImageIcon size={size} />
+  if (type === 'audio') return <Music2 size={size} />
+  if (type === 'video') return <Video size={size} />
+  return <File size={size} />
+}
+
 export default function AdminMediaPage() {
   const [resources, setResources] = useState<CloudinaryResource[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,27 +87,47 @@ export default function AdminMediaPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  async function fetchMedia() {
-    setLoading(true)
+  async function requestMedia() {
     const res = await fetch('/api/admin/media')
     const data = await res.json()
-    setResources(data.resources ?? [])
-    setLoading(false)
+    return data.resources ?? []
   }
 
   useEffect(() => {
-    fetchMedia()
+    let active = true
+
+    void requestMedia()
+      .then((items) => {
+        if (!active) return
+        setResources(items)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!active) return
+        setResources([])
+        setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
   }, [])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     if (!files?.length) return
     setUploading(true)
+    setLoading(true)
     const formData = new FormData()
     Array.from(files).forEach((file) => formData.append('file', file))
-    await fetch('/api/admin/media', { method: 'POST', body: formData })
-    await fetchMedia()
-    setUploading(false)
+    try {
+      await fetch('/api/admin/media', { method: 'POST', body: formData })
+      const items = await requestMedia()
+      setResources(items)
+    } finally {
+      setLoading(false)
+      setUploading(false)
+    }
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -186,49 +227,51 @@ export default function AdminMediaPage() {
   const hasActiveFilters = query.trim().length > 0 || typeFilter !== 'all' || sortBy !== 'newest'
 
   return (
-    <div className="p-6 md:p-8 space-y-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {filteredResources.length} shown of {resources.length} files
-          </p>
+    <div className="min-h-screen space-y-6 bg-slate-50/70 p-4 md:p-8">
+      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm md:px-6 md:py-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Media Library</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {filteredResources.length} shown of {resources.length} files
+            </p>
+          </div>
+          <label
+            className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#08507f] px-4 text-sm font-medium text-white transition-colors hover:bg-[#063a5c] ${
+              uploading ? 'cursor-not-allowed opacity-50' : ''
+            }`}
+          >
+            <Upload size={16} />
+            {uploading ? 'Uploading...' : 'Upload Files'}
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept="image/*,audio/*,video/*"
+              onChange={handleUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
         </div>
-        <label
-          className={`inline-flex items-center justify-center gap-2 bg-[#08507f] hover:bg-[#063a5c] text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors cursor-pointer ${
-            uploading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-        >
-          <Upload size={16} />
-          {uploading ? 'Uploading...' : 'Upload Files'}
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            accept="image/*,audio/*,video/*"
-            onChange={handleUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-3 md:p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr),180px,180px,auto,auto] md:items-center">
-          <div className="relative">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <div className="relative min-w-[280px] flex-1">
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by filename, id, or format..."
-              className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
+              className="h-10 w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
             />
           </div>
 
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value as MediaTypeFilter)}
-            className="rounded-lg border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
+            className="h-10 w-[170px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
           >
             <option value="all">All Types</option>
             <option value="image">Images</option>
@@ -240,7 +283,7 @@ export default function AdminMediaPage() {
           <select
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as SortOption)}
-            className="rounded-lg border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
+            className="h-10 w-[170px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#08507f] focus:ring-2 focus:ring-[#08507f]/20"
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
@@ -259,17 +302,17 @@ export default function AdminMediaPage() {
               setSortBy('newest')
             }}
             disabled={!hasActiveFilters}
-            className="rounded-lg border border-gray-300 py-2 px-3 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Clear
           </button>
 
-          <div className="inline-flex rounded-lg border border-gray-300 p-0.5">
+          <div className="inline-flex h-10 shrink-0 items-center rounded-xl border border-slate-300 p-1">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                viewMode === 'grid' ? 'bg-[#08507f] text-white' : 'text-gray-700 hover:bg-gray-50'
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                viewMode === 'grid' ? 'bg-[#08507f] text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               Grid
@@ -277,8 +320,8 @@ export default function AdminMediaPage() {
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                viewMode === 'list' ? 'bg-[#08507f] text-white' : 'text-gray-700 hover:bg-gray-50'
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                viewMode === 'list' ? 'bg-[#08507f] text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               List
@@ -288,31 +331,31 @@ export default function AdminMediaPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {Array.from({ length: 18 }).map((_, index) => (
-            <div key={index} className="h-44 rounded-xl border border-gray-200 bg-gray-100 animate-pulse" />
+            <div key={index} className="h-44 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
           ))}
         </div>
       ) : filteredResources.length === 0 ? (
         <div className="py-20 text-center">
-          <ImageIcon size={44} className="text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 text-sm font-medium">No matching files</p>
-          <p className="text-gray-400 text-sm mt-1">Try changing the search text, type filter, or sort order.</p>
+          <ImageIcon size={44} className="mx-auto mb-3 text-slate-300" />
+          <p className="text-sm font-medium text-slate-600">No matching files</p>
+          <p className="mt-1 text-sm text-slate-400">Try changing the search text, type filter, or sort order.</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filteredResources.map((resource) => {
             const mediaType = inferMediaType(resource)
             const filename = getFilename(resource.public_id)
             const dimensions = resource.width && resource.height ? `${resource.width}x${resource.height}` : null
-            const commonMeta = `${resource.format?.toUpperCase() ?? 'FILE'} · ${formatBytes(resource.bytes)}`
+            const commonMeta = `${resource.format?.toUpperCase() ?? 'FILE'} | ${formatBytes(resource.bytes)}`
 
             return (
               <div
                 key={resource.public_id}
-                className="rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#08507f]/40 transition-colors"
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#08507f]/40 hover:shadow-md"
               >
-                <div className="relative h-28 bg-gray-100">
+                <div className="relative h-28 bg-slate-100">
                   {mediaType === 'image' ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -322,38 +365,32 @@ export default function AdminMediaPage() {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 text-gray-600">
-                      {mediaType === 'audio' ? (
-                        <Music2 size={28} />
-                      ) : mediaType === 'video' ? (
-                        <Video size={28} />
-                      ) : (
-                        <File size={28} />
-                      )}
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 text-slate-600">
+                      {getMediaIcon(mediaType, 28)}
                     </div>
                   )}
-                  <span className="absolute right-2 top-2 rounded-md bg-black/65 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                  <span className={`absolute right-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${getTypeStyles(mediaType)}`}>
                     {mediaType}
                   </span>
                 </div>
 
                 <div className="p-2.5">
-                  <p className="truncate text-xs font-medium text-gray-800" title={filename}>
+                  <p className="truncate text-xs font-medium text-slate-800" title={filename}>
                     {filename}
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-500 truncate" title={resource.public_id}>
+                  <p className="mt-1 truncate text-[11px] text-slate-500" title={resource.public_id}>
                     {resource.public_id}
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-500">
-                    {dimensions ? `${dimensions} · ${commonMeta}` : commonMeta}
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {dimensions ? `${dimensions} | ${commonMeta}` : commonMeta}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-gray-400">{formatDate(resource.created_at)}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">{formatDate(resource.created_at)}</p>
 
                   <div className="mt-2 flex items-center gap-1.5">
                     <button
                       onClick={() => handleCopy(resource.secure_url)}
                       title="Copy URL"
-                      className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-md border border-gray-200 bg-white text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-700 hover:bg-slate-50"
                     >
                       {copied === resource.secure_url ? <Check size={12} /> : <Copy size={12} />}
                       {copied === resource.secure_url ? 'Copied' : 'Copy'}
@@ -372,8 +409,8 @@ export default function AdminMediaPage() {
           })}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="hidden grid-cols-[48px,1.4fr,0.7fr,0.8fr,0.7fr,140px] items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 md:grid">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="hidden grid-cols-[56px,minmax(280px,1.8fr),130px,220px,120px,150px] items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 xl:grid">
             <span>Type</span>
             <span>Name</span>
             <span>Format</span>
@@ -381,49 +418,57 @@ export default function AdminMediaPage() {
             <span>Date</span>
             <span className="text-right">Actions</span>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-100">
             {filteredResources.map((resource) => {
               const mediaType = inferMediaType(resource)
               const filename = getFilename(resource.public_id)
-              const dimensions = resource.width && resource.height ? `${resource.width}x${resource.height}` : '-'
+              const dimensions = resource.width && resource.height ? `${resource.width}x${resource.height}` : 'No dimensions'
 
               return (
                 <div
                   key={resource.public_id}
-                  className="grid grid-cols-[40px,minmax(0,1fr),auto] items-center gap-3 px-3 py-2.5 md:grid-cols-[48px,1.4fr,0.7fr,0.8fr,0.7fr,140px]"
+                  className="grid grid-cols-[52px,minmax(0,1fr),auto] items-center gap-3 px-3 py-3 transition-colors hover:bg-slate-50 sm:px-4 xl:grid-cols-[56px,minmax(280px,1.8fr),130px,220px,120px,150px]"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-600 md:h-10 md:w-10">
-                    {mediaType === 'image' ? (
-                      <ImageIcon size={16} />
-                    ) : mediaType === 'audio' ? (
-                      <Music2 size={16} />
-                    ) : mediaType === 'video' ? (
-                      <Video size={16} />
-                    ) : (
-                      <File size={16} />
-                    )}
-                  </div>
+                  {mediaType === 'image' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={resource.secure_url}
+                      alt={filename}
+                      className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200">
+                      {getMediaIcon(mediaType, 18)}
+                    </div>
+                  )}
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-800" title={filename}>
+                    <p className="truncate text-sm font-semibold text-slate-900" title={filename}>
                       {filename}
                     </p>
-                    <p className="truncate text-[11px] text-gray-500" title={resource.public_id}>
+                    <p className="truncate text-[11px] text-slate-500" title={resource.public_id}>
                       {resource.public_id}
                     </p>
+                    <div className="mt-1 flex items-center gap-2 xl:hidden">
+                      <span className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${getTypeStyles(mediaType)}`}>
+                        {mediaType}
+                      </span>
+                      <span className="text-[11px] text-slate-500">{resource.format?.toUpperCase() ?? 'FILE'}</span>
+                    </div>
                   </div>
 
-                  <p className="hidden text-xs text-gray-600 md:block">{resource.format?.toUpperCase() ?? 'FILE'}</p>
-                  <p className="hidden text-xs text-gray-600 md:block">
-                    {dimensions} · {formatBytes(resource.bytes)}
+                  <p className="hidden text-xs text-slate-600 xl:block">{resource.format?.toUpperCase() ?? 'FILE'}</p>
+                  <p className="hidden text-xs text-slate-600 xl:block">
+                    {dimensions} | {formatBytes(resource.bytes)}
                   </p>
-                  <p className="hidden text-xs text-gray-500 md:block">{formatDate(resource.created_at)}</p>
+                  <p className="hidden text-xs text-slate-500 xl:block">{formatDate(resource.created_at)}</p>
 
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => handleCopy(resource.secure_url)}
                       title="Copy URL"
-                      className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-gray-200 px-2 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-slate-200 px-2 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
                     >
                       {copied === resource.secure_url ? <Check size={12} /> : <Copy size={12} />}
                       <span className="hidden sm:inline">{copied === resource.secure_url ? 'Copied' : 'Copy'}</span>
@@ -431,7 +476,7 @@ export default function AdminMediaPage() {
                     <button
                       onClick={() => handleDelete(resource)}
                       title="Delete file"
-                      className="inline-flex h-7 w-8 items-center justify-center rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -445,3 +490,4 @@ export default function AdminMediaPage() {
     </div>
   )
 }
+
