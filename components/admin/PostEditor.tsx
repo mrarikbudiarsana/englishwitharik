@@ -16,7 +16,7 @@ import {
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
   ChevronDown, ChevronRight, Mail, AlignJustify, Type, X,
-  Table as TableIcon, Spline, Merge, Columns, Rows, Trash,
+  Table as TableIcon, Spline, Merge, Columns, Rows, Trash, GripHorizontal,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
@@ -171,6 +171,12 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showMissingLettersModal, setShowMissingLettersModal] = useState(false)
   const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
   const [showFormattingToolbar, setShowFormattingToolbar] = useState(false)
+  const [showDragSentenceModal, setShowDragSentenceModal] = useState(false)
+  const [dragSentenceTitle, setDragSentenceTitle] = useState('')
+  const [dragSentenceItems, setDragSentenceItems] = useState<Array<{ speaker1Image?: string, speaker1Text?: string, speaker2Image?: string, speaker2Text: string, distractors: string[] }>>([
+    { speaker2Text: '', distractors: [] }
+  ])
+  const [dragSentenceExplanation, setDragSentenceExplanation] = useState('')
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -679,6 +685,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setEditingShortcode(null)
   }
 
+  function resetDragSentenceForm() {
+    setDragSentenceTitle('')
+    setDragSentenceItems([{ speaker2Text: '', distractors: [] }])
+    setDragSentenceExplanation('')
+    setEditingShortcode(null)
+  }
+
   function saveTemplates(next: CtaTemplate[]) {
     setCtaTemplates(next)
     window.localStorage.setItem(CTA_TEMPLATES_KEY, JSON.stringify(next))
@@ -897,7 +910,39 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     setShowMissingLettersModal(false)
   }
 
-  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters') {
+  function insertDragSentenceBlock() {
+    const items = dragSentenceItems
+      .filter(item => item.speaker2Text.trim() !== '')
+      .map(item => ({
+        ...item,
+        speaker1Image: item.speaker1Image?.trim() || undefined,
+        speaker1Text: item.speaker1Text?.trim() || undefined,
+        speaker2Image: item.speaker2Image?.trim() || undefined,
+        speaker2Text: item.speaker2Text.trim(),
+        distractors: item.distractors.map(d => d.trim()).filter(Boolean)
+      }))
+
+    if (items.length === 0) {
+      window.alert('Add at least one item with a speaker 2 text/gaps.')
+      return
+    }
+
+    if (!items.some(item => item.speaker2Text.includes('[[') && item.speaker2Text.includes(']]'))) {
+      window.alert('At least one item must include a [[word]] placeholder to drag to.')
+      return
+    }
+
+    insertShortcodeBlock('drag_sentence', {
+      title: dragSentenceTitle.trim() || undefined,
+      items,
+      explanation: dragSentenceExplanation.trim() || undefined,
+    })
+
+    resetDragSentenceForm()
+    setShowDragSentenceModal(false)
+  }
+
+  function openBlockModal(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | 'dragsentence') {
     setShowBlockPicker(false)
     setShowFloatingBlockPicker(false)
     prepareModalForType(type)
@@ -910,6 +955,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (type === 'cta') openModalNearCursor(() => setShowCtaModal(true), 640, 520)
     if (type === 'emailwriting') openModalNearCursor(() => setShowEmailWritingModal(true), 900, 760)
     if (type === 'missingletters') openModalNearCursor(() => setShowMissingLettersModal(true), 768, 760)
+    if (type === 'dragsentence') openModalNearCursor(() => setShowDragSentenceModal(true), 768, 760)
   }
 
   function parseShortcodeConfig(encoded: string) {
@@ -948,7 +994,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     return null
   }
 
-  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters') {
+  function prepareModalForType(type: 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | 'dragsentence') {
     const context = getActiveShortcodeContext()
     if (!context) {
       if (type === 'mcq') resetMcqForm()
@@ -960,10 +1006,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'cta') resetCtaForm()
       if (type === 'emailwriting') resetEmailWritingForm()
       if (type === 'missingletters') resetMissingLettersForm()
+      if (type === 'dragsentence') resetDragSentenceForm()
       return
     }
 
-    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters', string> = {
+    const typeMap: Record<'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | 'dragsentence', string> = {
       mcq: 'mcq',
       audio: 'audio',
       fill: 'fill_gaps',
@@ -973,6 +1020,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       cta: 'cta',
       emailwriting: 'email_writing',
       missingletters: 'missing_letters',
+      dragsentence: 'drag_sentence',
     }
 
     if (context.blockType !== typeMap[type] || !context.config) {
@@ -985,6 +1033,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       if (type === 'cta') resetCtaForm()
       if (type === 'emailwriting') resetEmailWritingForm()
       if (type === 'missingletters') resetMissingLettersForm()
+      if (type === 'dragsentence') resetDragSentenceForm()
       return
     }
 
@@ -1086,6 +1135,24 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       setMissingLettersItems(Array.isArray(c.items) ? c.items.map(item => String(item)) : [''])
       setMissingLettersExplanation(typeof c.explanation === 'string' ? c.explanation : '')
     }
+
+    if (type === 'dragsentence') {
+      setDragSentenceTitle(typeof c.title === 'string' ? c.title : '')
+      const items = Array.isArray(c.items)
+        ? c.items.map(item => {
+          const i = item as Record<string, unknown>
+          return {
+            speaker1Image: String(i.speaker1Image || ''),
+            speaker1Text: String(i.speaker1Text || ''),
+            speaker2Image: String(i.speaker2Image || ''),
+            speaker2Text: String(i.speaker2Text || ''),
+            distractors: Array.isArray(i.distractors) ? i.distractors.map(String) : []
+          }
+        })
+        : [{ speaker2Text: '', distractors: [] }]
+      setDragSentenceItems(items.length > 0 ? items : [{ speaker2Text: '', distractors: [] }])
+      setDragSentenceExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
   }
 
   function computeModalPosition(panelWidth: number, panelHeight: number) {
@@ -1126,7 +1193,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     editor.chain().focus().setTextSelection({ from: entry.from, to: entry.to }).run()
   }
 
-  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | null {
+  function blockTypeToModal(blockType: string): 'mcq' | 'audio' | 'fill' | 'dropdown' | 'truefalse' | 'matching' | 'cta' | 'emailwriting' | 'missingletters' | 'dragsentence' | null {
     if (blockType === 'mcq') return 'mcq'
     if (blockType === 'audio') return 'audio'
     if (blockType === 'fill_gaps') return 'fill'
@@ -1136,6 +1203,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     if (blockType === 'cta') return 'cta'
     if (blockType === 'email_writing') return 'emailwriting'
     if (blockType === 'missing_letters') return 'missingletters'
+    if (blockType === 'drag_sentence') return 'dragsentence'
     return null
   }
 
@@ -1524,6 +1592,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
               <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
               <button type="button" onClick={() => openBlockModal('missingletters')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><AlignJustify size={14} />Missing Letters</button>
               <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
+              <button type="button" onClick={() => openBlockModal('dragsentence')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GripHorizontal size={14} />Drag Sentence</button>
               <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
             </div>
           )}
@@ -1751,6 +1820,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             <button type="button" onClick={() => openBlockModal('matching')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GitCompareArrows size={14} />Matching</button>
             <button type="button" onClick={() => openBlockModal('missingletters')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><AlignJustify size={14} />Missing Letters</button>
             <button type="button" onClick={() => openBlockModal('emailwriting')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Mail size={14} />Email Writing</button>
+            <button type="button" onClick={() => openBlockModal('dragsentence')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><GripHorizontal size={14} />Drag Sentence</button>
             <button type="button" onClick={() => openBlockModal('cta')} className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"><Send size={14} />CTA Form</button>
           </div>
         )}
@@ -2759,6 +2829,146 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
                 Cancel
               </button>
               <button type="button" onClick={insertMatchingBlock} className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]">
+                Insert block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDragSentenceModal && (
+        <div className="fixed inset-0 z-30 bg-black/30 p-4">
+          <div
+            className="absolute w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-xl p-5 space-y-4"
+            style={{ top: modalPosition?.top ?? 80, left: modalPosition?.left ?? 24 }}
+          >
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Insert Drag Sentence Block</h3>
+              <p className="text-xs text-gray-500 mt-1">Users drag words to form sentences. Use [[word]] for draggable words.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title (optional)</label>
+                <input
+                  type="text"
+                  value={dragSentenceTitle}
+                  onChange={e => setDragSentenceTitle(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                  placeholder="Make an appropriate sentence."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">Items</label>
+                <div className="space-y-4">
+                  {dragSentenceItems.map((item, index) => (
+                    <div key={`param-row-${index}`} className="p-3 border border-gray-200 rounded-lg bg-gray-50 space-y-3 relative">
+                      <button
+                        type="button"
+                        onClick={() => setDragSentenceItems(prev => prev.filter((_, i) => i !== index))}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <p className="text-xs font-semibold text-gray-700">Item {index + 1}</p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-500 mb-1">Speaker 1 Image URL (optional)</label>
+                          <input
+                            type="text"
+                            value={item.speaker1Image || ''}
+                            onChange={e => setDragSentenceItems(prev => prev.map((r, i) => i === index ? { ...r, speaker1Image: e.target.value } : r))}
+                            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none"
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-500 mb-1">Speaker 1 Text (optional)</label>
+                          <input
+                            type="text"
+                            value={item.speaker1Text || ''}
+                            onChange={e => setDragSentenceItems(prev => prev.map((r, i) => i === index ? { ...r, speaker1Text: e.target.value } : r))}
+                            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none"
+                            placeholder="What was the highlight..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-500 mb-1">Speaker 2 Image URL (optional)</label>
+                          <input
+                            type="text"
+                            value={item.speaker2Image || ''}
+                            onChange={e => setDragSentenceItems(prev => prev.map((r, i) => i === index ? { ...r, speaker2Image: e.target.value } : r))}
+                            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none"
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-500 mb-1">Speaker 2 Text / Gaps</label>
+                          <textarea
+                            value={item.speaker2Text}
+                            onChange={e => setDragSentenceItems(prev => prev.map((r, i) => i === index ? { ...r, speaker2Text: e.target.value } : r))}
+                            rows={2}
+                            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none resize-none"
+                            placeholder="The [[old city]] [[tour guides]] [[were]] fantastic."
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-500 mb-1">Distractors (comma separated)</label>
+                        <input
+                          type="text"
+                          value={item.distractors.join(', ')}
+                          onChange={e => setDragSentenceItems(prev => prev.map((r, i) => i === index ? { ...r, distractors: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : r))}
+                          className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none"
+                          placeholder="was, their, who"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setDragSentenceItems(prev => [...prev, { speaker2Text: '', distractors: [] }])}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-white transition-colors"
+                  >
+                    <Plus size={14} /> Add Item
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Explanation (optional)</label>
+                <textarea
+                  value={dragSentenceExplanation}
+                  onChange={e => setDragSentenceExplanation(e.target.value)}
+                  rows={2}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f] resize-y"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  resetDragSentenceForm()
+                  setShowDragSentenceModal(false)
+                }}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={insertDragSentenceBlock}
+                className="px-3 py-2 text-sm rounded-lg bg-[#08507f] text-white hover:bg-[#063a5c]"
+              >
                 Insert block
               </button>
             </div>

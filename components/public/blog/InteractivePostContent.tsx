@@ -10,6 +10,7 @@ import TrueFalseBlock, { type TrueFalseConfig } from './TrueFalseBlock'
 import MatchingBlock, { type MatchingConfig } from './MatchingBlock'
 import EmailWritingBlock, { type EmailWritingConfig } from './EmailWritingBlock'
 import MissingLettersBlock, { type MissingLettersConfig } from './MissingLettersBlock'
+import DragSentenceBlock from './DragSentenceBlock'
 
 interface InteractivePostContentProps {
   html: string
@@ -176,6 +177,33 @@ function isMissingLettersConfig(config: unknown): config is MissingLettersConfig
   return Array.isArray(c.items) && c.items.every(item => typeof item === 'string')
 }
 
+export interface DragSentenceConfig {
+  title?: string
+  items: Array<{
+    speaker1Image?: string
+    speaker1Text?: string
+    speaker2Image?: string
+    speaker2Text: string
+    distractors: string[]
+  }>
+  explanation?: string
+}
+
+function isDragSentenceConfig(config: unknown): config is DragSentenceConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return (
+    Array.isArray(c.items) &&
+    c.items.every(
+      item =>
+        item &&
+        typeof item === 'object' &&
+        typeof (item as Record<string, unknown>).speaker2Text === 'string' &&
+        Array.isArray((item as Record<string, unknown>).distractors)
+    )
+  )
+}
+
 function UnknownBlock({ blockType }: { blockType: string }) {
   return (
     <div className="my-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -244,6 +272,10 @@ export default function InteractivePostContent({ html, postId, postSlug }: Inter
 
         if (segment.blockType === 'missing_letters' && isMissingLettersConfig(segment.config)) {
           return <MissingLettersBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'drag_sentence' && isDragSentenceConfig(segment.config)) {
+          return <DragSentenceBlock key={`block-${index}`} config={segment.config} />
         }
 
         return <UnknownBlock key={`block-${index}`} blockType={segment.blockType} />

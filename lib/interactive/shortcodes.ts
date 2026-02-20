@@ -119,6 +119,31 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'drag_sentence') {
+    const items = Array.isArray(config.items) ? config.items : []
+    if (items.length === 0) return 'Drag sentence needs at least 1 item.'
+
+    const hasInvalid = items.some(item => {
+      if (!item || typeof item !== 'object') return true
+      const row = item as Record<string, unknown>
+      return typeof row.speaker2Text !== 'string' || !row.speaker2Text.trim()
+    })
+    if (hasInvalid) return 'Drag sentence items must have a non-empty speaker2Text.'
+
+    // Verify there's at least one gap
+    const hasNoGaps = items.some(item => {
+      const row = item as Record<string, unknown>
+      const text = row.speaker2Text as string
+      return !FILL_GAP_TOKEN_REGEX.test(text)
+    })
+
+    if (hasNoGaps) {
+      return 'Drag sentence items must include at least one [[word]] placeholder to drag to.'
+    }
+
+    return null
+  }
+
   return `Unsupported block type: ${blockType}`
 }
 
