@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
-import { Save, Eye, Trash2, ArrowLeft } from 'lucide-react'
+import MediaPickerModal from '@/components/admin/MediaPickerModal'
+import { Save, Eye, Trash2, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import type { Post, Category, Tag } from '@/lib/types'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
@@ -35,6 +36,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
   const [status, setStatus] = useState<'draft' | 'published'>(post.status)
   const [catIds, setCatIds] = useState<string[]>(selectedCategoryIds)
   const [tagIds, setTagIds] = useState<string[]>(selectedTagIds)
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
@@ -161,7 +163,13 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Featured Image</h3>
             <input type="url" placeholder="Paste Cloudinary URL…" value={featuredImage} onChange={e => setFeaturedImage(e.target.value)}
-              className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f]" />
+              className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f] mb-2" />
+            <button
+              onClick={() => setShowMediaPicker(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <ImageIcon size={16} /> Select from Media
+            </button>
             {featuredImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={featuredImage} alt="Preview" className="mt-3 rounded-lg w-full object-cover aspect-video" />
@@ -231,6 +239,11 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
           </div>
         </div>
       </div>
-    </div>
+      <MediaPickerModal
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url) => setFeaturedImage(url)}
+      />
+    </div >
   )
 }

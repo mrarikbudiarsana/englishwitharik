@@ -7,11 +7,16 @@ import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
 import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus, Send, Headphones, FileQuestion, ListChecks, ToggleLeft, GitCompareArrows, Plus, Trash2,
   ChevronDown, ChevronRight, Mail, AlignJustify, Type, X,
+  Table as TableIcon, Spline, Merge, Columns, Rows, Trash,
 } from 'lucide-react'
 import { cn } from '@/components/ui/cn'
 import { SHORTCODE_REGEX, validateShortcode } from '@/lib/interactive/shortcodes'
@@ -247,6 +252,15 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       Link.configure({ openOnClick: false }),
       ResizableImage.configure({ HTMLAttributes: { class: 'rounded-lg max-w-full' } }),
       Placeholder.configure({ placeholder: 'Start writing your post…' }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-auto w-full',
+        },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content,
     onUpdate({ editor }) {
@@ -1391,6 +1405,100 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
             <button type="button" onClick={() => setSelectedImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
             <button type="button" onClick={() => setSelectedImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
             <button type="button" onClick={() => setSelectedImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+          </div>
+        )}
+
+        <div className="w-px h-5 bg-gray-300 mx-1" />
+
+        <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} active={editor.isActive('table')} title="Insert Table">
+          <TableIcon size={15} />
+        </ToolbarButton>
+
+        {editor.isActive('table') && (
+          <div className="ml-1 inline-flex items-center gap-0.5 rounded-md border border-gray-300 bg-white px-1 py-0.5 shadow-sm">
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              disabled={!editor.can().addColumnBefore()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Add Column Before"
+            >
+              <Columns size={13} className="rotate-90" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              disabled={!editor.can().addColumnAfter()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Add Column After"
+            >
+              <Columns size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              disabled={!editor.can().deleteColumn()}
+              className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+              title="Delete Column"
+            >
+              <Trash size={13} />
+            </button>
+            <div className="w-px h-3 bg-gray-200 mx-0.5" />
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              disabled={!editor.can().addRowBefore()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Add Row Before"
+            >
+              <Rows size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              disabled={!editor.can().addRowAfter()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Add Row After"
+            >
+              <Rows size={13} className="rotate-180" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              disabled={!editor.can().deleteRow()}
+              className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+              title="Delete Row"
+            >
+              <Trash size={13} />
+            </button>
+            <div className="w-px h-3 bg-gray-200 mx-0.5" />
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().mergeCells().run()}
+              disabled={!editor.can().mergeCells()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Merge Cells"
+            >
+              <Merge size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().splitCell().run()}
+              disabled={!editor.can().splitCell()}
+              className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+              title="Split Cell"
+            >
+              <Spline size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              disabled={!editor.can().deleteTable()}
+              className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+              title="Delete Table"
+            >
+              <Trash size={13} />
+            </button>
           </div>
         )}
 

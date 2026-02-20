@@ -109,22 +109,26 @@ export default async function HomePage() {
     <>
       {/* ===== HERO ===== */}
       <section
-        className="relative min-h-[calc(100vh-64px)] flex items-end justify-center pb-16 bg-cover bg-center bg-no-repeat"
+        className="relative min-h-[calc(100vh-64px)] flex items-end justify-center pb-12 md:pb-24 bg-cover bg-center bg-no-repeat px-4"
         style={{
           backgroundImage: `url('https://res.cloudinary.com/english-tests-platform/image/upload/v1771332153/untitled-design-47_zrmjxa.webp')`,
         }}
       >
         {/* Content Card */}
-        <div className="relative z-10 bg-white/90 py-7 px-12 md:py-8 md:px-20 text-center shadow-lg w-full max-w-2xl">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 whitespace-nowrap">
-            Your Gateway to Global Success
+        <div className="relative z-10 w-full max-w-4xl rounded-[28px] border border-white/30 bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] px-6 py-10 md:px-14 md:py-12 text-center">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+            Your Gateway to{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#08507f] to-blue-600">
+              Global Success
+            </span>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4"></div>
           </h1>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a
               href="https://wa.me/6282144223581"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#08507f] hover:bg-[#063a5c] text-white font-bold py-2.5 px-6 md:py-3 md:px-8 rounded transition-colors uppercase text-sm md:text-base tracking-wide"
+              className="w-full sm:w-auto bg-[#08507f] hover:bg-[#063a5c] text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg hover:shadow-[#08507f]/30 hover:-translate-y-1 uppercase tracking-wide text-sm"
             >
               Free Consultation
             </a>
@@ -132,9 +136,9 @@ export default async function HomePage() {
               href="https://rates.englishwitharik.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#08507f] hover:bg-[#063a5c] text-white font-bold py-2.5 px-6 md:py-3 md:px-8 rounded transition-colors uppercase text-sm md:text-base tracking-wide"
+              className="w-full sm:w-auto bg-transparent border-2 border-[#08507f] text-[#08507f] hover:bg-[#08507f]/5 font-bold py-3 px-8 rounded-full transition-all uppercase tracking-wide text-sm"
             >
-              Pricing
+              View Pricing
             </a>
           </div>
         </div>

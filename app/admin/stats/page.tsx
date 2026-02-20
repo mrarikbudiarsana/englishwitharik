@@ -5,6 +5,7 @@ import { Eye, Users, TrendingUp, TrendingDown, Heart, MessageSquare } from 'luci
 import StatsBarChart from '@/components/admin/StatsBarChart'
 import StatsDonutChart from '@/components/admin/StatsDonutChart'
 import StatsDatePicker from '@/components/admin/StatsDatePicker'
+import StatsLocations from '@/components/admin/StatsLocations'
 
 // ---------------------------------------------------------------------------
 // Range parsing — supports presets + custom from/to
@@ -138,23 +139,36 @@ async function getStats(range: ParsedRange) {
   const rows: any[] = currentRows ?? []
 
   // ── Chart data ────────────────────────────────────────────────────────────
-  let chartData: { label: string; views: number }[]
+  let chartData: { label: string; views: number; visitors: number }[]
 
   if (range.granularity === 'hour') {
-    const map: Record<number, number> = {}
+    const viewMap: Record<number, number> = {}
+    const visitorMap: Record<number, Set<string>> = {}
+
     for (const v of rows) {
       const h = new Date(v.viewed_at).getHours()
-      map[h] = (map[h] ?? 0) + 1
+      viewMap[h] = (viewMap[h] ?? 0) + 1
+      if (v.session_id) {
+        if (!visitorMap[h]) visitorMap[h] = new Set()
+        visitorMap[h].add(v.session_id)
+      }
     }
     chartData = Array.from({ length: 24 }, (_, h) => ({
       label: `${h.toString().padStart(2, '0')}:00`,
-      views: map[h] ?? 0,
+      views: viewMap[h] ?? 0,
+      visitors: visitorMap[h]?.size ?? 0,
     }))
   } else if (range.granularity === 'day') {
-    const map: Record<string, number> = {}
+    const viewMap: Record<string, number> = {}
+    const visitorMap: Record<string, Set<string>> = {}
+
     for (const v of rows) {
       const day = (v.viewed_at as string).substring(0, 10)
-      map[day] = (map[day] ?? 0) + 1
+      viewMap[day] = (viewMap[day] ?? 0) + 1
+      if (v.session_id) {
+        if (!visitorMap[day]) visitorMap[day] = new Set()
+        visitorMap[day].add(v.session_id)
+      }
     }
     const days = Math.ceil(dur / 86_400_000)
     chartData = Array.from({ length: Math.min(days, 366) }, (_, i) => {
@@ -163,15 +177,22 @@ async function getStats(range: ParsedRange) {
       const key = d.toISOString().substring(0, 10)
       return {
         label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        views: map[key] ?? 0,
+        views: viewMap[key] ?? 0,
+        visitors: visitorMap[key]?.size ?? 0,
       }
     })
   } else {
     // monthly
-    const map: Record<string, number> = {}
+    const viewMap: Record<string, number> = {}
+    const visitorMap: Record<string, Set<string>> = {}
+
     for (const v of rows) {
       const m = (v.viewed_at as string).substring(0, 7)
-      map[m] = (map[m] ?? 0) + 1
+      viewMap[m] = (viewMap[m] ?? 0) + 1
+      if (v.session_id) {
+        if (!visitorMap[m]) visitorMap[m] = new Set()
+        visitorMap[m].add(v.session_id)
+      }
     }
     const d = new Date(range.from)
     d.setDate(1)
@@ -180,7 +201,8 @@ async function getStats(range: ParsedRange) {
       const key = d.toISOString().substring(0, 7)
       chartData.push({
         label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-        views: map[key] ?? 0,
+        views: viewMap[key] ?? 0,
+        visitors: visitorMap[key]?.size ?? 0,
       })
       d.setMonth(d.getMonth() + 1)
     }
@@ -225,15 +247,37 @@ async function getStats(range: ParsedRange) {
     .sort((a, b) => b[1] - a[1]).slice(0, 10)
     .map(([domain, count]) => ({ domain, count }))
 
-  // ── Countries ─────────────────────────────────────────────────────────────
-  const countryMap = new Map<string, number>()
+  // ── Countries & Cities ────────────────────────────────────────────────────
+  interface CityData { name: string; count: number }
+  interface CountryData { code: string; count: number; cities: CityData[] }
+
+  const countryMap = new Map<string, { count: number; cities: Map<string, number> }>()
+
   for (const v of rows) {
     if (!v.country) continue
-    countryMap.set(v.country as string, (countryMap.get(v.country as string) ?? 0) + 1)
+    const code = v.country as string
+    const city = v.city as string || 'Unknown'
+
+    if (!countryMap.has(code)) {
+      countryMap.set(code, { count: 0, cities: new Map() })
+    }
+
+    const entry = countryMap.get(code)!
+    entry.count++
+    entry.cities.set(city, (entry.cities.get(city) ?? 0) + 1)
   }
-  const countries = Array.from(countryMap.entries())
-    .sort((a, b) => b[1] - a[1]).slice(0, 10)
-    .map(([code, count]) => ({ code, count }))
+
+  const countries: CountryData[] = Array.from(countryMap.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 10)
+    .map(([code, data]) => ({
+      code,
+      count: data.count,
+      cities: Array.from(data.cities.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name, count]) => ({ name, count }))
+    }))
 
   // ── Devices ───────────────────────────────────────────────────────────────
   const deviceMap: Record<string, number> = {}
@@ -394,21 +438,7 @@ export default async function StatsPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Locations</h2>
-          {data.countries.length === 0 ? (
-            <p className="text-sm text-gray-400">No location data in this period.</p>
-          ) : (
-            <Rows>
-              {data.countries.map(c => (
-                <div key={c.code} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-2.5 flex-1 mr-4">
-                    <span className="text-base leading-none">{countryFlag(c.code)}</span>
-                    <span className="text-sm text-gray-700">{countryName(c.code)}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900 flex-shrink-0">{c.count}</span>
-                </div>
-              ))}
-            </Rows>
-          )}
+          <StatsLocations data={data.countries} />
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">

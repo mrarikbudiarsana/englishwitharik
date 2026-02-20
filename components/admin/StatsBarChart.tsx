@@ -13,6 +13,7 @@ import {
 interface DataPoint {
   label: string
   views: number
+  visitors: number
 }
 
 export default function StatsBarChart({ data }: { data: DataPoint[] }) {
@@ -37,7 +38,8 @@ export default function StatsBarChart({ data }: { data: DataPoint[] }) {
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
           cursor={{ fill: '#f3f4f6' }}
         />
-        <Bar dataKey="views" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="views" name="Views" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="visitors" name="Visitors" fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={40} />
       </BarChart>
     </ResponsiveContainer>
   )

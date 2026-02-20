@@ -23,3 +23,45 @@ body {
 /* Line clamp utilities */
 .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Table styles for Tiptap and frontend */
+.prose table {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.prose table td,
+.prose table th {
+  padding: 0.5em 0.75em;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  position: relative;
+}
+
+.prose table th {
+  font-weight: 600;
+  background-color: #f9fafb; /* gray-50 */
+  text-align: left;
+}
+
+/* Tiptap specific interactive styles */
+.tiptap table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+
+.tiptap table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #adf;
+  pointer-events: none;
+}

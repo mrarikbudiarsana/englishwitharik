@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
-import { Save, Eye, ArrowLeft } from 'lucide-react'
+import MediaPickerModal from '@/components/admin/MediaPickerModal'
+import { Save, Eye, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
 import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
@@ -29,6 +30,7 @@ export default function NewPostPage() {
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDesc, setSeoDesc] = useState('')
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
@@ -144,8 +146,14 @@ export default function NewPostPage() {
               placeholder="Paste Cloudinary URL…"
               value={featuredImage}
               onChange={e => setFeaturedImage(e.target.value)}
-              className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+              className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f] mb-2"
             />
+            <button
+              onClick={() => setShowMediaPicker(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <ImageIcon size={16} /> Select from Media
+            </button>
             {featuredImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={featuredImage} alt="Preview" className="mt-3 rounded-lg w-full object-cover aspect-video" />
@@ -194,6 +202,11 @@ export default function NewPostPage() {
           </div>
         </div>
       </div>
+      <MediaPickerModal
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url) => setFeaturedImage(url)}
+      />
     </div>
   )
 }
