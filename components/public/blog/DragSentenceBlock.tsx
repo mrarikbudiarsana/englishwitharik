@@ -240,10 +240,10 @@ export default function DragSentenceBlock({ config }: DragSentenceBlockProps) {
     return (
         <div className="my-8 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
             <div className="border-b border-gray-100 bg-[#08507f] px-6 py-4">
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="!text-white text-lg font-semibold !m-0">
                     {config.title || 'Drag the words to complete the sentences'}
                 </h3>
-                <p className="text-sm text-blue-100 mt-1">Drag and drop words into the correct gaps, or tap a word then tap a gap.</p>
+                <p className="text-sm text-blue-100/80 mt-1">Drag and drop words into the correct gaps, or tap a word then tap a gap.</p>
             </div>
 
             <div className="p-6 md:p-8 space-y-10 bg-gray-50/30">
