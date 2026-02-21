@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <h2>Cookies</h2>
         <p>We use minimal cookies for site functionality (e.g., authentication). We do not use tracking cookies for advertising.</p>
         <h2>Contact</h2>
-        <p>For privacy concerns, contact us at <a href="mailto:hello@englishwitharik.com">hello@englishwitharik.com</a>.</p>
+        <p>For privacy concerns, contact us at <a href="mailto:info@englishwitharik.com">info@englishwitharik.com</a>.</p>
       </div>
     </div>
   )

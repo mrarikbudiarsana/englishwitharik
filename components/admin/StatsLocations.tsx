@@ -2,17 +2,25 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, MapPin } from 'lucide-react'
-
-// Utilities (copied from page to keep this self-contained or importable)
-function countryFlag(code: string) {
-    return [...code.toUpperCase()]
-        .map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-        .join('')
-}
+import Image from 'next/image'
 
 function countryName(code: string) {
     try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code }
     catch { return code }
+}
+
+// Flag image from CDN (works on all platforms including Windows)
+function CountryFlag({ code }: { code: string }) {
+    return (
+        <Image
+            src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+            alt={code}
+            width={20}
+            height={15}
+            className="rounded-sm object-cover"
+            unoptimized
+        />
+    )
 }
 
 interface CityData {
@@ -54,7 +62,7 @@ export default function StatsLocations({ data }: { data: CountryData[] }) {
                                 }`}
                         >
                             <div className="flex items-center gap-2.5 flex-1 mr-4">
-                                <span className="text-base leading-none">{countryFlag(c.code)}</span>
+                                <CountryFlag code={c.code} />
                                 <span className="text-sm text-gray-700 font-medium">{countryName(c.code)}</span>
                                 {hasCities && (
                                     <span className="text-gray-400">
@@ -72,7 +80,7 @@ export default function StatsLocations({ data }: { data: CountryData[] }) {
                                     <div key={city.name} className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2 text-gray-500">
                                             <MapPin size={12} className="opacity-50" />
-                                            <span>{city.name === 'null' ? 'Unknown City' : city.name}</span>
+                                            <span>{(!city.name || city.name === 'null' || city.name === 'Unknown') ? 'Unknown City' : city.name}</span>
                                         </div>
                                         <span className="text-xs text-gray-400 tabular-nums">{city.count}</span>
                                     </div>

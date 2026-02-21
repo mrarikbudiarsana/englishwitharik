@@ -50,8 +50,7 @@ export default function StatsDonutChart({ devices }: { devices: Record<string, n
             ))}
           </Pie>
           <Tooltip
-            // @ts-ignore
-            formatter={(value: any, name: any) => [`${value} views`, name]}
+            formatter={(value: number | string | undefined, name: string | number | undefined) => [`${value ?? 0} views`, String(name ?? '')]}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
           />
         </PieChart>
@@ -61,10 +60,11 @@ export default function StatsDonutChart({ devices }: { devices: Record<string, n
         {data.map(item => (
           <div key={item.key} className="flex items-center gap-1.5 text-sm text-gray-600">
             <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: item.color }} />
-            {item.name}: {item.pct}%
+            <span>{item.name}: <span className="font-medium">{item.value.toLocaleString()}</span> ({item.pct}%)</span>
           </div>
         ))}
       </div>
+      <p className="text-center text-xs text-gray-400 mt-2">Total: {total.toLocaleString()} views</p>
     </div>
   )
 }

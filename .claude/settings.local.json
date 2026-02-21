@@ -17,7 +17,8 @@
       "Bash(node scripts/debug-xml.mjs:*)",
       "Bash(node scripts/debug-xml2.mjs:*)",
       "Bash(node scripts/debug-xml3.mjs:*)",
-      "Bash(del \"d:\\\\Website\\\\English with Arik\\\\middleware.ts\")"
+      "Bash(del \"d:\\\\Website\\\\English with Arik\\\\middleware.ts\")",
+      "Bash(find:*)"
     ]
   }
 }

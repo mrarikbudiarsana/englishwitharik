@@ -160,7 +160,7 @@ export default async function HomePage() {
               <div className="prose prose-lg text-gray-600 mb-8">
                 <p>
                   Founded by <strong>I Putu Arik Budiarsana</strong>, English with Arik is your premier online platform for mastering English.
-                  Whether you're aiming for global opportunities, academic success, or professional growth, we provide a personalized learning experience that sticks.
+                  Whether you&apos;re aiming for global opportunities, academic success, or professional growth, we provide a personalized learning experience that sticks.
                 </p>
                 <p>
                   With extensive expertise in <strong>IELTS, TOEFL, PTE, General English, English for Tourism, Business English, and English for Other Purposes</strong>, Arik brings a communicative approach
@@ -481,7 +481,7 @@ export default async function HomePage() {
                   <Phone className="w-6 h-6" />
                 </div>
                 <h4 className="text-white font-bold text-lg mb-2">Contact</h4>
-                <p className="text-slate-400">082-144-223-581<br />hello@englishwitharik.id</p>
+                <p className="text-slate-400">082-144-223-581<br />info@englishwitharik.com</p>
               </div>
               <div className="flex flex-col items-center md:items-start text-center md:text-left">
                 <div className="bg-white/10 p-3 rounded-full text-white mb-4">

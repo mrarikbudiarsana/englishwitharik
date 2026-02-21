@@ -10,9 +10,10 @@ export async function POST(req: NextRequest) {
     const city = req.headers.get('x-vercel-ip-city') ?? null
     const referrer = req.headers.get('referer') ?? null
     const ua = req.headers.get('user-agent') ?? ''
-    const device = /mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(ua)
-      ? 'mobile'
-      : 'desktop'
+    // Detect device type: tablet first (iPad, Android tablet), then mobile, then desktop
+    const isTablet = /ipad|android(?!.*mobile)|tablet/i.test(ua)
+    const isMobile = /mobile|android|iphone|ipod|blackberry|windows phone/i.test(ua)
+    const device = isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop'
 
     await supabase.from('page_views').insert({
       path,

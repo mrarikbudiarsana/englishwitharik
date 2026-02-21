@@ -149,7 +149,7 @@ export default async function TestPrepPage() {
                 Master Your <span className="text-[#08507f]">English Proficiency Test</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Whether it's IELTS, PTE, or TOEFL, we provide expert coaching to help you achieve the score you need for your global ambitions.
+                Whether it&apos;s IELTS, PTE, or TOEFL, we provide expert coaching to help you achieve the score you need for your global ambitions.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
@@ -189,7 +189,7 @@ export default async function TestPrepPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Us?</h2>
-            <p className="text-lg text-gray-600">We don't just teach English; we teach you how to succeed in the test.</p>
+            <p className="text-lg text-gray-600">We don&apos;t just teach English; we teach you how to succeed in the test.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, i) => (
@@ -262,7 +262,7 @@ export default async function TestPrepPage() {
         <div className="max-w-4xl mx-auto px-4 relative z-10">
           <h2 className="text-4xl font-bold mb-6">Ready to Ace Your Test?</h2>
           <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-            Don't let the exam stand in your way. Get the expert help you need today.
+            Don&apos;t let the exam stand in your way. Get the expert help you need today.
           </p>
           <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center bg-white text-[#08507f] font-bold text-lg py-4 px-10 rounded-2xl hover:bg-gray-100 transition-colors shadow-lg">

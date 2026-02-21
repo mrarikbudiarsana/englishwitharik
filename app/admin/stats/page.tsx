@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import type { ElementType } from 'react'
-import { Eye, Users, TrendingUp, TrendingDown, Heart, MessageSquare } from 'lucide-react'
+import { Eye, Users, TrendingUp, TrendingDown, Layers, Globe } from 'lucide-react'
 import StatsBarChart from '@/components/admin/StatsBarChart'
 import StatsDonutChart from '@/components/admin/StatsDonutChart'
 import StatsDatePicker from '@/components/admin/StatsDatePicker'
@@ -139,7 +139,7 @@ async function getStats(range: ParsedRange) {
   const rows: any[] = currentRows ?? []
 
   // ── Chart data ────────────────────────────────────────────────────────────
-  let chartData: { label: string; views: number; visitors: number }[]
+  let chartData: { label: string; date?: string; views: number; visitors: number }[]
 
   if (range.granularity === 'hour') {
     const viewMap: Record<number, number> = {}
@@ -157,6 +157,7 @@ async function getStats(range: ParsedRange) {
       label: `${h.toString().padStart(2, '0')}:00`,
       views: viewMap[h] ?? 0,
       visitors: visitorMap[h]?.size ?? 0,
+      // No date for hourly - already viewing single day
     }))
   } else if (range.granularity === 'day') {
     const viewMap: Record<string, number> = {}
@@ -177,6 +178,7 @@ async function getStats(range: ParsedRange) {
       const key = d.toISOString().substring(0, 10)
       return {
         label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: key,  // YYYY-MM-DD for navigation
         views: viewMap[key] ?? 0,
         visitors: visitorMap[key]?.size ?? 0,
       }
@@ -201,6 +203,7 @@ async function getStats(range: ParsedRange) {
       const key = d.toISOString().substring(0, 7)
       chartData.push({
         label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        date: key,  // YYYY-MM for navigation
         views: viewMap[key] ?? 0,
         visitors: visitorMap[key]?.size ?? 0,
       })
@@ -210,9 +213,16 @@ async function getStats(range: ParsedRange) {
 
   // ── Unique visitors ───────────────────────────────────────────────────────
   const sessionSet = new Set(rows.filter(v => v.session_id).map(v => v.session_id as string))
-  const visitors = sessionSet.size || rows.length
+  const visitors = sessionSet.size  // Accurate count - don't fallback to views
   const prevSessions = new Set((prevSessionRows ?? []).map(v => v.session_id as string))
-  const prevVisitors = prevSessions.size || (prevCount ?? 0)
+  const prevVisitors = prevSessions.size
+
+  // ── Pages per visitor ────────────────────────────────────────────────────
+  const pagesPerVisitor = visitors > 0 ? Math.round((rows.length / visitors) * 10) / 10 : 0
+  const prevPagesPerVisitor = prevVisitors > 0 ? (prevCount ?? 0) / prevVisitors : 0
+  const pagesPerVisitorChange = prevPagesPerVisitor > 0
+    ? Math.round(((pagesPerVisitor - prevPagesPerVisitor) / prevPagesPerVisitor) * 100)
+    : null
 
   // ── % changes ─────────────────────────────────────────────────────────────
   const viewsChange = prevCount && prevCount > 0
@@ -235,17 +245,44 @@ async function getStats(range: ParsedRange) {
   const topPosts = Array.from(postMap.values()).sort((a, b) => b.count - a.count).slice(0, 10)
 
   // ── Referrers ─────────────────────────────────────────────────────────────
+  // Show external traffic sources (Google, social media, etc.)
+  // Exclude: internal navigation, direct visits, localhost/dev traffic
   const refMap = new Map<string, number>()
+  let directTraffic = 0
+  const ownDomains = ['englishwitharik.com', 'www.englishwitharik.com']
+  const devDomains = ['localhost', '127.0.0.1', '192.168.']
+
   for (const v of rows) {
-    if (!v.referrer) continue
+    if (!v.referrer) {
+      // No referrer = direct traffic (typed URL, bookmark, etc.)
+      directTraffic++
+      continue
+    }
     try {
       const domain = new URL(v.referrer as string).hostname.replace(/^www\./, '')
-      if (domain) refMap.set(domain, (refMap.get(domain) ?? 0) + 1)
+      // Skip internal navigation (same site)
+      if (ownDomains.includes(domain) || ownDomains.includes(`www.${domain}`)) {
+        continue
+      }
+      // Skip dev/localhost traffic
+      if (devDomains.some(d => domain.includes(d))) {
+        continue
+      }
+      if (domain) {
+        refMap.set(domain, (refMap.get(domain) ?? 0) + 1)
+      }
     } catch { /* skip */ }
   }
-  const referrers = Array.from(refMap.entries())
-    .sort((a, b) => b[1] - a[1]).slice(0, 10)
+
+  // Build referrers list - external sources only, with direct at bottom
+  const externalReferrers = Array.from(refMap.entries())
+    .sort((a, b) => b[1] - a[1]).slice(0, 9)
     .map(([domain, count]) => ({ domain, count }))
+
+  // Add direct traffic at the end if there are no external referrers, or as last item
+  const referrers = externalReferrers.length > 0
+    ? [...externalReferrers, ...(directTraffic > 0 ? [{ domain: 'Direct', count: directTraffic }] : [])]
+    : (directTraffic > 0 ? [{ domain: 'Direct', count: directTraffic }] : [])
 
   // ── Countries & Cities ────────────────────────────────────────────────────
   interface CityData { name: string; count: number }
@@ -288,7 +325,9 @@ async function getStats(range: ParsedRange) {
   return {
     views: rows.length, viewsChange,
     visitors, visitorsChange,
-    chartData, topPosts, referrers, countries, devices: deviceMap,
+    pagesPerVisitor, pagesPerVisitorChange,
+    chartData, granularity: range.granularity,
+    topPosts, referrers, countries, devices: deviceMap,
   }
 }
 
@@ -296,18 +335,12 @@ async function getStats(range: ParsedRange) {
 // Utilities
 // ---------------------------------------------------------------------------
 
-function countryFlag(code: string) {
-  return [...code.toUpperCase()]
-    .map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('')
-}
-
-function countryName(code: string) {
-  try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code }
-  catch { return code }
-}
-
 function toDateStr(d: Date) { return d.toISOString().substring(0, 10) }
+
+function formatValue(value: number): string {
+  // Format decimals nicely (e.g., 2.5 stays as "2.5", 10 becomes "10")
+  return Number.isInteger(value) ? value.toLocaleString() : value.toFixed(1)
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -334,7 +367,7 @@ function StatCard({
         <Icon size={14} className="text-gray-400" />
         <span className="text-sm text-gray-500">{label}</span>
       </div>
-      <p className="text-3xl font-bold text-gray-900">{value.toLocaleString()}</p>
+      <p className="text-3xl font-bold text-gray-900">{formatValue(value)}</p>
       {change !== undefined && <ChangeLabel change={change ?? null} context={context ?? ''} />}
     </div>
   )
@@ -386,14 +419,26 @@ export default async function StatsPage({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Views" value={data.views} change={data.viewsChange} context={cmpLabel} icon={Eye} />
         <StatCard label="Visitors" value={data.visitors} change={data.visitorsChange} context={cmpLabel} icon={Users} />
-        <StatCard label="Likes" value={0} icon={Heart} />
-        <StatCard label="Comments" value={0} icon={MessageSquare} />
+        <StatCard label="Pages / Visitor" value={data.pagesPerVisitor} change={data.pagesPerVisitorChange} context={cmpLabel} icon={Layers} />
+        <StatCard label="Countries" value={data.countries.length} icon={Globe} />
       </div>
 
       {/* Views chart */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-1">Views</h2>
-        <StatsBarChart data={data.chartData} />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-700">Views Over Time</h2>
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-blue-500" />
+              <span className="text-gray-600">Views ({data.views.toLocaleString()})</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+              <span className="text-gray-600">Visitors ({data.visitors.toLocaleString()})</span>
+            </div>
+          </div>
+        </div>
+        <StatsBarChart data={data.chartData} granularity={data.granularity} />
       </div>
 
       {/* Most Viewed + Referrers */}
