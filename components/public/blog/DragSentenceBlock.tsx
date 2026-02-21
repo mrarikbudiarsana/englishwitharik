@@ -243,7 +243,7 @@ export default function DragSentenceBlock({ config }: DragSentenceBlockProps) {
                 <h3 className="!text-white text-lg font-semibold !m-0">
                     {config.title || 'Drag the words to complete the sentences'}
                 </h3>
-                <p className="text-sm text-blue-100/80 mt-1">Drag and drop words into the correct gaps, or tap a word then tap a gap.</p>
+                <p className="!text-blue-100/90 text-sm !m-0 !mt-1">Drag and drop words into the correct gaps, or tap a word then tap a gap.</p>
             </div>
 
             <div className="p-6 md:p-8 space-y-10 bg-gray-50/30">
