@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { getAttributionBundle } from '@/lib/attribution'
 
 export interface EmailWritingConfig {
   title?: string
@@ -67,6 +68,7 @@ export default function EmailWritingBlock({ config, postId, postSlug }: EmailWri
       : response.trim()
 
     try {
+      const attribution = getAttributionBundle()
       const responseResult = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +80,9 @@ export default function EmailWritingBlock({ config, postId, postSlug }: EmailWri
           block_id: config.blockId ?? null,
           post_id: postId ?? null,
           submission,
+          ...attribution.first,
+          first_seen_attribution: attribution.first,
+          last_seen_attribution: attribution.last,
         }),
       })
 

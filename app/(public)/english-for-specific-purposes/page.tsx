@@ -3,15 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, MessageCircle, Users, Trophy, Target, Clock, ArrowRight, Plane, Stethoscope, Briefcase, GraduationCap, Mic2 } from 'lucide-react'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-    title: 'English for Specific Purposes | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+    title: 'English for Specific Purposes',
     description: 'Master English for tourism, education, healthcare, or any specialised field. Tailored lessons for your profession.',
-}
+    path: '/english-for-specific-purposes',
+})
 
 export const revalidate = 3600
 

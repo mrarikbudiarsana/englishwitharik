@@ -2,16 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, BookOpen, Users, Trophy, Target, Clock, ArrowRight, Laptop, Star } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-  title: 'IELTS Preparation | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'IELTS Preparation',
   description: 'Join our IELTS Full Preparation or Skill-Focused Training. Achieve your target band with personalized coaching and our premium Student Portal.',
-}
+  path: '/ielts-preparation',
+})
 export const revalidate = 3600
 
 export default async function IELTSPage() {

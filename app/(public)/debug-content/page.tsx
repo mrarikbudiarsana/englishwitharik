@@ -1,5 +1,14 @@
 
 import { createClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
+
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Debug Content',
+  description: 'Internal debug page.',
+  path: '/debug-content',
+  noindex: true,
+})
 
 export const revalidate = 0
 

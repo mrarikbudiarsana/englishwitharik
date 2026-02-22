@@ -15,6 +15,20 @@ import {
 export const metadata: Metadata = {
   title: 'English with Arik — Your Gateway to Global Success',
   description: 'Learn English in an effective and fun way! Professional tutoring for IELTS, TOEFL, PTE, Business English & General English with I Putu Arik Budiarsana based in Bali, Indonesia.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'English with Arik — Your Gateway to Global Success',
+    description: 'Learn English in an effective and fun way! Professional tutoring for IELTS, TOEFL, PTE, Business English & General English.',
+    url: '/',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'English with Arik — Your Gateway to Global Success',
+    description: 'Learn English in an effective and fun way! Professional tutoring for IELTS, TOEFL, PTE, Business English & General English.',
+  },
 }
 
 export const revalidate = 60
@@ -106,8 +120,21 @@ export default async function HomePage() {
     ).filter(Boolean),
   }))
 
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationalOrganization',
+    name: 'English with Arik',
+    url: 'https://englishwitharik.com',
+    email: 'info@englishwitharik.com',
+    areaServed: 'Worldwide',
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       {/* ===== HERO ===== */}
       <section
         className="relative min-h-[calc(100vh-64px)] flex items-end justify-center pb-12 md:pb-24 bg-cover bg-center bg-no-repeat px-4"

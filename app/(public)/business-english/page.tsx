@@ -3,16 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, BookOpen, Users, Trophy, Target, Clock, ArrowRight, Laptop, Star, Briefcase, Presentation, Globe } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-  title: 'Business English | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Business English',
   description: 'Communicate professionally and confidently at work. Improve your English for meetings, presentations, emails, and negotiations.',
-}
+  path: '/business-english',
+})
 
 export const revalidate = 3600
 

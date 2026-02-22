@@ -87,6 +87,12 @@ function enhancePostHtml(rawHtml: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    ? (process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : `https://${process.env.NEXT_PUBLIC_SITE_URL}`)
+    : 'https://englishwitharik.com'
+  const canonicalPath = `/blog/${slug}`
   const supabase = await createClient()
   const { data: post } = await supabase
     .from('posts')
@@ -97,13 +103,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post) return {}
 
+  const title = post.seo_title ?? `${post.title} | English with Arik`
+  const description = post.seo_description ?? post.excerpt ?? 'English learning article by English with Arik.'
+  const image = post.featured_image_url ?? undefined
+
   return {
-    title: post.seo_title ?? `${post.title} | English with Arik`,
-    description: post.seo_description ?? post.excerpt ?? '',
+    title,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+    },
     openGraph: {
-      title: post.seo_title ?? post.title,
-      description: post.seo_description ?? post.excerpt ?? '',
-      images: post.featured_image_url ? [post.featured_image_url] : [],
+      type: 'article',
+      url: canonicalPath,
+      title,
+      description,
+      images: image ? [image] : [],
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: image ? [image] : [],
     },
   }
 }

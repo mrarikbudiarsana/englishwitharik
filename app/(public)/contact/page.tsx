@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Contact | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Contact',
   description: 'Get in touch with Arik for IELTS, PTE, TOEFL or English tutoring. Book a free trial session.',
-}
+  path: '/contact',
+})
 
 export default function ContactPage() {
   return (

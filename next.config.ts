@@ -12,6 +12,21 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'englishwitharik.com' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.englishwitharik.com',
+          },
+        ],
+        destination: 'https://englishwitharik.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;

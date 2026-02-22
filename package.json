@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run seo:audit",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "import:wp": "npx tsx scripts/import-wordpress.ts"
+    "import:wp": "npx tsx scripts/import-wordpress.ts",
+    "seo:audit": "npx tsx scripts/seo-audit.ts",
+    "hooks:install": "node scripts/setup-githooks.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

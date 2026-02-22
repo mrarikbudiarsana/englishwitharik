@@ -18,11 +18,18 @@ interface Props {
   preset:     string         // active preset name, or 'custom'
   from:       string         // YYYY-MM-DD  (display + arrow base)
   to:         string         // YYYY-MM-DD
+  campaign?:  string
   prevFrom:   string         // ← arrow destination
   prevTo:     string
   nextFrom:   string         // → arrow destination
   nextTo:     string
   canGoNext:  boolean
+}
+
+const GMT8_OFFSET_MS = 8 * 60 * 60 * 1000
+
+function getTodayGmt8Key() {
+  return new Date(Date.now() + GMT8_OFFSET_MS).toISOString().substring(0, 10)
 }
 
 function fmtDisplay(dateStr: string) {
@@ -31,14 +38,14 @@ function fmtDisplay(dateStr: string) {
 }
 
 export default function StatsDatePicker({
-  preset, from, to, prevFrom, prevTo, nextFrom, nextTo, canGoNext,
+  preset, from, to, campaign, prevFrom, prevTo, nextFrom, nextTo, canGoNext,
 }: Props) {
   const router   = useRouter()
   const [open, setOpen]         = useState(false)
   const [cfrom, setCfrom]       = useState(from)
   const [cto, setCto]           = useState(to)
   const containerRef             = useRef<HTMLDivElement>(null)
-  const today                    = new Date().toISOString().substring(0, 10)
+  const today                    = getTodayGmt8Key()
 
   // Close on outside click
   useEffect(() => {
@@ -58,13 +65,17 @@ export default function StatsDatePicker({
   }
 
   function selectPreset(value: string) {
-    router.push(`/admin/stats?range=${value}`)
+    const qs = new URLSearchParams({ range: value })
+    if (campaign) qs.set('campaign', campaign)
+    router.push(`/admin/stats?${qs.toString()}`)
     setOpen(false)
   }
 
   function applyCustom() {
     if (cfrom && cto && cfrom <= cto) {
-      router.push(`/admin/stats?from=${cfrom}&to=${cto}`)
+      const qs = new URLSearchParams({ from: cfrom, to: cto })
+      if (campaign) qs.set('campaign', campaign)
+      router.push(`/admin/stats?${qs.toString()}`)
       setOpen(false)
     }
   }
@@ -77,7 +88,11 @@ export default function StatsDatePicker({
     <div className="flex items-center gap-1.5" ref={containerRef}>
       {/* ← arrow */}
       <button
-        onClick={() => router.push(`/admin/stats?from=${prevFrom}&to=${prevTo}`)}
+        onClick={() => {
+          const qs = new URLSearchParams({ from: prevFrom, to: prevTo })
+          if (campaign) qs.set('campaign', campaign)
+          router.push(`/admin/stats?${qs.toString()}`)
+        }}
         className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-colors"
         title="Previous period"
       >
@@ -86,7 +101,12 @@ export default function StatsDatePicker({
 
       {/* → arrow */}
       <button
-        onClick={() => canGoNext && router.push(`/admin/stats?from=${nextFrom}&to=${nextTo}`)}
+        onClick={() => {
+          if (!canGoNext) return
+          const qs = new URLSearchParams({ from: nextFrom, to: nextTo })
+          if (campaign) qs.set('campaign', campaign)
+          router.push(`/admin/stats?${qs.toString()}`)
+        }}
         disabled={!canGoNext}
         className={`p-1.5 rounded-lg transition-colors ${
           canGoNext

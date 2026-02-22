@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy | English with Arik',
-}
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Privacy Policy',
+  description: 'Privacy policy for English with Arik.',
+  path: '/privacy-policy',
+})
 
 export default function PrivacyPolicyPage() {
   return (

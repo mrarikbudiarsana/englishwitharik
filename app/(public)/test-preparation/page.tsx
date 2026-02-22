@@ -3,16 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, BookOpen, Users, Trophy, Target, ArrowRight, Laptop, GraduationCap } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-  title: 'Test Preparation | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Test Preparation',
   description: 'Expert preparation for IELTS, PTE Academic, and TOEFL. Achieve your target score with our proven strategies and personalized coaching.',
-}
+  path: '/test-preparation',
+})
 
 export const revalidate = 3600
 

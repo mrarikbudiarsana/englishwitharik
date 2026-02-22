@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Pricing | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Pricing',
   description: 'Affordable English tutoring packages for IELTS, PTE, TOEFL and Business English in Bali.',
-}
+  path: '/pricing',
+})
 export const revalidate = 3600
 
 export default async function PricingPage() {

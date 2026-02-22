@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { getAttributionBundle } from '@/lib/attribution'
 
 export interface CtaConfig {
   title: string
@@ -49,6 +50,7 @@ export default function CtaBlock({ config, postId, postSlug }: CtaBlockProps) {
     setStatus('idle')
 
     try {
+      const attribution = getAttributionBundle()
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +61,9 @@ export default function CtaBlock({ config, postId, postSlug }: CtaBlockProps) {
           source: config.source ?? (postSlug ? `blog:${postSlug}` : 'blog'),
           block_id: config.blockId ?? null,
           post_id: postId ?? null,
+          ...attribution.first,
+          first_seen_attribution: attribution.first,
+          last_seen_attribution: attribution.last,
         }),
       })
 

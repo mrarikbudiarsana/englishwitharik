@@ -21,28 +21,59 @@ interface DataPoint {
 interface Props {
   data: DataPoint[]
   granularity?: 'hour' | 'day' | 'month'
+  campaign?: string
 }
 
-export default function StatsBarChart({ data, granularity = 'day' }: Props) {
+export default function StatsBarChart({ data, granularity = 'day', campaign }: Props) {
   const router = useRouter()
   const isClickable = granularity !== 'hour'
 
-  // Handle bar click - navigate to that day's stats
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleBarClick = (entry: any) => {
+  const navigateToPoint = (entry?: DataPoint) => {
     if (!isClickable || !entry?.date) return
 
     if (granularity === 'day') {
       // Navigate to single day view
-      router.push(`/admin/stats?from=${entry.date}&to=${entry.date}`)
+      const qs = new URLSearchParams({ from: entry.date, to: entry.date })
+      if (campaign) qs.set('campaign', campaign)
+      router.push(`/admin/stats?${qs.toString()}`)
     } else if (granularity === 'month') {
       // Navigate to that month (first to last day)
       const d = new Date(entry.date + '-01')
       const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0)
       const from = `${entry.date}-01`
       const to = lastDay.toISOString().substring(0, 10)
-      router.push(`/admin/stats?from=${from}&to=${to}`)
+      const qs = new URLSearchParams({ from, to })
+      if (campaign) qs.set('campaign', campaign)
+      router.push(`/admin/stats?${qs.toString()}`)
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBarClick = (_: any, index: number) => {
+    navigateToPoint(data[index])
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderTick = (props: any) => {
+    const { x, y, payload, index } = props
+    const entry = data[index]
+    const clickable = isClickable && Boolean(entry?.date)
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="middle"
+          fill="#9ca3af"
+          fontSize={11}
+          className={clickable ? 'cursor-pointer hover:fill-[#08507f]' : ''}
+          onClick={() => navigateToPoint(entry)}
+        >
+          {payload.value}
+        </text>
+      </g>
+    )
   }
 
   return (
@@ -55,7 +86,7 @@ export default function StatsBarChart({ data, granularity = 'day' }: Props) {
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
+          tick={renderTick}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"

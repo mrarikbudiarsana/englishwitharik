@@ -2,16 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, BookOpen, Users, Trophy, Target, Clock, ArrowRight, Laptop, Star } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-  title: 'PTE Academic | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'PTE Academic',
   description: 'Join our PTE Academic Preparation Program. Expert coaching, AI-powered mock tests, and personalised feedback to help you achieve your target score.',
-}
+  path: '/pte-academic',
+})
 
 export const revalidate = 3600
 

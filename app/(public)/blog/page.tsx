@@ -3,9 +3,34 @@ import PostCard from '@/components/public/PostCard'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Blog & Articles | English with Arik',
-  description: 'Tips, strategies and guides for IELTS, PTE, TOEFL, Business English and General English.',
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}): Promise<Metadata> {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+  const title = page > 1 ? `Blog & Articles - Page ${page}` : 'Blog & Articles'
+  const canonical = page > 1 ? `/blog?page=${page}` : '/blog'
+
+  return {
+    title,
+    description: 'Tips, strategies and guides for IELTS, PTE, TOEFL, Business English and General English.',
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: 'website',
+      title,
+      description: 'Tips, strategies and guides for IELTS, PTE, TOEFL, Business English and General English.',
+      url: canonical,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description: 'Tips, strategies and guides for IELTS, PTE, TOEFL, Business English and General English.',
+    },
+  }
 }
 
 export const revalidate = 60

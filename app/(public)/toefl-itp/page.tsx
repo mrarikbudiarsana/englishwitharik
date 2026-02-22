@@ -2,16 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { CheckCircle2, BookOpen, Users, Trophy, Target, Clock, ArrowRight, Laptop, Star } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import PostCard from '@/components/public/PostCard'
 
-export const metadata: Metadata = {
-  title: 'TOEFL ITP | English with Arik',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'TOEFL ITP',
   description: 'Prepare for the TOEFL ITP with tailored coaching, full study materials, and section-focused strategies for Listening, Structure, and Reading success.',
-}
+  path: '/toefl-itp',
+})
 
 export const revalidate = 3600
 

@@ -6,6 +6,7 @@ import StatsBarChart from '@/components/admin/StatsBarChart'
 import StatsDonutChart from '@/components/admin/StatsDonutChart'
 import StatsDatePicker from '@/components/admin/StatsDatePicker'
 import StatsLocations from '@/components/admin/StatsLocations'
+import StatsCsvDownloadButton from '@/components/admin/StatsCsvDownloadButton'
 
 // ---------------------------------------------------------------------------
 // Range parsing — supports presets + custom from/to
@@ -20,16 +21,68 @@ interface ParsedRange {
   granularity: Granularity
 }
 
+const GMT8_OFFSET_MS = 8 * 60 * 60 * 1000
+const DAY_MS = 86_400_000
+
+function startOfGmt8Day(date: Date): Date {
+  const shifted = new Date(date.getTime() + GMT8_OFFSET_MS)
+  shifted.setUTCHours(0, 0, 0, 0)
+  return new Date(shifted.getTime() - GMT8_OFFSET_MS)
+}
+
+function parseGmt8DateStart(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00+08:00`)
+}
+
+function parseGmt8DateEnd(dateStr: string): Date {
+  return new Date(`${dateStr}T23:59:59.999+08:00`)
+}
+
+function toGmt8DateKey(date: Date): string {
+  return new Date(date.getTime() + GMT8_OFFSET_MS).toISOString().substring(0, 10)
+}
+
+function toGmt8MonthKey(date: Date): string {
+  return new Date(date.getTime() + GMT8_OFFSET_MS).toISOString().substring(0, 7)
+}
+
+function formatGmt8DayLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'Asia/Singapore',
+  }).format(date)
+}
+
+function formatGmt8MonthLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    year: '2-digit',
+    timeZone: 'Asia/Singapore',
+  }).format(date)
+}
+
+function normalizeCampaign(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
+function getAttributionCampaign(raw: unknown): string | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const obj = raw as Record<string, unknown>
+  return normalizeCampaign(obj.utm_campaign)
+}
+
 function parseRange(sp: { range?: string; from?: string; to?: string }): ParsedRange {
   const now = new Date()
-  const todayStart = new Date(now)
-  todayStart.setHours(0, 0, 0, 0)
+  const todayStart = startOfGmt8Day(now)
 
   // Custom date range (?from=YYYY-MM-DD&to=YYYY-MM-DD)
   if (sp.from && sp.to) {
-    const from = new Date(sp.from + 'T00:00:00')
-    const to = new Date(sp.to + 'T23:59:59')
-    const diffDays = (to.getTime() - from.getTime()) / 86_400_000
+    const from = parseGmt8DateStart(sp.from)
+    const to = parseGmt8DateEnd(sp.to)
+    const diffDays = Math.floor((startOfGmt8Day(to).getTime() - startOfGmt8Day(from).getTime()) / DAY_MS) + 1
     return {
       from, to, preset: 'custom',
       granularity: diffDays <= 1 ? 'hour' : diffDays <= 90 ? 'day' : 'month',
@@ -45,32 +98,32 @@ function parseRange(sp: { range?: string; from?: string; to?: string }): ParsedR
     case '30':        // legacy
     case '30d': {
       const from = new Date(todayStart)
-      from.setDate(from.getDate() - 30)
+      from.setUTCDate(from.getUTCDate() - 30)
       return { from, to: now, preset: '30d', granularity: 'day' }
     }
 
     case 'mtd': {
       const from = new Date(todayStart)
-      from.setDate(1)
+      from.setUTCDate(1)
       return { from, to: now, preset: 'mtd', granularity: 'day' }
     }
 
     case '12m': {
       const from = new Date(todayStart)
-      from.setFullYear(from.getFullYear() - 1)
+      from.setUTCFullYear(from.getUTCFullYear() - 1)
       return { from, to: now, preset: '12m', granularity: 'month' }
     }
 
     case 'ytd': {
       const from = new Date(todayStart)
-      from.setMonth(0, 1)
+      from.setUTCMonth(0, 1)
       const diffDays = (now.getTime() - from.getTime()) / 86_400_000
       return { from, to: now, preset: 'ytd', granularity: diffDays <= 90 ? 'day' : 'month' }
     }
 
     case '3y': {
       const from = new Date(todayStart)
-      from.setFullYear(from.getFullYear() - 3)
+      from.setUTCFullYear(from.getUTCFullYear() - 3)
       return { from, to: now, preset: '3y', granularity: 'month' }
     }
 
@@ -78,7 +131,7 @@ function parseRange(sp: { range?: string; from?: string; to?: string }): ParsedR
     case '7d':
     default: {
       const from = new Date(todayStart)
-      from.setDate(from.getDate() - 7)
+      from.setUTCDate(from.getUTCDate() - 7)
       return { from, to: now, preset: '7d', granularity: 'day' }
     }
   }
@@ -93,10 +146,10 @@ function navRanges(from: Date, to: Date) {
   const nextTo = new Date(to.getTime() + dur)
   const now = new Date()
   return {
-    prevFrom: prevFrom.toISOString().substring(0, 10),
-    prevTo: prevTo.toISOString().substring(0, 10),
-    nextFrom: nextFrom.toISOString().substring(0, 10),
-    nextTo: nextTo.toISOString().substring(0, 10),
+    prevFrom: toGmt8DateKey(prevFrom),
+    prevTo: toGmt8DateKey(prevTo),
+    nextFrom: toGmt8DateKey(nextFrom),
+    nextTo: toGmt8DateKey(nextTo),
     canGoNext: nextFrom < now,
   }
 }
@@ -105,7 +158,7 @@ function navRanges(from: Date, to: Date) {
 // Data fetching
 // ---------------------------------------------------------------------------
 
-async function getStats(range: ParsedRange) {
+async function getStats(range: ParsedRange, campaignFilter: string | null) {
   const supabase = await createClient()
 
   const dur = range.to.getTime() - range.from.getTime()
@@ -135,8 +188,18 @@ async function getStats(range: ParsedRange) {
     .lt('viewed_at', prevEnd.toISOString())
     .not('session_id', 'is', null)
 
+  const { data: leadRows } = await supabase
+    .from('leads')
+    .select('post_id, utm_campaign, first_seen_attribution, last_seen_attribution')
+    .gte('created_at', range.from.toISOString())
+    .lte('created_at', range.to.toISOString())
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows: any[] = currentRows ?? []
+  const allRows: any[] = currentRows ?? []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: any[] = campaignFilter
+    ? allRows.filter(v => normalizeCampaign(v.utm_campaign) === campaignFilter)
+    : allRows
 
   // ── Chart data ────────────────────────────────────────────────────────────
   let chartData: { label: string; date?: string; views: number; visitors: number }[]
@@ -146,7 +209,9 @@ async function getStats(range: ParsedRange) {
     const visitorMap: Record<number, Set<string>> = {}
 
     for (const v of rows) {
-      const h = new Date(v.viewed_at).getHours()
+      // Adjust to GMT+8 for accurate local-hour grouping
+      const date = new Date(v.viewed_at)
+      const h = (date.getUTCHours() + 8) % 24
       viewMap[h] = (viewMap[h] ?? 0) + 1
       if (v.session_id) {
         if (!visitorMap[h]) visitorMap[h] = new Set()
@@ -164,20 +229,21 @@ async function getStats(range: ParsedRange) {
     const visitorMap: Record<string, Set<string>> = {}
 
     for (const v of rows) {
-      const day = (v.viewed_at as string).substring(0, 10)
+      const day = toGmt8DateKey(new Date(v.viewed_at as string))
       viewMap[day] = (viewMap[day] ?? 0) + 1
       if (v.session_id) {
         if (!visitorMap[day]) visitorMap[day] = new Set()
         visitorMap[day].add(v.session_id)
       }
     }
-    const days = Math.ceil(dur / 86_400_000)
+    const fromDayStart = startOfGmt8Day(range.from)
+    const toDayStart = startOfGmt8Day(range.to)
+    const days = Math.floor((toDayStart.getTime() - fromDayStart.getTime()) / DAY_MS) + 1
     chartData = Array.from({ length: Math.min(days, 366) }, (_, i) => {
-      const d = new Date(range.from)
-      d.setDate(d.getDate() + i)
-      const key = d.toISOString().substring(0, 10)
+      const d = new Date(fromDayStart.getTime() + (i * DAY_MS))
+      const key = toGmt8DateKey(d)
       return {
-        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: formatGmt8DayLabel(d),
         date: key,  // YYYY-MM-DD for navigation
         views: viewMap[key] ?? 0,
         visitors: visitorMap[key]?.size ?? 0,
@@ -189,25 +255,26 @@ async function getStats(range: ParsedRange) {
     const visitorMap: Record<string, Set<string>> = {}
 
     for (const v of rows) {
-      const m = (v.viewed_at as string).substring(0, 7)
+      const m = toGmt8MonthKey(new Date(v.viewed_at as string))
       viewMap[m] = (viewMap[m] ?? 0) + 1
       if (v.session_id) {
         if (!visitorMap[m]) visitorMap[m] = new Set()
         visitorMap[m].add(v.session_id)
       }
     }
-    const d = new Date(range.from)
-    d.setDate(1)
+    const fromDayStart = startOfGmt8Day(range.from)
+    const d = new Date(fromDayStart)
+    d.setUTCDate(1)
     chartData = []
     while (d <= range.to) {
-      const key = d.toISOString().substring(0, 7)
+      const key = toGmt8MonthKey(d)
       chartData.push({
-        label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        label: formatGmt8MonthLabel(d),
         date: key,  // YYYY-MM for navigation
         views: viewMap[key] ?? 0,
         visitors: visitorMap[key]?.size ?? 0,
       })
-      d.setMonth(d.getMonth() + 1)
+      d.setUTCMonth(d.getUTCMonth() + 1)
     }
   }
 
@@ -284,6 +351,131 @@ async function getStats(range: ParsedRange) {
     ? [...externalReferrers, ...(directTraffic > 0 ? [{ domain: 'Direct', count: directTraffic }] : [])]
     : (directTraffic > 0 ? [{ domain: 'Direct', count: directTraffic }] : [])
 
+  // ── Campaign attribution (UTM + click IDs) ──────────────────────────────
+  const campaignMap = new Map<string, {
+    source: string
+    medium: string
+    campaign: string
+    views: number
+    visitors: Set<string>
+  }>()
+
+  for (const v of allRows) {
+    let source = (v.utm_source as string | null) ?? null
+    let medium = (v.utm_medium as string | null) ?? null
+    const campaign = (v.utm_campaign as string | null) ?? '(not set)'
+    const hasClickId = Boolean(v.gclid || v.fbclid || v.msclkid)
+
+    if (!source && v.gclid) source = 'google'
+    if (!medium && v.gclid) medium = 'cpc'
+    if (!source && v.fbclid) source = 'facebook'
+    if (!medium && v.fbclid) medium = 'paid_social'
+    if (!source && v.msclkid) source = 'bing'
+    if (!medium && v.msclkid) medium = 'cpc'
+
+    if (!source && !medium && !campaign && !hasClickId) continue
+    if (!source && !medium && campaign === '(not set)' && !hasClickId) continue
+
+    const safeSource = source ?? '(unknown)'
+    const safeMedium = medium ?? '(none)'
+    const key = `${safeSource}|${safeMedium}|${campaign}`
+
+    if (!campaignMap.has(key)) {
+      campaignMap.set(key, {
+        source: safeSource,
+        medium: safeMedium,
+        campaign,
+        views: 0,
+        visitors: new Set<string>(),
+      })
+    }
+
+    const entry = campaignMap.get(key)!
+    entry.views++
+    if (v.session_id) entry.visitors.add(v.session_id as string)
+  }
+
+  const campaigns = Array.from(campaignMap.values())
+    .map(entry => ({
+      source: entry.source,
+      medium: entry.medium,
+      campaign: entry.campaign,
+      views: entry.views,
+      visitors: entry.visitors.size,
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20)
+
+  // ── Page performance ──────────────────────────────────────────────────────
+  const leadCountByPostId = new Map<string, number>()
+  for (const lead of leadRows ?? []) {
+    if (!lead.post_id) continue
+    const leadCampaign = normalizeCampaign(lead.utm_campaign)
+      ?? getAttributionCampaign(lead.last_seen_attribution)
+      ?? getAttributionCampaign(lead.first_seen_attribution)
+    if (campaignFilter && leadCampaign !== campaignFilter) continue
+    leadCountByPostId.set(lead.post_id, (leadCountByPostId.get(lead.post_id) ?? 0) + 1)
+  }
+
+  const pageMap = new Map<string, {
+    title: string
+    path: string
+    views: number
+    visitors: Set<string>
+    leads: number
+  }>()
+
+  for (const v of rows) {
+    const post = Array.isArray(v.posts) ? v.posts[0] : v.posts
+    const postId = v.post_id as string | null
+    const postSlug = (post?.slug as string | undefined) ?? null
+    const postTitle = (post?.title as string | undefined) ?? null
+
+    let key: string
+    let path: string
+    let title: string
+
+    if (postId && postSlug) {
+      key = `post:${postId}`
+      path = `/blog/${postSlug}`
+      title = postTitle ?? path
+    } else {
+      path = (v.path as string) || '/'
+      key = `path:${path}`
+      title = path
+    }
+
+    if (!pageMap.has(key)) {
+      pageMap.set(key, { title, path, views: 0, visitors: new Set<string>(), leads: 0 })
+    }
+
+    const entry = pageMap.get(key)!
+    entry.views++
+    if (v.session_id) entry.visitors.add(v.session_id as string)
+  }
+
+  for (const [key, entry] of pageMap.entries()) {
+    if (!key.startsWith('post:')) continue
+    const postId = key.slice(5)
+    entry.leads = leadCountByPostId.get(postId) ?? 0
+  }
+
+  const pagePerformance = Array.from(pageMap.values())
+    .map(entry => {
+      const visitorsCount = entry.visitors.size
+      const conversionRate = visitorsCount > 0 ? (entry.leads / visitorsCount) * 100 : 0
+      return {
+        title: entry.title,
+        path: entry.path,
+        views: entry.views,
+        visitors: visitorsCount,
+        leads: entry.leads,
+        conversionRate: Math.round(conversionRate * 10) / 10,
+      }
+    })
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 15)
+
   // ── Countries & Cities ────────────────────────────────────────────────────
   interface CityData { name: string; count: number }
   interface CountryData { code: string; count: number; cities: CityData[] }
@@ -327,7 +519,8 @@ async function getStats(range: ParsedRange) {
     visitors, visitorsChange,
     pagesPerVisitor, pagesPerVisitorChange,
     chartData, granularity: range.granularity,
-    topPosts, referrers, countries, devices: deviceMap,
+    topPosts, referrers, campaigns, pagePerformance, countries, devices: deviceMap,
+    campaignFilter,
   }
 }
 
@@ -335,7 +528,7 @@ async function getStats(range: ParsedRange) {
 // Utilities
 // ---------------------------------------------------------------------------
 
-function toDateStr(d: Date) { return d.toISOString().substring(0, 10) }
+function toDateStr(d: Date) { return toGmt8DateKey(d) }
 
 function formatValue(value: number): string {
   // Format decimals nicely (e.g., 2.5 stays as "2.5", 10 becomes "10")
@@ -384,11 +577,12 @@ function Rows({ children }: { children: React.ReactNode }) {
 export default async function StatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; from?: string; to?: string }>
+  searchParams: Promise<{ range?: string; from?: string; to?: string; campaign?: string }>
 }) {
   const sp = await searchParams
   const range = parseRange(sp)
-  const data = await getStats(range)
+  const campaignFilter = normalizeCampaign(sp.campaign)
+  const data = await getStats(range, campaignFilter)
   const nav = navRanges(range.from, range.to)
 
   const fromStr = toDateStr(range.from)
@@ -398,21 +592,42 @@ export default async function StatsPage({
     : range.preset === 'custom' ? 'vs prev period'
       : `vs prev period`
 
+  const campaignCsvRows = data.campaigns.map(row => [
+    row.source,
+    row.medium,
+    row.campaign,
+    row.views,
+    row.visitors,
+  ])
+
+  const pagePerformanceCsvRows = data.pagePerformance.map(row => [
+    row.title,
+    row.path,
+    row.views,
+    row.visitors,
+    row.leads,
+    `${row.conversionRate.toFixed(1)}%`,
+  ])
+
   return (
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Stats</h1>
-        <StatsDatePicker
-          preset={range.preset}
-          from={fromStr}
-          to={toStr}
-          prevFrom={nav.prevFrom}
-          prevTo={nav.prevTo}
-          nextFrom={nav.nextFrom}
-          nextTo={nav.nextTo}
-          canGoNext={nav.canGoNext}
-        />
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500">Timezone: GMT+8</span>
+          <StatsDatePicker
+            preset={range.preset}
+            from={fromStr}
+            to={toStr}
+            campaign={campaignFilter ?? undefined}
+            prevFrom={nav.prevFrom}
+            prevTo={nav.prevTo}
+            nextFrom={nav.nextFrom}
+            nextTo={nav.nextTo}
+            canGoNext={nav.canGoNext}
+          />
+        </div>
       </div>
 
       {/* KPI cards */}
@@ -438,8 +653,19 @@ export default async function StatsPage({
             </div>
           </div>
         </div>
-        <StatsBarChart data={data.chartData} granularity={data.granularity} />
+        <StatsBarChart data={data.chartData} granularity={data.granularity} campaign={campaignFilter ?? undefined} />
       </div>
+
+      {campaignFilter && (
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm">
+            <span>Campaign filter: {campaignFilter}</span>
+            <Link href={`/admin/stats?from=${fromStr}&to=${toStr}`} className="underline text-blue-700">
+              Clear
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Most Viewed + Referrers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -477,6 +703,102 @@ export default async function StatsPage({
             </Rows>
           )}
         </div>
+      </div>
+
+      {/* Campaign attribution */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-700">Campaign Attribution</h2>
+          <StatsCsvDownloadButton
+            filename={`campaign-attribution-${fromStr}_to_${toStr}.csv`}
+            headers={['Source', 'Medium', 'Campaign', 'Views', 'Visitors']}
+            rows={campaignCsvRows}
+          />
+        </div>
+        {data.campaigns.length === 0 ? (
+          <p className="text-sm text-gray-400">No UTM/campaign data in this period.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b border-gray-100">
+                  <th className="py-2 pr-4 font-medium">Source</th>
+                  <th className="py-2 pr-4 font-medium">Medium</th>
+                  <th className="py-2 pr-4 font-medium">Campaign</th>
+                  <th className="py-2 pr-4 font-medium text-right">Views</th>
+                  <th className="py-2 font-medium text-right">Visitors</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.campaigns.map(row => (
+                  <tr key={`${row.source}|${row.medium}|${row.campaign}`} className="border-b border-gray-50">
+                    <td className="py-2 pr-4 text-gray-700">{row.source}</td>
+                    <td className="py-2 pr-4 text-gray-700">{row.medium}</td>
+                    <td className="py-2 pr-4 text-gray-700">
+                      <Link
+                        href={`/admin/stats?from=${fromStr}&to=${toStr}&campaign=${encodeURIComponent(row.campaign)}`}
+                        className="hover:text-[#08507f] hover:underline"
+                      >
+                        {row.campaign}
+                      </Link>
+                    </td>
+                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.views.toLocaleString()}</td>
+                    <td className="py-2 text-right font-semibold text-gray-900">{row.visitors.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Page performance */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-700">Page Performance</h2>
+          <StatsCsvDownloadButton
+            filename={`page-performance-${fromStr}_to_${toStr}.csv`}
+            headers={['Page', 'Path', 'Views', 'Visitors', 'Leads', 'Conversion Rate']}
+            rows={pagePerformanceCsvRows}
+          />
+        </div>
+        {data.pagePerformance.length === 0 ? (
+          <p className="text-sm text-gray-400">No page performance data in this period.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b border-gray-100">
+                  <th className="py-2 pr-4 font-medium">Page</th>
+                  <th className="py-2 pr-4 font-medium text-right">Views</th>
+                  <th className="py-2 pr-4 font-medium text-right">Visitors</th>
+                  <th className="py-2 pr-4 font-medium text-right">Leads</th>
+                  <th className="py-2 font-medium text-right">Conv. Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.pagePerformance.map(row => (
+                  <tr key={row.path} className="border-b border-gray-50">
+                    <td className="py-2 pr-4">
+                      <Link
+                        href={row.path}
+                        target="_blank"
+                        className="text-gray-700 hover:text-[#08507f] truncate inline-block max-w-[420px]"
+                        title={row.path}
+                      >
+                        {row.title}
+                      </Link>
+                    </td>
+                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.views.toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.visitors.toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.leads.toLocaleString()}</td>
+                    <td className="py-2 text-right font-semibold text-gray-900">{row.conversionRate.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Locations + Devices */}

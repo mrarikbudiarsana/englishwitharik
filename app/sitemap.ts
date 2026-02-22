@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { createClient as createBrowserClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 function getSiteUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL || 'https://englishwitharik.com'
@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!supabaseUrl || !supabaseAnonKey) return entries
 
   try {
-    const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
     const { data: posts } = await supabase
       .from('posts')
       .select('slug, updated_at, published_at')

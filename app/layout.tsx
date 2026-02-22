@@ -6,7 +6,10 @@ import "./wp-blocks.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "English with Arik — Learn English with the Best!",
+  title: {
+    default: "English with Arik — Learn English with the Best!",
+    template: "%s | English with Arik",
+  },
   description: "Professional English tutoring for IELTS, PTE Academic, TOEFL iBT/ITP, Business English and General English. Based in Bali, Indonesia.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL
@@ -15,6 +18,36 @@ export const metadata: Metadata = {
         : `https://${process.env.NEXT_PUBLIC_SITE_URL}`
       : "https://englishwitharik.com"
   ),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "English with Arik",
+    title: "English with Arik — Learn English with the Best!",
+    description: "Professional English tutoring for IELTS, PTE Academic, TOEFL iBT/ITP, Business English and General English.",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "English with Arik — Learn English with the Best!",
+    description: "Professional English tutoring for IELTS, PTE Academic, TOEFL iBT/ITP, Business English and General English.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export default function RootLayout({

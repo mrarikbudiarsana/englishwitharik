@@ -64,6 +64,16 @@ export interface PageView {
   viewed_at: string
   country: string | null
   referrer: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_term: string | null
+  utm_content: string | null
+  gclid: string | null
+  fbclid: string | null
+  msclkid: string | null
+  first_seen_attribution: Record<string, string | null> | null
+  last_seen_attribution: Record<string, string | null> | null
 }
 
 export interface SiteSettings {

@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+set -e
+
+STAGED_FILES="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+echo "$STAGED_FILES" | grep -E '^(app/\(public\)/.*/page\.tsx|app/layout\.tsx|app/robots\.ts|app/sitemap\.ts|lib/seo\.ts|scripts/seo-audit\.ts|package\.json)$' > /dev/null || exit 0
+
+echo "Running SEO audit for staged SEO-related changes..."
+npm run seo:audit
