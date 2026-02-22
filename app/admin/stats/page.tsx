@@ -13,6 +13,7 @@ import StatsCsvDownloadButton from '@/components/admin/StatsCsvDownloadButton'
 // ---------------------------------------------------------------------------
 
 type Granularity = 'hour' | 'day' | 'month'
+const PAGE_PERFORMANCE_PAGE_SIZE = 10
 
 interface ParsedRange {
   from: Date
@@ -474,7 +475,6 @@ async function getStats(range: ParsedRange, campaignFilter: string | null) {
       }
     })
     .sort((a, b) => b.views - a.views)
-    .slice(0, 15)
 
   // ── Countries & Cities ────────────────────────────────────────────────────
   interface CityData { name: string; count: number }
@@ -577,7 +577,7 @@ function Rows({ children }: { children: React.ReactNode }) {
 export default async function StatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; from?: string; to?: string; campaign?: string }>
+  searchParams: Promise<{ range?: string; from?: string; to?: string; campaign?: string; page?: string }>
 }) {
   const sp = await searchParams
   const range = parseRange(sp)
@@ -591,6 +591,30 @@ export default async function StatsPage({
   const cmpLabel = range.preset === 'today' ? 'vs yesterday'
     : range.preset === 'custom' ? 'vs prev period'
       : `vs prev period`
+
+  const requestedPage = Number.parseInt(sp.page ?? '1', 10)
+  const totalPagePerformancePages = Math.max(
+    1,
+    Math.ceil(data.pagePerformance.length / PAGE_PERFORMANCE_PAGE_SIZE),
+  )
+  const pagePerformancePage = Number.isNaN(requestedPage)
+    ? 1
+    : Math.min(Math.max(requestedPage, 1), totalPagePerformancePages)
+  const pagePerformanceStart = (pagePerformancePage - 1) * PAGE_PERFORMANCE_PAGE_SIZE
+  const visiblePagePerformance = data.pagePerformance.slice(
+    pagePerformanceStart,
+    pagePerformanceStart + PAGE_PERFORMANCE_PAGE_SIZE,
+  )
+
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams()
+    if (sp.range) params.set('range', sp.range)
+    if (sp.from) params.set('from', sp.from)
+    if (sp.to) params.set('to', sp.to)
+    if (sp.campaign) params.set('campaign', sp.campaign)
+    if (targetPage > 1) params.set('page', String(targetPage))
+    return `/admin/stats?${params.toString()}`
+  }
 
   const campaignCsvRows = data.campaigns.map(row => [
     row.source,
@@ -765,39 +789,62 @@ export default async function StatsPage({
         {data.pagePerformance.length === 0 ? (
           <p className="text-sm text-gray-400">No page performance data in this period.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b border-gray-100">
-                  <th className="py-2 pr-4 font-medium">Page</th>
-                  <th className="py-2 pr-4 font-medium text-right">Views</th>
-                  <th className="py-2 pr-4 font-medium text-right">Visitors</th>
-                  <th className="py-2 pr-4 font-medium text-right">Leads</th>
-                  <th className="py-2 font-medium text-right">Conv. Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.pagePerformance.map(row => (
-                  <tr key={row.path} className="border-b border-gray-50">
-                    <td className="py-2 pr-4">
-                      <Link
-                        href={row.path}
-                        target="_blank"
-                        className="text-gray-700 hover:text-[#08507f] truncate inline-block max-w-[420px]"
-                        title={row.path}
-                      >
-                        {row.title}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.views.toLocaleString()}</td>
-                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.visitors.toLocaleString()}</td>
-                    <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.leads.toLocaleString()}</td>
-                    <td className="py-2 text-right font-semibold text-gray-900">{row.conversionRate.toFixed(1)}%</td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b border-gray-100">
+                    <th className="py-2 pr-4 font-medium">Page</th>
+                    <th className="py-2 pr-4 font-medium text-right">Views</th>
+                    <th className="py-2 pr-4 font-medium text-right">Visitors</th>
+                    <th className="py-2 pr-4 font-medium text-right">Leads</th>
+                    <th className="py-2 font-medium text-right">Conv. Rate</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {visiblePagePerformance.map(row => (
+                    <tr key={row.path} className="border-b border-gray-50">
+                      <td className="py-2 pr-4">
+                        <Link
+                          href={row.path}
+                          target="_blank"
+                          className="text-gray-700 hover:text-[#08507f] truncate inline-block max-w-[420px]"
+                          title={row.path}
+                        >
+                          {row.title}
+                        </Link>
+                      </td>
+                      <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.views.toLocaleString()}</td>
+                      <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.visitors.toLocaleString()}</td>
+                      <td className="py-2 pr-4 text-right font-semibold text-gray-900">{row.leads.toLocaleString()}</td>
+                      <td className="py-2 text-right font-semibold text-gray-900">{row.conversionRate.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {totalPagePerformancePages > 1 && (
+              <div className="mt-4 flex items-center justify-end gap-3 text-sm">
+                {pagePerformancePage > 1 ? (
+                  <Link href={pageHref(pagePerformancePage - 1)} className="text-gray-600 hover:text-[#08507f]">
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="text-gray-300">Previous</span>
+                )}
+                <span className="text-gray-500">
+                  Page {pagePerformancePage} of {totalPagePerformancePages}
+                </span>
+                {pagePerformancePage < totalPagePerformancePages ? (
+                  <Link href={pageHref(pagePerformancePage + 1)} className="text-gray-600 hover:text-[#08507f]">
+                    Next
+                  </Link>
+                ) : (
+                  <span className="text-gray-300">Next</span>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -5,10 +5,11 @@ import MetricsDashboard from '@/components/admin/MetricsDashboard'
 
 async function getStats() {
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
   const [postsRes, publishedRes, viewsRes, topPostsRes] = await Promise.all([
     supabase.from('posts').select('id', { count: 'exact', head: true }),
-    supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+    supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published').lte('published_at', nowIso),
     supabase.from('page_views').select('id', { count: 'exact', head: true }),
     supabase
       .from('page_views')

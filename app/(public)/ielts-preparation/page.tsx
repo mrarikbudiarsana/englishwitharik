@@ -18,12 +18,14 @@ export const revalidate = 3600
 
 export default async function IELTSPage() {
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
   // Fetch latest blog posts for the bottom section
   const { data: posts } = await supabase
     .from('posts')
     .select('*')
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .ilike('title', '%IELTS%')
     .order('published_at', { ascending: false })
     .limit(3)

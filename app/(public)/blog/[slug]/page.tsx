@@ -87,6 +87,7 @@ function enhancePostHtml(rawHtml: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
+  const nowIso = new Date().toISOString()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
     ? (process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')
       ? process.env.NEXT_PUBLIC_SITE_URL
@@ -99,6 +100,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select('title, excerpt, seo_title, seo_description, featured_image_url')
     .eq('slug', slug)
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .single()
 
   if (!post) return {}
@@ -135,9 +137,10 @@ export async function generateStaticParams() {
   if (!url || !key) return []
 
   try {
+    const nowIso = new Date().toISOString()
     const { createClient: createBrowserClient } = await import('@supabase/supabase-js')
     const supabase = createBrowserClient(url, key)
-    const { data } = await supabase.from('posts').select('slug').eq('status', 'published')
+    const { data } = await supabase.from('posts').select('slug').eq('status', 'published').lte('published_at', nowIso)
     return (data ?? []).map(p => ({ slug: p.slug }))
   } catch {
     return []
@@ -146,6 +149,7 @@ export async function generateStaticParams() {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params
+  const nowIso = new Date().toISOString()
   const supabase = await createClient()
 
   const { data: post } = await supabase
@@ -157,6 +161,7 @@ export default async function BlogPostPage({ params }: Props) {
     `)
     .eq('slug', slug)
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .single()
 
   if (!post) notFound()
@@ -215,6 +220,7 @@ export default async function BlogPostPage({ params }: Props) {
         post_categories!inner(category_id, categories(id, name, slug))
       `)
       .eq('status', 'published')
+      .lte('published_at', nowIso)
       .neq('id', post.id) // Exclude current post
       .in('post_categories.category_id', categoryIds)
       .order('published_at', { ascending: false })

@@ -20,12 +20,14 @@ export const revalidate = 3600
 
 export default async function GeneralEnglishPage() {
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
   // Fetch latest General English blog posts
   const { data: posts } = await supabase
     .from('posts')
     .select('*, categories(*)')
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .ilike('title', '%General English%') // Or just general query if needed
     .order('published_at', { ascending: false })
     .limit(3)

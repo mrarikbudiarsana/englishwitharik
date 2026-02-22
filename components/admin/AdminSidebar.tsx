@@ -16,6 +16,7 @@ import {
   Layers,
   Inbox,
   Star,
+  Share2,
 } from 'lucide-react'
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/admin/pages',      label: 'Pages',      icon: Layers },
   { href: '/admin/leads',      label: 'Leads',      icon: Inbox },
   { href: '/admin/ratings',    label: 'Ratings',    icon: Star },
+  { href: '/admin/share-links', label: 'Share Links', icon: Share2 },
   { href: '/admin/media',      label: 'Media',      icon: Image },
   { href: '/admin/categories', label: 'Categories', icon: Tag },
   { href: '/admin/settings',   label: 'Settings',   icon: Settings },
@@ -46,7 +48,7 @@ export default function AdminSidebar() {
   }
 
   return (
-    <aside className="w-60 min-h-screen bg-gray-900 text-white flex flex-col">
+    <aside className="w-60 h-screen sticky top-0 flex-shrink-0 overflow-hidden bg-gray-900 text-white flex flex-col">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-800">
         <Link href="/" target="_blank" className="flex items-center gap-2.5 group">
@@ -74,7 +76,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-0.5">
         {navItems.map(item => {
           const active = isActive(item.href, item.exact)
           return (

@@ -9,9 +9,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (pathname === '/admin/login') return <>{children}</>
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 h-screen overflow-y-auto">
         {children}
       </main>
     </div>

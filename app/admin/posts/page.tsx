@@ -9,18 +9,25 @@ export default async function AdminPostsPage({
 }) {
   const { status, q } = await searchParams
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
   let query = supabase
     .from('posts')
     .select('id, title, slug, status, published_at, created_at')
     .order('created_at', { ascending: false })
 
-  if (status && status !== 'all') query = query.eq('status', status)
+  if (status === 'published') {
+    query = query.eq('status', 'published').lte('published_at', nowIso)
+  } else if (status === 'scheduled') {
+    query = query.eq('status', 'published').gt('published_at', nowIso)
+  } else if (status === 'draft') {
+    query = query.eq('status', 'draft')
+  }
   if (q) query = query.ilike('title', `%${q}%`)
 
   const { data: posts } = await query
 
-  const tabs = ['all', 'published', 'draft']
+  const tabs = ['all', 'published', 'scheduled', 'draft']
 
   return (
     <div className="p-8">
@@ -101,7 +108,9 @@ export default async function AdminPostsPage({
                         ? 'bg-[#08507f]/10 text-[#08507f]'
                         : 'bg-gray-100 text-gray-600'
                       }`}>
-                      {post.status}
+                      {post.status === 'published' && post.published_at && post.published_at > nowIso
+                        ? 'scheduled'
+                        : post.status}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-gray-500 text-xs">

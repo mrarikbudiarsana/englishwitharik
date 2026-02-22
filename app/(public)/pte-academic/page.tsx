@@ -19,12 +19,14 @@ export const revalidate = 3600
 
 export default async function PTEPage() {
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
   // Fetch latest PTE blog posts
   const { data: posts } = await supabase
     .from('posts')
     .select('*, categories(*)')
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .ilike('title', '%PTE%')
     .order('published_at', { ascending: false })
     .limit(3)

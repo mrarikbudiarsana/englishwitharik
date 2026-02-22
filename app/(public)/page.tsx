@@ -103,6 +103,7 @@ const testimonials = [
 
 export default async function HomePage() {
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
   const { data: rawPosts } = await supabase
     .from('posts')
     .select(`
@@ -110,6 +111,7 @@ export default async function HomePage() {
       post_categories(category_id, categories(id, name, slug))
     `)
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .order('published_at', { ascending: false })
     .limit(6)
 

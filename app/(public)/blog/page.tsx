@@ -46,6 +46,7 @@ export default async function BlogPage({
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
+  const nowIso = new Date().toISOString()
 
   const supabase = await createClient()
 
@@ -56,6 +57,7 @@ export default async function BlogPage({
       post_categories(category_id, categories(id, name, slug))
     `, { count: 'exact' })
     .eq('status', 'published')
+    .lte('published_at', nowIso)
     .order('published_at', { ascending: false })
     .range(from, to)
 

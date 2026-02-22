@@ -34,6 +34,21 @@ interface CountryData {
     cities: CityData[]
 }
 
+function formatCityName(rawName: string): string {
+    const trimmed = (rawName ?? '').trim()
+    if (!trimmed || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'unknown') {
+        return 'Unknown City'
+    }
+
+    // Some providers store URL-encoded city values (e.g. Santa%20Clara, Lule%C3%A5).
+    // Decode for display while falling back safely if the value is malformed.
+    try {
+        return decodeURIComponent(trimmed.replace(/\+/g, ' '))
+    } catch {
+        return trimmed
+    }
+}
+
 export default function StatsLocations({ data }: { data: CountryData[] }) {
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -80,7 +95,7 @@ export default function StatsLocations({ data }: { data: CountryData[] }) {
                                     <div key={city.name} className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2 text-gray-500">
                                             <MapPin size={12} className="opacity-50" />
-                                            <span>{(!city.name || city.name === 'null' || city.name === 'Unknown') ? 'Unknown City' : city.name}</span>
+                                            <span>{formatCityName(city.name)}</span>
                                         </div>
                                         <span className="text-xs text-gray-400 tabular-nums">{city.count}</span>
                                     </div>

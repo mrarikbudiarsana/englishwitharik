@@ -19,12 +19,14 @@ export const revalidate = 3600
 
 export default async function ESPPage() {
     const supabase = await createClient()
+    const nowIso = new Date().toISOString()
 
     // Fetch latest ESP blog posts (broad search for "Specific")
     const { data: posts } = await supabase
         .from('posts')
         .select('*, categories(*)')
         .eq('status', 'published')
+        .lte('published_at', nowIso)
         .ilike('title', '%Specific%') // Adjust query if needed
         .order('published_at', { ascending: false })
         .limit(3)
