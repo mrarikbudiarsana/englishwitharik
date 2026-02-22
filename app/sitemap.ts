@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/test-preparation',
     '/toefl-ibt',
     '/toefl-itp',
+    '/id/kursus-bahasa-inggris-indonesia',
   ]
 
   const entries: MetadataRoute.Sitemap = staticRoutes.map((path) => ({
