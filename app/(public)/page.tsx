@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import PostCard from '@/components/public/PostCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import StudentLocationsMap from '@/components/public/StudentLocationsMap'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
@@ -398,6 +399,9 @@ export default async function HomePage() {
           />
         </div>
       </section>
+
+      {/* ===== STUDENT LOCATIONS MAP ===== */}
+      <StudentLocationsMap />
 
       {/* ===== FAQ SECTION ===== */}
       <section className="py-24 px-4 bg-[#fd9d19]/5">
