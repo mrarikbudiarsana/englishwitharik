@@ -18,7 +18,9 @@
       "Bash(node scripts/debug-xml2.mjs:*)",
       "Bash(node scripts/debug-xml3.mjs:*)",
       "Bash(del \"d:\\\\Website\\\\English with Arik\\\\middleware.ts\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Student Locations Map section to homepage\n\nAdd interactive world map showing student locations using Leaflet + OpenStreetMap:\n- Indonesian cities with pink markers \\(Bali highlighted in blue\\)\n- International locations \\(Australia, Turkey, USA\\) with orange markers\n- Click markers for popup details\n- Responsive design, seamless integration with page\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
