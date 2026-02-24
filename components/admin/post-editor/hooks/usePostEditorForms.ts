@@ -71,6 +71,8 @@ export function usePostEditorForms(editor: Editor | null) {
   const [missingLettersTitle, setMissingLettersTitle] = useState('')
   const [missingLettersItems, setMissingLettersItems] = useState<string[]>([''])
   const [missingLettersExplanation, setMissingLettersExplanation] = useState('')
+  const [collapsibleTitle, setCollapsibleTitle] = useState('')
+  const [collapsibleContent, setCollapsibleContent] = useState('')
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
 
   function resetMcqForm() {
@@ -166,6 +168,12 @@ export function usePostEditorForms(editor: Editor | null) {
     setEditingShortcode(null)
   }
 
+  function resetCollapsibleForm() {
+    setCollapsibleTitle('')
+    setCollapsibleContent('')
+    setEditingShortcode(null)
+  }
+
   function getActiveShortcodeContext() {
     if (!editor) return null
     const { $from } = editor.state.selection
@@ -207,6 +215,7 @@ export function usePostEditorForms(editor: Editor | null) {
       if (type === 'emailwriting') resetEmailWritingForm()
       if (type === 'missingletters') resetMissingLettersForm()
       if (type === 'dragsentence') resetDragSentenceForm()
+      if (type === 'collapsible') resetCollapsibleForm()
       return
     }
 
@@ -340,6 +349,11 @@ export function usePostEditorForms(editor: Editor | null) {
       setDragSentenceItems(items.length > 0 ? items : [{ speaker2Text: '', distractors: [] }])
       setDragSentenceExplanation(typeof c.explanation === 'string' ? c.explanation : '')
     }
+
+    if (type === 'collapsible') {
+      setCollapsibleTitle(typeof c.title === 'string' ? c.title : '')
+      setCollapsibleContent(typeof c.content === 'string' ? c.content : '')
+    }
   }
 
   function getCtaConfig() {
@@ -468,6 +482,10 @@ export function usePostEditorForms(editor: Editor | null) {
     setMissingLettersItems,
     missingLettersExplanation,
     setMissingLettersExplanation,
+    collapsibleTitle,
+    setCollapsibleTitle,
+    collapsibleContent,
+    setCollapsibleContent,
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
@@ -480,6 +498,7 @@ export function usePostEditorForms(editor: Editor | null) {
     resetEmailWritingForm,
     resetMissingLettersForm,
     resetDragSentenceForm,
+    resetCollapsibleForm,
     prepareModalForType,
     getCtaConfig,
   }

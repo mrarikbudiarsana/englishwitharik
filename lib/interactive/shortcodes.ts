@@ -144,6 +144,14 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'collapsible') {
+    const title = typeof config.title === 'string' ? config.title.trim() : ''
+    const content = typeof config.content === 'string' ? config.content.trim() : ''
+    if (!title) return 'Collapsible block must have a visible title.'
+    if (!content) return 'Collapsible block must have hidden content.'
+    return null
+  }
+
   return `Unsupported block type: ${blockType}`
 }
 

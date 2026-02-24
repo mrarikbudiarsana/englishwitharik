@@ -11,6 +11,8 @@ import MatchingBlock, { type MatchingConfig } from './MatchingBlock'
 import EmailWritingBlock, { type EmailWritingConfig } from './EmailWritingBlock'
 import MissingLettersBlock, { type MissingLettersConfig } from './MissingLettersBlock'
 import DragSentenceBlock from './DragSentenceBlock'
+import CollapsibleBlock from './CollapsibleBlock'
+import type { CollapsibleConfig } from './CollapsibleBlock'
 
 interface InteractivePostContentProps {
   html: string
@@ -204,6 +206,12 @@ function isDragSentenceConfig(config: unknown): config is DragSentenceConfig {
   )
 }
 
+function isCollapsibleConfig(config: unknown): config is CollapsibleConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return typeof c.title === 'string' && typeof c.content === 'string'
+}
+
 function UnknownBlock({ blockType }: { blockType: string }) {
   return (
     <div className="my-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -276,6 +284,10 @@ export default function InteractivePostContent({ html, postId, postSlug }: Inter
 
         if (segment.blockType === 'drag_sentence' && isDragSentenceConfig(segment.config)) {
           return <DragSentenceBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'collapsible' && isCollapsibleConfig(segment.config)) {
+          return <CollapsibleBlock key={`block-${index}`} config={segment.config} />
         }
 
         return <UnknownBlock key={`block-${index}`} blockType={segment.blockType} />

@@ -84,13 +84,7 @@ export function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
         <Quote size={15} />
       </ToolbarButton>
-      <ToolbarButton onClick={() => {
-        if (editor.isActive('details')) {
-          editor.chain().focus().unsetDetails().run()
-        } else {
-          editor.chain().focus().setDetails().run()
-        }
-      }} active={editor.isActive('details')} title="Collapsible Block">
+      <ToolbarButton onClick={() => onOpenBlockModal('collapsible')} active={false} title="Collapsible Block">
         <ListCollapse size={15} />
       </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">

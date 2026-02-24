@@ -57,6 +57,7 @@ export type BlockModalType =
   | 'emailwriting'
   | 'missingletters'
   | 'dragsentence'
+  | 'collapsible'
 
 export interface McqFormState {
   question: string
@@ -147,6 +148,11 @@ export interface DragSentenceFormState {
   title: string
   items: DragSentenceItem[]
   explanation: string
+}
+
+export interface CollapsibleFormState {
+  title: string
+  content: string
 }
 
 export interface EditorContextValue {

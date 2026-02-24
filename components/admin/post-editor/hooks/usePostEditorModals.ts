@@ -25,6 +25,7 @@ export function usePostEditorModals({
   const [showEmailWritingModal, setShowEmailWritingModal] = useState(false)
   const [showMissingLettersModal, setShowMissingLettersModal] = useState(false)
   const [showDragSentenceModal, setShowDragSentenceModal] = useState(false)
+  const [showCollapsibleModal, setShowCollapsibleModal] = useState(false)
   const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
 
   const openNearCursor = useCallback((open: () => void, panelWidth: number, panelHeight: number) => {
@@ -45,6 +46,7 @@ export function usePostEditorModals({
     if (type === 'emailwriting') openNearCursor(() => setShowEmailWritingModal(true), 900, 760)
     if (type === 'missingletters') openNearCursor(() => setShowMissingLettersModal(true), 768, 760)
     if (type === 'dragsentence') openNearCursor(() => setShowDragSentenceModal(true), 768, 760)
+    if (type === 'collapsible') openNearCursor(() => setShowCollapsibleModal(true), 768, 480)
   }, [onBeforeOpenAnyModal, onBeforeOpenBlockModal, openNearCursor])
 
   const openImageLibraryModal = useCallback(() => {
@@ -64,6 +66,7 @@ export function usePostEditorModals({
     showEmailWritingModal,
     showMissingLettersModal,
     showDragSentenceModal,
+    showCollapsibleModal,
     showImageLibraryModal,
     openBlockModal,
     openImageLibraryModal,
@@ -77,6 +80,7 @@ export function usePostEditorModals({
     closeEmailWritingModal: () => setShowEmailWritingModal(false),
     closeMissingLettersModal: () => setShowMissingLettersModal(false),
     closeDragSentenceModal: () => setShowDragSentenceModal(false),
+    closeCollapsibleModal: () => setShowCollapsibleModal(false),
     closeImageLibraryModal: () => setShowImageLibraryModal(false),
   }
 }

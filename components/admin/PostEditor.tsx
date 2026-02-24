@@ -11,7 +11,6 @@ import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
-import { Details, DetailsSummary, DetailsContent } from '@tiptap/extension-details'
 import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
 import type { PostEditorProps, ShortcodeEntry } from './post-editor/types'
 import {
@@ -35,6 +34,7 @@ import {
   EmailWritingModal,
   MissingLettersModal,
   DragSentenceModal,
+  CollapsibleModal,
   ImageLibraryModal,
 } from './post-editor/modals'
 
@@ -97,23 +97,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       }),
       TableRow,
       TableHeader,
+      TableHeader,
       TableCell,
-      Details.configure({
-        persist: true,
-        HTMLAttributes: {
-          class: 'details-block bg-white border border-slate-200 rounded-xl my-6 shadow-sm overflow-hidden open:shadow-md transition-shadow',
-        },
-      }),
-      DetailsSummary.configure({
-        HTMLAttributes: {
-          class: 'details-summary font-bold text-slate-800 text-xl cursor-pointer p-5 bg-slate-50 hover:bg-slate-100 outline-none flex items-center relative [&::-webkit-details-marker]:hidden transition-colors',
-        },
-      }),
-      DetailsContent.configure({
-        HTMLAttributes: {
-          class: 'details-content p-6 pt-2 border-t border-slate-100 text-slate-700 leading-relaxed',
-        },
-      }),
     ],
     content,
     onUpdate({ editor }) {
@@ -189,6 +174,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     missingLettersTitle,
     missingLettersItems,
     missingLettersExplanation,
+    collapsibleTitle,
+    collapsibleContent,
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
@@ -201,6 +188,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     resetEmailWritingForm,
     resetMissingLettersForm,
     resetDragSentenceForm,
+    resetCollapsibleForm,
     prepareModalForType,
     getCtaConfig,
   } = usePostEditorForms(editor)
@@ -283,6 +271,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     closeCtaModal,
     closeEmailWritingModal,
     closeMissingLettersModal,
+    showCollapsibleModal,
+    closeCollapsibleModal,
     closeDragSentenceModal,
     closeImageLibraryModal,
   } = usePostEditorModals({
@@ -355,6 +345,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     missingLettersInitialData,
     matchingInitialData,
     dragSentenceInitialData,
+    collapsibleInitialData,
     closeImageLibrary,
     closeMcq,
     closeAudio,
@@ -366,6 +357,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     closeMissingLetters,
     closeMatching,
     closeDragSentence,
+    closeCollapsible,
   } = usePostEditorModalBindings({
     mcqQuestion,
     mcqOptionA,
@@ -435,6 +427,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     missingLettersExplanation,
     resetMissingLettersForm,
     closeMissingLettersModal,
+    collapsibleTitle,
+    collapsibleContent,
+    resetCollapsibleForm,
+    closeCollapsibleModal,
     dragSentenceTitle,
     dragSentenceItems,
     dragSentenceExplanation,
@@ -680,6 +676,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         initialData={matchingInitialData}
         onClose={closeMatching}
         onInsert={config => insertShortcodeBlock('matching', config)}
+      />
+      <CollapsibleModal
+        isOpen={showCollapsibleModal}
+        position={modalPosition}
+        initialData={collapsibleInitialData}
+        onClose={closeCollapsible}
+        onInsert={config => insertShortcodeBlock('collapsible', config)}
       />
       <DragSentenceModal
         isOpen={showDragSentenceModal}

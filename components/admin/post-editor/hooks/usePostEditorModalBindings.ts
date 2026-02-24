@@ -78,6 +78,10 @@ interface UsePostEditorModalBindingsParams {
   dragSentenceExplanation: string
   resetDragSentenceForm: () => void
   closeDragSentenceModal: () => void
+  collapsibleTitle: string
+  collapsibleContent: string
+  resetCollapsibleForm: () => void
+  closeCollapsibleModal: () => void
   closeImageLibraryModal: () => void
   setMediaQuery: (value: string) => void
 }
@@ -166,6 +170,11 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     explanation: params.dragSentenceExplanation,
   }
 
+  const collapsibleInitialData = {
+    title: params.collapsibleTitle,
+    content: params.collapsibleContent,
+  }
+
   function closeImageLibrary() {
     params.closeImageLibraryModal()
     params.setMediaQuery('')
@@ -221,6 +230,11 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     params.closeDragSentenceModal()
   }
 
+  function closeCollapsible() {
+    params.resetCollapsibleForm()
+    params.closeCollapsibleModal()
+  }
+
   return {
     mcqInitialData,
     audioInitialData,
@@ -232,6 +246,7 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     missingLettersInitialData,
     matchingInitialData,
     dragSentenceInitialData,
+    collapsibleInitialData,
     closeImageLibrary,
     closeMcq,
     closeAudio,
@@ -243,5 +258,6 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     closeMissingLetters,
     closeMatching,
     closeDragSentence,
+    closeCollapsible,
   }
 }

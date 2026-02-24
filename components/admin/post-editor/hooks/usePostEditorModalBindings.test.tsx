@@ -77,6 +77,10 @@ function createParams() {
     dragSentenceExplanation: 'drag exp',
     resetDragSentenceForm: vi.fn(),
     closeDragSentenceModal: vi.fn(),
+    collapsibleTitle: 'Collapsible',
+    collapsibleContent: 'Hidden content',
+    resetCollapsibleForm: vi.fn(),
+    closeCollapsibleModal: vi.fn(),
     closeImageLibraryModal: vi.fn(),
     setMediaQuery: vi.fn(),
   }
