@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 import type { Editor } from '@tiptap/react'
+import '@tiptap/extension-details'
 import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
   Quote, LinkIcon, ImageIcon, Minus, SquarePlus,
-  Table as TableIcon, Spline, Merge, Columns, Rows, Trash,
+  Table as TableIcon, Spline, Merge, Columns, Rows, Trash, ListCollapse
 } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { BlockPickerMenu } from './BlockPickerMenu'
@@ -82,6 +83,15 @@ export function EditorToolbar({
       </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
         <Quote size={15} />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => {
+        if (editor.isActive('details')) {
+          editor.chain().focus().unsetDetails().run()
+        } else {
+          editor.chain().focus().setDetails().run()
+        }
+      }} active={editor.isActive('details')} title="Collapsible Block">
+        <ListCollapse size={15} />
       </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">
         <Minus size={15} />
