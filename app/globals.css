@@ -12,7 +12,9 @@ body {
 }
 
 /* Tiptap placeholder */
-.tiptap p.is-editor-empty:first-child::before {
+.tiptap p.is-editor-empty:first-child::before,
+.tiptap .details-summary.is-empty::before,
+.tiptap .details-content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: #9ca3af;
