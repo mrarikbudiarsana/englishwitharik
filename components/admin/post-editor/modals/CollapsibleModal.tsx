@@ -55,7 +55,7 @@ export function CollapsibleModal({
         content: initialData.content || '',
         editorProps: {
             attributes: {
-                class: 'min-h-[140px] px-3 py-2.5 focus:outline-none text-base text-gray-800 leading-relaxed',
+                class: 'prose max-w-none min-h-[140px] px-3 py-2.5 focus:outline-none text-base text-gray-800 leading-relaxed',
             },
         },
     })
