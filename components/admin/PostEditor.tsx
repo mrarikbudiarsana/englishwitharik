@@ -80,7 +80,15 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       Underline,
       Link.configure({ openOnClick: false }),
       ResizableImage.configure({ HTMLAttributes: { class: 'rounded-lg max-w-full' } }),
-      Placeholder.configure({ placeholder: 'Start writing your post...' }),
+      Placeholder.configure({
+        placeholder: ({ node }) => {
+          if (node.type.name === 'detailsSummary') {
+            return 'Enter title or summary here...'
+          }
+          return 'Start writing your post...'
+        },
+        showOnlyCurrent: false,
+      }),
       Table.configure({
         resizable: true,
         HTMLAttributes: {
@@ -98,7 +106,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
       }),
       DetailsSummary.configure({
         HTMLAttributes: {
-          class: 'details-summary font-bold text-slate-800 text-xl cursor-pointer p-5 bg-slate-50 hover:bg-slate-100 outline-none flex items-center justify-between [&::-webkit-details-marker]:hidden transition-colors',
+          class: 'details-summary font-bold text-slate-800 text-xl cursor-pointer p-5 bg-slate-50 hover:bg-slate-100 outline-none flex items-center relative [&::-webkit-details-marker]:hidden transition-colors',
         },
       }),
       DetailsContent.configure({
@@ -715,6 +723,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
           outline-offset: 1px;
         }
 
+        /* Collapsible Block Chevrons & Empty States */
+        .ProseMirror details.details-block .details-content {
+          min-height: 3rem;
+        }
       `}</style>
     </div>
   )
