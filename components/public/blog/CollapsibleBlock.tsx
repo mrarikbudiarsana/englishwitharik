@@ -11,12 +11,15 @@ export interface CollapsibleConfig {
 export default function CollapsibleBlock({ config }: { config: CollapsibleConfig }) {
     const [open, setOpen] = useState(false)
 
+    // content may be plain text (legacy) or HTML
+    const isHtml = config.content.trim().startsWith('<')
+
     return (
         <div className="my-4 rounded-lg border border-gray-200 overflow-hidden">
             <button
                 type="button"
                 onClick={() => setOpen(prev => !prev)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left font-medium text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors"
                 aria-expanded={open}
             >
                 <span>{config.title}</span>
@@ -27,8 +30,15 @@ export default function CollapsibleBlock({ config }: { config: CollapsibleConfig
             </button>
 
             {open && (
-                <div className="px-4 py-3 border-t border-gray-100 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap bg-gray-50">
-                    {config.content}
+                <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
+                    {isHtml ? (
+                        <div
+                            className="prose max-w-none text-gray-700"
+                            dangerouslySetInnerHTML={{ __html: config.content }}
+                        />
+                    ) : (
+                        <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap">{config.content}</p>
+                    )}
                 </div>
             )}
         </div>

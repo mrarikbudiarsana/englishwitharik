@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
+import {
+    Bold, Italic, UnderlineIcon, List, ListOrdered,
+} from 'lucide-react'
 import type { ModalPosition, CollapsibleFormState } from '../types'
 
 interface CollapsibleModalProps {
@@ -9,6 +15,29 @@ interface CollapsibleModalProps {
     onInsert: (config: Record<string, unknown>) => void
 }
 
+function MiniToolbarButton({
+    onClick,
+    active,
+    title,
+    children,
+}: {
+    onClick: () => void
+    active: boolean
+    title: string
+    children: React.ReactNode
+}) {
+    return (
+        <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); onClick() }}
+            title={title}
+            className={`p-1.5 rounded cursor-pointer transition-colors ${active ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100'}`}
+        >
+            {children}
+        </button>
+    )
+}
+
 export function CollapsibleModal({
     isOpen,
     position,
@@ -17,27 +46,44 @@ export function CollapsibleModal({
     onInsert,
 }: CollapsibleModalProps) {
     const [title, setTitle] = useState(initialData.title)
-    const [content, setContent] = useState(initialData.content)
+
+    const contentEditor = useEditor({
+        extensions: [
+            StarterKit.configure({ underline: false }),
+            Underline,
+        ],
+        content: initialData.content || '',
+        editorProps: {
+            attributes: {
+                class: 'min-h-[140px] px-3 py-2.5 focus:outline-none text-base text-gray-800 leading-relaxed',
+            },
+        },
+    })
 
     // Sync state when modal opens
     useEffect(() => {
         if (isOpen) {
             setTitle(initialData.title || '')
-            setContent(initialData.content || '')
+            if (contentEditor) {
+                contentEditor.commands.setContent(initialData.content || '')
+            }
         }
-    }, [isOpen, initialData])
+    }, [isOpen, initialData, contentEditor])
 
     if (!isOpen || !position) return null
 
     const handleSave = () => {
-        if (!title.trim() || !content.trim()) {
+        const html = contentEditor?.getHTML() ?? ''
+        const plainText = contentEditor?.getText().trim() ?? ''
+
+        if (!title.trim() || !plainText) {
             alert('Please provide both the visible text (title) and the hidden content.')
             return
         }
 
         onInsert({
             title: title.trim(),
-            content: content.trim(),
+            content: html,
         })
         onClose()
     }
@@ -58,7 +104,7 @@ export function CollapsibleModal({
                     top: Math.max(20, position.top),
                     left: Math.max(20, position.left),
                     width: '768px',
-                    maxHeight: 'min(480px, calc(100vh - 40px))',
+                    maxHeight: 'min(520px, calc(100vh - 40px))',
                 }}
             >
                 {/* Header */}
@@ -66,7 +112,7 @@ export function CollapsibleModal({
                     <h3 className="text-lg font-semibold text-gray-900">Collapsible Text</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md cursor-pointer hover:bg-gray-100"
                     >
                         <span className="sr-only">Close</span>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,48 +122,84 @@ export function CollapsibleModal({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Visible Text
-                            </label>
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={e => setTitle(e.target.value)}
-                                placeholder="e.g. Click to see the translation..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                    {/* Visible text */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Visible Text
+                        </label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            placeholder="e.g. Click to see the translation..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Hidden Content
-                            </label>
-                            <textarea
-                                value={content}
-                                onChange={e => setContent(e.target.value)}
-                                placeholder="Write the hidden extra information here..."
-                                rows={4}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm leading-relaxed whitespace-pre-wrap"
-                            />
+                    {/* Hidden content with mini rich-text editor */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hidden Content
+                        </label>
+                        <div className="border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                            {/* Mini toolbar */}
+                            <div className="flex items-center gap-0.5 px-2 py-1 border-b border-gray-200 bg-gray-50">
+                                <MiniToolbarButton
+                                    onClick={() => contentEditor?.chain().focus().toggleBold().run()}
+                                    active={!!contentEditor?.isActive('bold')}
+                                    title="Bold"
+                                >
+                                    <Bold size={14} />
+                                </MiniToolbarButton>
+                                <MiniToolbarButton
+                                    onClick={() => contentEditor?.chain().focus().toggleItalic().run()}
+                                    active={!!contentEditor?.isActive('italic')}
+                                    title="Italic"
+                                >
+                                    <Italic size={14} />
+                                </MiniToolbarButton>
+                                <MiniToolbarButton
+                                    onClick={() => contentEditor?.chain().focus().toggleUnderline().run()}
+                                    active={!!contentEditor?.isActive('underline')}
+                                    title="Underline"
+                                >
+                                    <UnderlineIcon size={14} />
+                                </MiniToolbarButton>
+                                <div className="w-px h-4 bg-gray-300 mx-1" />
+                                <MiniToolbarButton
+                                    onClick={() => contentEditor?.chain().focus().toggleBulletList().run()}
+                                    active={!!contentEditor?.isActive('bulletList')}
+                                    title="Bullet List"
+                                >
+                                    <List size={14} />
+                                </MiniToolbarButton>
+                                <MiniToolbarButton
+                                    onClick={() => contentEditor?.chain().focus().toggleOrderedList().run()}
+                                    active={!!contentEditor?.isActive('orderedList')}
+                                    title="Numbered List"
+                                >
+                                    <ListOrdered size={14} />
+                                </MiniToolbarButton>
+                            </div>
+
+                            {/* Editor area */}
+                            <EditorContent editor={contentEditor} />
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3 mt-auto">
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
-                        disabled={!title.trim() || !content.trim()}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg cursor-pointer hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
                         Save Block
                     </button>

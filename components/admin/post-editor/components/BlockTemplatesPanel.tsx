@@ -42,7 +42,7 @@ export function BlockTemplatesPanel({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between rounded-md px-1 py-1 text-left hover:bg-gray-100/70"
+        className="w-full flex items-center justify-between rounded-md px-1 py-1 text-left cursor-pointer hover:bg-gray-100/70"
         aria-expanded={isOpen}
       >
         <span className="text-xs font-semibold text-gray-700">Block Templates</span>
@@ -71,18 +71,18 @@ export function BlockTemplatesPanel({
                 </option>
               ))}
             </select>
-            <button type="button" onClick={onInsertTemplate} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+            <button type="button" onClick={onInsertTemplate} className="px-3 py-2 text-sm border border-gray-300 rounded-lg cursor-pointer hover:bg-white">
               Insert
             </button>
-            <button type="button" onClick={onDeleteTemplate} className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">
+            <button type="button" onClick={onDeleteTemplate} className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg cursor-pointer hover:bg-red-50">
               Delete
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onExport} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+            <button type="button" onClick={onExport} className="px-3 py-2 text-sm border border-gray-300 rounded-lg cursor-pointer hover:bg-white">
               Export
             </button>
-            <button type="button" onClick={onImportClick} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white">
+            <button type="button" onClick={onImportClick} className="px-3 py-2 text-sm border border-gray-300 rounded-lg cursor-pointer hover:bg-white">
               Import
             </button>
             <input
