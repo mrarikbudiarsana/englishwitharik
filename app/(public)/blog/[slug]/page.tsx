@@ -95,13 +95,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : 'https://englishwitharik.com'
   const canonicalPath = `/blog/${slug}`
   const supabase = await createClient()
-  const { data: post } = await supabase
+
+  // Allow previewing drafts for authenticated users, but don't crash if cookies aren't available (e.g. scrapers)
+  let isAuthorized = false
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    isAuthorized = !!user
+  } catch (err) {
+    // Ignore auth errors during static generation or crawler visits
+  }
+
+  let query = supabase
     .from('posts')
     .select('title, excerpt, seo_title, seo_description, featured_image_url')
     .eq('slug', slug)
-    .eq('status', 'published')
-    .lte('published_at', nowIso)
-    .single()
+
+  if (!isAuthorized) {
+    query = query.eq('status', 'published').lte('published_at', nowIso)
+  }
+
+  const { data: post } = await query.single()
 
   if (!post) return {}
 
@@ -113,11 +126,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: canonicalPath,
+      canonical: `${siteUrl}${canonicalPath}`,
     },
     openGraph: {
       type: 'article',
-      url: canonicalPath,
+      url: `${siteUrl}${canonicalPath}`,
       title,
       description,
       images: image ? [image] : [],
@@ -152,7 +165,16 @@ export default async function BlogPostPage({ params }: Props) {
   const nowIso = new Date().toISOString()
   const supabase = await createClient()
 
-  const { data: post } = await supabase
+  // Allow previewing drafts for authenticated users (admins)
+  let isAuthorized = false
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    isAuthorized = !!user
+  } catch (err) {
+    // Ignore auth errors during crawler visits
+  }
+
+  let query = supabase
     .from('posts')
     .select(`
       *,
@@ -160,9 +182,12 @@ export default async function BlogPostPage({ params }: Props) {
       post_tags(tag_id, tags(id, name, slug))
     `)
     .eq('slug', slug)
-    .eq('status', 'published')
-    .lte('published_at', nowIso)
-    .single()
+
+  if (!isAuthorized) {
+    query = query.eq('status', 'published').lte('published_at', nowIso)
+  }
+
+  const { data: post } = await query.single()
 
   if (!post) notFound()
 

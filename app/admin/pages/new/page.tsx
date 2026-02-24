@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
-import { Save, Eye, ArrowLeft } from 'lucide-react'
+import { Save, Send, Eye, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 function generateSlug(title: string) {
@@ -42,7 +42,14 @@ export default function NewPagePage() {
       .single()
 
     setSaving(false)
-    if (error) { alert(error.message); return }
+    if (error) {
+      if (error.code === '23505') {
+        alert('A page with this slug already exists. Please choose a different title or slug.')
+      } else {
+        alert(error.message)
+      }
+      return
+    }
     router.push(`/admin/pages/${data.id}`)
   }, [title, slug, content, router])
 
@@ -57,20 +64,22 @@ export default function NewPagePage() {
           <h1 className="text-xl font-bold text-gray-900">New Page</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleSave('draft')}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <Save size={15} />
-            Save Draft
-          </button>
+          {status !== 'draft' && (
+            <button
+              onClick={() => handleSave('draft')}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <Save size={15} />
+              Save Draft
+            </button>
+          )}
           <button
             onClick={() => handleSave('published')}
             disabled={saving}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] transition-colors disabled:opacity-50"
           >
-            <Eye size={15} />
+            <Send size={15} />
             Publish
           </button>
         </div>

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
-import { Save, Eye, Trash2, ArrowLeft } from 'lucide-react'
+import { Save, Send, Eye, Trash2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { BlogPage } from '@/lib/types'
 
@@ -21,13 +21,23 @@ export default function EditPageClient({ page }: { page: BlogPage }) {
     setSaving(true)
     const supabase = createClient()
 
-    await supabase.from('blog_pages').update({
+    const { error } = await supabase.from('blog_pages').update({
       title,
       slug,
       content,
       status: saveStatus,
       updated_at: new Date().toISOString(),
     }).eq('id', page.id)
+
+    if (error) {
+      setSaving(false)
+      if (error.code === '23505') {
+        alert('A page with this slug already exists. Please choose a different title or slug.')
+      } else {
+        alert(error.message)
+      }
+      return
+    }
 
     setSaving(false)
     setStatus(saveStatus)
@@ -49,15 +59,14 @@ export default function EditPageClient({ page }: { page: BlogPage }) {
             <ArrowLeft size={18} />
           </Link>
           <h1 className="text-xl font-bold text-gray-900">Edit Page</h1>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === 'published' ? 'bg-[#08507f]/10 text-[#08507f]' : 'bg-gray-100 text-gray-600'
-          }`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status === 'published' ? 'bg-[#08507f]/10 text-[#08507f]' : 'bg-gray-100 text-gray-600'
+            }`}>
             {status}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href={`/${slug}`}
+            href={`/${slug}?preview=true`}
             target="_blank"
             className="flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600"
           >
@@ -75,7 +84,7 @@ export default function EditPageClient({ page }: { page: BlogPage }) {
             disabled={saving}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] disabled:opacity-50"
           >
-            <Eye size={15} /> Publish
+            <Send size={15} /> {page.status === 'published' ? 'Update' : 'Publish'}
           </button>
         </div>
       </div>

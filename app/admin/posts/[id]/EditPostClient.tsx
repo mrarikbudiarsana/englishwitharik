@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
 import MediaPickerModal from '@/components/admin/MediaPickerModal'
 import PostSharePanel from '@/components/admin/PostSharePanel'
-import { Save, Eye, Trash2, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { Save, Send, Eye, Trash2, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import type { Post, Category, Tag } from '@/lib/types'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
@@ -91,7 +91,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
     setSaving(true)
     const supabase = createClient()
 
-    await supabase.from('posts').update({
+    const { error } = await supabase.from('posts').update({
       title,
       slug,
       content: cleanContent,
@@ -103,6 +103,16 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
       published_at: publishedAt,
       updated_at: new Date().toISOString(),
     }).eq('id', post.id)
+
+    if (error) {
+      setSaving(false)
+      if (error.code === '23505') {
+        alert('A post with this slug already exists. Please choose a different title or slug.')
+      } else {
+        alert(error.message)
+      }
+      return
+    }
 
     // Sync categories
     await supabase.from('post_categories').delete().eq('post_id', post.id)
@@ -153,16 +163,16 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/blog/${slug}`} target="_blank" className="flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600">
+          <Link href={`/blog/${slug}?preview=true`} target="_blank" className="flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600">
             <Eye size={15} /> Preview
           </Link>
           <button onClick={() => handleSave('draft')} disabled={saving}
             className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
             <Save size={15} /> Save Draft
           </button>
-          <button onClick={() => handleSave(status)} disabled={saving}
+          <button onClick={() => handleSave(status === 'scheduled' ? 'scheduled' : 'published')} disabled={saving}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] disabled:opacity-50">
-            <Eye size={15} /> {status === 'scheduled' ? 'Schedule' : status === 'draft' ? 'Save Draft' : 'Publish'}
+            <Send size={15} /> {status === 'scheduled' ? 'Schedule' : post.status === 'published' ? 'Update' : 'Publish'}
           </button>
         </div>
       </div>

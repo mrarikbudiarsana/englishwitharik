@@ -3,19 +3,20 @@
 import { useMemo, useState } from 'react'
 import { Copy, ExternalLink } from 'lucide-react'
 
-type ShareIntentChannel = 'linkedin' | 'facebook' | 'x'
+type ShareIntentChannel = 'linkedin' | 'facebook' | 'x' | 'threads'
 type LinkChannel = ShareIntentChannel | 'instagram' | 'whatsapp' | 'youtube'
 
 const linkChannelConfig: Record<LinkChannel, { label: string; source: string; medium: string }> = {
   linkedin: { label: 'LinkedIn', source: 'linkedin', medium: 'social' },
   facebook: { label: 'Facebook', source: 'facebook', medium: 'social' },
   x: { label: 'X', source: 'x', medium: 'social' },
+  threads: { label: 'Threads', source: 'threads', medium: 'social' },
   instagram: { label: 'Instagram', source: 'instagram', medium: 'social' },
   whatsapp: { label: 'WhatsApp', source: 'whatsapp', medium: 'referral' },
   youtube: { label: 'YouTube', source: 'youtube', medium: 'video' },
 }
 
-const shareIntentChannels: ShareIntentChannel[] = ['linkedin', 'facebook', 'x']
+const shareIntentChannels: ShareIntentChannel[] = ['linkedin', 'facebook', 'x', 'threads']
 
 function normalizeBaseUrl(raw?: string): string {
   if (!raw) return 'https://englishwitharik.com'
@@ -51,9 +52,10 @@ export default function PostSharePanel({
   const [selectedIntents, setSelectedIntents] = useState<Set<ShareIntentChannel>>(
     new Set(['linkedin', 'facebook']),
   )
-  const [campaign, setCampaign] = useState(`${monthKey()}-${safeSlug}`)
+  const [customCampaign, setCustomCampaign] = useState('')
 
-  const safeCampaign = useMemo(() => sanitizeCampaign(campaign) || `${monthKey()}-${safeSlug}`, [campaign, safeSlug])
+  const activeCampaign = customCampaign || `${monthKey()}-${safeSlug}`
+  const safeCampaign = useMemo(() => sanitizeCampaign(activeCampaign) || `${monthKey()}-${safeSlug}`, [activeCampaign, safeSlug])
   const linkMeta = linkChannelConfig[linkChannel]
 
   const trackedUrl = useMemo(() => {
@@ -92,6 +94,9 @@ export default function PostSharePanel({
     if (channel === 'facebook') {
       return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(trackedUrl)}`
     }
+    if (channel === 'threads') {
+      return `https://www.threads.net/intent/post?text=${encodeURIComponent(title || 'New blog post')} ${encodeURIComponent(trackedUrl)}`
+    }
     return `https://twitter.com/intent/tweet?url=${encodeURIComponent(trackedUrl)}&text=${encodeURIComponent(title || 'New blog post')}`
   }
 
@@ -114,8 +119,8 @@ export default function PostSharePanel({
           <label className="text-xs text-gray-500 mb-1 block">Campaign Name</label>
           <input
             type="text"
-            value={campaign}
-            onChange={e => setCampaign(e.target.value)}
+            value={activeCampaign}
+            onChange={e => setCustomCampaign(e.target.value)}
             className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
           />
           <p className="text-xs text-gray-400 mt-1">Use lowercase and hyphens. Example: 2026-02-business-english-reel</p>
@@ -168,11 +173,10 @@ export default function PostSharePanel({
                   key={channel}
                   type="button"
                   onClick={() => toggleIntentChannel(channel)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    active
-                      ? 'bg-[#08507f] text-white border-[#08507f]'
-                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                  }`}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${active
+                    ? 'bg-[#08507f] text-white border-[#08507f]'
+                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
                 >
                   {linkChannelConfig[channel].label}
                 </button>

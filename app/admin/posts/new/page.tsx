@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
 import MediaPickerModal from '@/components/admin/MediaPickerModal'
 import PostSharePanel from '@/components/admin/PostSharePanel'
-import { Save, Eye, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { Save, Send, Eye, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { validateInteractiveShortcodes } from '@/lib/interactive/shortcodes'
 import { sanitizeEditorArtifacts } from '@/lib/interactive/editorSanitizer'
@@ -89,7 +89,14 @@ export default function NewPostPage() {
     }).select('id').single()
 
     setSaving(false)
-    if (error) { alert(error.message); return }
+    if (error) {
+      if (error.code === '23505') {
+        alert('A post with this slug already exists. Please choose a different title or slug.')
+      } else {
+        alert(error.message)
+      }
+      return
+    }
     router.push(`/admin/posts/${data.id}`)
   }, [title, slug, content, excerpt, featuredImage, seoTitle, seoDesc, scheduledAt, router])
 
@@ -113,12 +120,12 @@ export default function NewPostPage() {
             Save Draft
           </button>
           <button
-            onClick={() => handleSave(status)}
+            onClick={() => handleSave(status === 'scheduled' ? 'scheduled' : 'published')}
             disabled={saving}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] transition-colors disabled:opacity-50"
           >
-            <Eye size={15} />
-            {status === 'scheduled' ? 'Schedule' : status === 'draft' ? 'Save Draft' : 'Publish'}
+            <Send size={15} />
+            {status === 'scheduled' ? 'Schedule' : 'Publish'}
           </button>
         </div>
       </div>
