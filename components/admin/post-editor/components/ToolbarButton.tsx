@@ -25,7 +25,7 @@ export function ToolbarButton({
       title={title}
       disabled={disabled}
       className={cn(
-        'p-1.5 rounded hover:bg-gray-100 transition-colors',
+        'p-1.5 rounded cursor-pointer hover:bg-gray-100 transition-colors',
         active && 'bg-gray-200 text-gray-900',
         !active && 'text-gray-600',
         disabled && 'opacity-30 cursor-not-allowed',

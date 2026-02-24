@@ -13,9 +13,12 @@ import {
   LinkIcon,
   ImageIcon,
   Minus,
+  ListCollapse,
+  Table as TableIcon,
 } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
 import { ToolbarButton } from './ToolbarButton'
+import type { BlockModalType } from '../types'
 
 interface FloatingToolbarProps {
   editor: Editor
@@ -24,6 +27,7 @@ interface FloatingToolbarProps {
   onAddLink: () => void
   onAddImage: () => void
   onSetImageWidth: (width: string) => void
+  onOpenBlockModal: (type: BlockModalType) => void
 }
 
 export function FloatingToolbar({
@@ -33,13 +37,14 @@ export function FloatingToolbar({
   onAddLink,
   onAddImage,
   onSetImageWidth,
+  onOpenBlockModal,
 }: FloatingToolbarProps) {
   return (
     <div className="fixed bottom-6 left-6 z-20 flex items-end gap-2">
       <button
         type="button"
         onClick={onToggle}
-        className="rounded-full bg-white border border-gray-200 p-3 shadow-lg hover:bg-gray-50 text-gray-700 transition-colors"
+        className="rounded-full bg-white border border-gray-200 p-3 shadow-lg cursor-pointer hover:bg-gray-50 text-gray-700 transition-colors"
         title="Toggle formatting toolbar"
       >
         {isOpen ? <X size={20} /> : <Type size={20} />}
@@ -81,6 +86,9 @@ export function FloatingToolbar({
             <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote">
               <Quote size={15} />
             </ToolbarButton>
+            <ToolbarButton onClick={() => onOpenBlockModal('collapsible')} active={false} title="Collapsible Block">
+              <ListCollapse size={15} />
+            </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} active={false} title="Divider">
               <Minus size={15} />
             </ToolbarButton>
@@ -96,12 +104,18 @@ export function FloatingToolbar({
 
             {editor.isActive('image') && (
               <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
-                <button type="button" onClick={() => onSetImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
-                <button type="button" onClick={() => onSetImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
-                <button type="button" onClick={() => onSetImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
-                <button type="button" onClick={() => onSetImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+                <button type="button" onClick={() => onSetImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">S</button>
+                <button type="button" onClick={() => onSetImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">M</button>
+                <button type="button" onClick={() => onSetImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">L</button>
+                <button type="button" onClick={() => onSetImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">Full</button>
               </div>
             )}
+
+            <div className="w-px h-5 bg-gray-300 mx-1" />
+
+            <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} active={editor.isActive('table')} title="Insert Table">
+              <TableIcon size={15} />
+            </ToolbarButton>
           </div>
         </div>
       )}

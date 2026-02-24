@@ -579,6 +579,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         onAddLink={addLink}
         onAddImage={addImage}
         onSetImageWidth={setSelectedImageWidth}
+        onOpenBlockModal={openBlockModal}
       />
 
       <FloatingBlockPicker

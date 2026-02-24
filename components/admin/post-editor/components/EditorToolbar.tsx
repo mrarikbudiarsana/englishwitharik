@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
 import type { Editor } from '@tiptap/react'
-import '@tiptap/extension-details'
 import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading2, Heading3, List, ListOrdered,
@@ -102,10 +101,10 @@ export function EditorToolbar({
 
       {editor.isActive('image') && (
         <div className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1 py-0.5">
-          <button type="button" onClick={() => onSetImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">S</button>
-          <button type="button" onClick={() => onSetImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">M</button>
-          <button type="button" onClick={() => onSetImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">L</button>
-          <button type="button" onClick={() => onSetImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded hover:bg-gray-100">Full</button>
+          <button type="button" onClick={() => onSetImageWidth('40%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">S</button>
+          <button type="button" onClick={() => onSetImageWidth('60%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">M</button>
+          <button type="button" onClick={() => onSetImageWidth('80%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">L</button>
+          <button type="button" onClick={() => onSetImageWidth('100%')} className="px-1.5 py-0.5 text-[11px] text-gray-700 rounded cursor-pointer hover:bg-gray-100">Full</button>
         </div>
       )}
 
@@ -121,7 +120,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().addColumnBefore().run()}
             disabled={!editor.can().addColumnBefore()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Add Column Before"
           >
             <Columns size={13} className="rotate-90" />
@@ -130,7 +129,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().addColumnAfter().run()}
             disabled={!editor.can().addColumnAfter()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Add Column After"
           >
             <Columns size={13} />
@@ -139,7 +138,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().deleteColumn().run()}
             disabled={!editor.can().deleteColumn()}
-            className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+            className="p-1 text-red-600 rounded cursor-pointer hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Delete Column"
           >
             <Trash size={13} />
@@ -149,7 +148,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().addRowBefore().run()}
             disabled={!editor.can().addRowBefore()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Add Row Before"
           >
             <Rows size={13} />
@@ -158,7 +157,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().addRowAfter().run()}
             disabled={!editor.can().addRowAfter()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Add Row After"
           >
             <Rows size={13} className="rotate-180" />
@@ -167,7 +166,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().deleteRow().run()}
             disabled={!editor.can().deleteRow()}
-            className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+            className="p-1 text-red-600 rounded cursor-pointer hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Delete Row"
           >
             <Trash size={13} />
@@ -177,7 +176,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().mergeCells().run()}
             disabled={!editor.can().mergeCells()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Merge Cells"
           >
             <Merge size={13} />
@@ -186,7 +185,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().splitCell().run()}
             disabled={!editor.can().splitCell()}
-            className="p-1 text-gray-700 rounded hover:bg-gray-100 disabled:opacity-30"
+            className="p-1 text-gray-700 rounded cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Split Cell"
           >
             <Spline size={13} />
@@ -195,7 +194,7 @@ export function EditorToolbar({
             type="button"
             onClick={() => editor.chain().focus().deleteTable().run()}
             disabled={!editor.can().deleteTable()}
-            className="p-1 text-red-600 rounded hover:bg-red-50 disabled:opacity-30"
+            className="p-1 text-red-600 rounded cursor-pointer hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Delete Table"
           >
             <Trash size={13} />
