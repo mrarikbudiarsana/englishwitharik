@@ -39,7 +39,7 @@ export function BlockPickerMenu({ onSelect }: BlockPickerMenuProps) {
           key={option.type}
           type="button"
           onClick={() => onSelect(option.type)}
-          className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2"
+          className="w-full text-left px-2.5 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 inline-flex items-center gap-2 cursor-pointer"
         >
           {option.icon}
           {option.label}

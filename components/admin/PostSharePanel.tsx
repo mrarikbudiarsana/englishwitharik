@@ -148,7 +148,7 @@ export default function PostSharePanel({
             <button
               type="button"
               onClick={() => copyText(trackedUrl, 'Tracked link')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
             >
               <Copy size={13} /> Copy Link
             </button>
@@ -156,7 +156,7 @@ export default function PostSharePanel({
               href={trackedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 cursor-pointer"
             >
               <ExternalLink size={13} /> Open Link
             </a>
@@ -173,7 +173,7 @@ export default function PostSharePanel({
                   key={channel}
                   type="button"
                   onClick={() => toggleIntentChannel(channel)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${active
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${active
                     ? 'bg-[#08507f] text-white border-[#08507f]'
                     : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                     }`}
@@ -187,14 +187,14 @@ export default function PostSharePanel({
             <button
               type="button"
               onClick={openSelectedIntents}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] cursor-pointer"
             >
               <ExternalLink size={13} /> Open Selected
             </button>
             <button
               type="button"
               onClick={() => copyText(shareText, 'Share text')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
             >
               <Copy size={13} /> Copy Caption + Link
             </button>

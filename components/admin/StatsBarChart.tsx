@@ -99,7 +99,7 @@ export default function StatsBarChart({ data, granularity = 'day', campaign }: P
         />
         <Tooltip
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-          cursor={{ fill: '#f3f4f6' }}
+          cursor={false}
         />
         <Bar
           dataKey="views"

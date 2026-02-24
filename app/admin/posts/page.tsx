@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { PenSquare, Plus, Search } from 'lucide-react'
+import SharePostButton from '@/components/admin/SharePostButton'
 
 export default async function AdminPostsPage({
   searchParams,
@@ -53,8 +54,8 @@ export default async function AdminPostsPage({
               key={tab}
               href={`/admin/posts?status=${tab}`}
               className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${(status ?? 'all') === tab
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               {tab}
@@ -105,8 +106,8 @@ export default async function AdminPostsPage({
                   </td>
                   <td className="px-6 py-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${post.status === 'published'
-                        ? 'bg-[#08507f]/10 text-[#08507f]'
-                        : 'bg-gray-100 text-gray-600'
+                      ? 'bg-[#08507f]/10 text-[#08507f]'
+                      : 'bg-gray-100 text-gray-600'
                       }`}>
                       {post.status === 'published' && post.published_at && post.published_at > nowIso
                         ? 'scheduled'
@@ -121,6 +122,7 @@ export default async function AdminPostsPage({
                   <td className="px-6 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <Link href={`/admin/posts/${post.id}`} className="text-[#08507f] hover:underline text-xs">Edit</Link>
+                      <SharePostButton slug={post.slug} />
                       <Link href={`/blog/${post.slug}`} target="_blank" className="text-gray-400 hover:text-gray-600 text-xs">View</Link>
                     </div>
                   </td>

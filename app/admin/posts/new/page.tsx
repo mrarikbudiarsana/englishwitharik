@@ -114,7 +114,7 @@ export default function NewPostPage() {
           <button
             onClick={() => handleSave('draft')}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Save size={15} />
             Save Draft
@@ -122,7 +122,7 @@ export default function NewPostPage() {
           <button
             onClick={() => handleSave(status === 'scheduled' ? 'scheduled' : 'published')}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Send size={15} />
             {status === 'scheduled' ? 'Schedule' : 'Publish'}
@@ -196,7 +196,7 @@ export default function NewPostPage() {
             />
             <button
               onClick={() => setShowMediaPicker(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
             >
               <ImageIcon size={16} /> Select from Media
             </button>

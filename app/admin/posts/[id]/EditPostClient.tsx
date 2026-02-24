@@ -167,11 +167,11 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
             <Eye size={15} /> Preview
           </Link>
           <button onClick={() => handleSave('draft')} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
             <Save size={15} /> Save Draft
           </button>
           <button onClick={() => handleSave(status === 'scheduled' ? 'scheduled' : 'published')} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-[#08507f] text-white rounded-lg hover:bg-[#063a5c] disabled:opacity-50 cursor-pointer">
             <Send size={15} /> {status === 'scheduled' ? 'Schedule' : post.status === 'published' ? 'Update' : 'Publish'}
           </button>
         </div>
@@ -225,7 +225,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
               className="w-full text-sm border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#08507f] mb-2" />
             <button
               onClick={() => setShowMediaPicker(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
             >
               <ImageIcon size={16} /> Select from Media
             </button>
@@ -255,7 +255,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
             <div className="flex flex-wrap gap-1.5">
               {allTags.map(tag => (
                 <button key={tag.id} onClick={() => toggleTag(tag.id)} type="button"
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${tagIds.includes(tag.id) ? 'bg-[#08507f] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${tagIds.includes(tag.id) ? 'bg-[#08507f] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}>
                   {tag.name}
                 </button>
@@ -292,7 +292,7 @@ export default function EditPostClient({ post, allCategories, allTags, selectedC
           <div className="bg-white rounded-xl border border-red-100 p-4">
             <h3 className="text-sm font-semibold text-red-600 mb-3">Danger Zone</h3>
             <button onClick={handleDelete}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium">
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium cursor-pointer">
               <Trash2 size={14} /> Delete this post
             </button>
           </div>
