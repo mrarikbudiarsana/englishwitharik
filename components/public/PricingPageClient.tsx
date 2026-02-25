@@ -33,12 +33,7 @@ interface Tab {
 
 // Data is now passed as a prop from the server
 
-// Features shared across every programme and package tier
-const SHARED_FEATURES = [
-    'Student portal access (portal.englishwitharik.com)',
-    'Quizzes & games',
-    'Flexible booking',
-]
+// Features are fetched from the database.
 
 /* ─────────────────────────────────────────────
    ICONS
@@ -287,7 +282,7 @@ export default function PricingPageClient({ tabs }: { tabs: Tab[] }) {
             </div>
 
             {/* ── What's Included ── */}
-            <IncludedFeatures features={[...tab.features, ...SHARED_FEATURES]} />
+            <IncludedFeatures features={tab.features} />
 
 
             {/* ── Single Session ── */}
