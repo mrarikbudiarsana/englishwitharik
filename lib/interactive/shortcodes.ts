@@ -39,6 +39,18 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'reading_mcq') {
+    const text = typeof config.text === 'string' ? config.text.trim() : ''
+    const question = typeof config.question === 'string' ? config.question.trim() : ''
+    const options = Array.isArray(config.options) ? config.options : []
+    const answer = typeof config.answer === 'number' ? config.answer : -1
+    if (!text) return 'Reading MCQ text is required.'
+    if (!question) return 'Reading MCQ question is required.'
+    if (options.length < 2) return 'Reading MCQ needs at least 2 options.'
+    if (answer < 0 || answer >= options.length) return 'Reading MCQ correct answer index is out of range.'
+    return null
+  }
+
   if (blockType === 'audio') {
     const src = typeof config.src === 'string' ? config.src.trim() : ''
     if (!src) return 'Audio URL is required.'

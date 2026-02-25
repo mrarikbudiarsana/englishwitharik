@@ -21,6 +21,14 @@ export function usePostEditorForms(editor: Editor | null) {
     { speaker2Text: '', distractors: [] },
   ])
   const [dragSentenceExplanation, setDragSentenceExplanation] = useState('')
+  const [readingMcqText, setReadingMcqText] = useState('')
+  const [readingMcqQuestion, setReadingMcqQuestion] = useState('')
+  const [readingMcqOptionA, setReadingMcqOptionA] = useState('')
+  const [readingMcqOptionB, setReadingMcqOptionB] = useState('')
+  const [readingMcqOptionC, setReadingMcqOptionC] = useState('')
+  const [readingMcqOptionD, setReadingMcqOptionD] = useState('')
+  const [readingMcqCorrectIndex, setReadingMcqCorrectIndex] = useState(0)
+  const [readingMcqExplanation, setReadingMcqExplanation] = useState('')
   const [mcqQuestion, setMcqQuestion] = useState('')
   const [mcqOptionA, setMcqOptionA] = useState('')
   const [mcqOptionB, setMcqOptionB] = useState('')
@@ -83,6 +91,18 @@ export function usePostEditorForms(editor: Editor | null) {
     setMcqOptionD('')
     setMcqCorrectIndex(0)
     setMcqExplanation('')
+    setEditingShortcode(null)
+  }
+
+  function resetReadingMcqForm() {
+    setReadingMcqText('')
+    setReadingMcqQuestion('')
+    setReadingMcqOptionA('')
+    setReadingMcqOptionB('')
+    setReadingMcqOptionC('')
+    setReadingMcqOptionD('')
+    setReadingMcqCorrectIndex(0)
+    setReadingMcqExplanation('')
     setEditingShortcode(null)
   }
 
@@ -216,6 +236,7 @@ export function usePostEditorForms(editor: Editor | null) {
       if (type === 'missingletters') resetMissingLettersForm()
       if (type === 'dragsentence') resetDragSentenceForm()
       if (type === 'collapsible') resetCollapsibleForm()
+      if (type === 'reading_mcq') resetReadingMcqForm()
       return
     }
 
@@ -230,6 +251,7 @@ export function usePostEditorForms(editor: Editor | null) {
       if (type === 'emailwriting') resetEmailWritingForm()
       if (type === 'missingletters') resetMissingLettersForm()
       if (type === 'dragsentence') resetDragSentenceForm()
+      if (type === 'reading_mcq') resetReadingMcqForm()
       return
     }
 
@@ -245,6 +267,18 @@ export function usePostEditorForms(editor: Editor | null) {
       setMcqOptionD(options[3] ?? '')
       setMcqCorrectIndex(typeof c.answer === 'number' ? c.answer : 0)
       setMcqExplanation(typeof c.explanation === 'string' ? c.explanation : '')
+    }
+
+    if (type === 'reading_mcq') {
+      const options = Array.isArray(c.options) ? c.options.map(item => String(item)) : []
+      setReadingMcqText(typeof c.text === 'string' ? c.text : '')
+      setReadingMcqQuestion(typeof c.question === 'string' ? c.question : '')
+      setReadingMcqOptionA(options[0] ?? '')
+      setReadingMcqOptionB(options[1] ?? '')
+      setReadingMcqOptionC(options[2] ?? '')
+      setReadingMcqOptionD(options[3] ?? '')
+      setReadingMcqCorrectIndex(typeof c.answer === 'number' ? c.answer : 0)
+      setReadingMcqExplanation(typeof c.explanation === 'string' ? c.explanation : '')
     }
 
     if (type === 'audio') {
@@ -382,6 +416,22 @@ export function usePostEditorForms(editor: Editor | null) {
     setDragSentenceItems,
     dragSentenceExplanation,
     setDragSentenceExplanation,
+    readingMcqText,
+    setReadingMcqText,
+    readingMcqQuestion,
+    setReadingMcqQuestion,
+    readingMcqOptionA,
+    setReadingMcqOptionA,
+    readingMcqOptionB,
+    setReadingMcqOptionB,
+    readingMcqOptionC,
+    setReadingMcqOptionC,
+    readingMcqOptionD,
+    setReadingMcqOptionD,
+    readingMcqCorrectIndex,
+    setReadingMcqCorrectIndex,
+    readingMcqExplanation,
+    setReadingMcqExplanation,
     mcqQuestion,
     setMcqQuestion,
     mcqOptionA,
@@ -489,6 +539,7 @@ export function usePostEditorForms(editor: Editor | null) {
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
+    resetReadingMcqForm,
     resetAudioForm,
     resetFillForm,
     resetDropdownForm,

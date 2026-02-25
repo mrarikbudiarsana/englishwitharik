@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo } from 'react'
 import McqBlock, { type McqConfig } from './McqBlock'
+import ReadingMcqBlock, { type ReadingMcqConfig } from './ReadingMcqBlock'
 import CtaBlock, { type CtaConfig } from './CtaBlock'
 import AudioBlock, { type AudioConfig } from './AudioBlock'
 import FillGapsBlock, { type FillGapsConfig } from './FillGapsBlock'
@@ -107,6 +108,18 @@ function isMcqConfig(config: unknown): config is McqConfig {
   const c = config as Record<string, unknown>
   return (
     typeof c.question === 'string'
+    && Array.isArray(c.options)
+    && c.options.every(option => typeof option === 'string')
+    && typeof c.answer === 'number'
+  )
+}
+
+function isReadingMcqConfig(config: unknown): config is ReadingMcqConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  return (
+    typeof c.text === 'string'
+    && typeof c.question === 'string'
     && Array.isArray(c.options)
     && c.options.every(option => typeof option === 'string')
     && typeof c.answer === 'number'
@@ -233,6 +246,10 @@ export default function InteractivePostContent({ html, postId, postSlug }: Inter
 
         if (segment.blockType === 'mcq' && isMcqConfig(segment.config)) {
           return <McqBlock key={`block-${index}`} config={segment.config} />
+        }
+
+        if (segment.blockType === 'reading_mcq' && isReadingMcqConfig(segment.config)) {
+          return <ReadingMcqBlock key={`block-${index}`} config={segment.config} />
         }
 
         if (segment.blockType === 'cta' && isCtaConfig(segment.config)) {

@@ -100,6 +100,7 @@ vi.mock('./post-editor/modals', () => ({
   McqModal: (props: { isOpen: boolean; onInsert: (config: Record<string, unknown>) => void }) => (
     props.isOpen ? <button onClick={() => props.onInsert({ question: 'Edited Q' })}>Insert MCQ</button> : null
   ),
+  ReadingMcqModal: () => null,
   AudioModal: () => null,
   FillGapsModal: () => null,
   DropdownGapsModal: () => null,
@@ -109,6 +110,7 @@ vi.mock('./post-editor/modals', () => ({
   EmailWritingModal: () => null,
   MissingLettersModal: () => null,
   DragSentenceModal: () => null,
+  CollapsibleModal: () => null,
   ImageLibraryModal: () => null,
 }))
 
@@ -197,6 +199,7 @@ vi.mock('./post-editor/hooks', async () => {
     usePostEditorModals: vi.fn(() => ({
       modalPosition: null,
       showMcqModal: true,
+      showReadingMcqModal: false,
       showAudioModal: false,
       showFillGapsModal: false,
       showDropdownGapsModal: false,
@@ -206,10 +209,12 @@ vi.mock('./post-editor/hooks', async () => {
       showEmailWritingModal: false,
       showMissingLettersModal: false,
       showDragSentenceModal: false,
+      showCollapsibleModal: false,
       showImageLibraryModal: false,
       openBlockModal: vi.fn(),
       openImageLibraryModal: vi.fn(),
       closeMcqModal: vi.fn(),
+      closeReadingMcqModal: vi.fn(),
       closeAudioModal: vi.fn(),
       closeFillGapsModal: vi.fn(),
       closeDropdownGapsModal: vi.fn(),
@@ -219,6 +224,7 @@ vi.mock('./post-editor/hooks', async () => {
       closeEmailWritingModal: vi.fn(),
       closeMissingLettersModal: vi.fn(),
       closeDragSentenceModal: vi.fn(),
+      closeCollapsibleModal: vi.fn(),
       closeImageLibraryModal: vi.fn(),
     })),
     useBlockEntries: vi.fn(() => ({
@@ -258,10 +264,20 @@ vi.mock('./post-editor/hooks', async () => {
       mediaQuery: '',
       setMediaQuery: vi.fn(),
       mediaError: null,
-      loadMediaResources: vi.fn(async () => {}),
+      loadMediaResources: vi.fn(async () => { }),
     })),
     usePostEditorModalBindings: vi.fn(() => ({
       mcqInitialData: {
+        question: '',
+        optionA: '',
+        optionB: '',
+        optionC: '',
+        optionD: '',
+        correctIndex: 0,
+        explanation: '',
+      },
+      readingMcqInitialData: {
+        text: '',
         question: '',
         optionA: '',
         optionB: '',
@@ -303,8 +319,10 @@ vi.mock('./post-editor/hooks', async () => {
       missingLettersInitialData: { title: '', items: [''], explanation: '' },
       matchingInitialData: { title: '', prompt: '', rows: [{ left: '', right: '' }], explanation: '' },
       dragSentenceInitialData: { title: '', items: [{ speaker2Text: '', distractors: [] }], explanation: '' },
+      collapsibleInitialData: { title: '', content: '' },
       closeImageLibrary: vi.fn(),
       closeMcq: vi.fn(),
+      closeReadingMcq: vi.fn(),
       closeAudio: vi.fn(),
       closeFill: vi.fn(),
       closeDropdown: vi.fn(),
@@ -314,6 +332,7 @@ vi.mock('./post-editor/hooks', async () => {
       closeMissingLetters: vi.fn(),
       closeMatching: vi.fn(),
       closeDragSentence: vi.fn(),
+      closeCollapsible: vi.fn(),
     })),
   }
 })

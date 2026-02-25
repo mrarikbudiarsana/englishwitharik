@@ -25,6 +25,7 @@ import { FloatingToolbar } from './post-editor/components/FloatingToolbar'
 import { FloatingBlockPicker } from './post-editor/components/FloatingBlockPicker'
 import {
   McqModal,
+  ReadingMcqModal,
   AudioModal,
   FillGapsModal,
   DropdownGapsModal,
@@ -122,6 +123,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     mcqOptionD,
     mcqCorrectIndex,
     mcqExplanation,
+    readingMcqText,
+    readingMcqQuestion,
+    readingMcqOptionA,
+    readingMcqOptionB,
+    readingMcqOptionC,
+    readingMcqOptionD,
+    readingMcqCorrectIndex,
+    readingMcqExplanation,
     audioSrc,
     audioTitle,
     audioTranscript,
@@ -179,6 +188,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
+    resetReadingMcqForm,
     resetAudioForm,
     resetFillForm,
     resetDropdownForm,
@@ -250,6 +260,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   const {
     modalPosition,
     showMcqModal,
+    showReadingMcqModal,
     showAudioModal,
     showFillGapsModal,
     showDropdownGapsModal,
@@ -263,6 +274,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     openBlockModal,
     openImageLibraryModal,
     closeMcqModal,
+    closeReadingMcqModal,
     closeAudioModal,
     closeFillGapsModal,
     closeDropdownGapsModal,
@@ -336,6 +348,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   // Modal initial values and close handlers composed for concise JSX.
   const {
     mcqInitialData,
+    readingMcqInitialData,
     audioInitialData,
     fillInitialData,
     dropdownInitialData,
@@ -348,6 +361,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     collapsibleInitialData,
     closeImageLibrary,
     closeMcq,
+    closeReadingMcq,
     closeAudio,
     closeFill,
     closeDropdown,
@@ -368,6 +382,16 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     mcqExplanation,
     resetMcqForm,
     closeMcqModal,
+    readingMcqText,
+    readingMcqQuestion,
+    readingMcqOptionA,
+    readingMcqOptionB,
+    readingMcqOptionC,
+    readingMcqOptionD,
+    readingMcqCorrectIndex,
+    readingMcqExplanation,
+    resetReadingMcqForm,
+    closeReadingMcqModal,
     audioSrc,
     audioTitle,
     audioTranscript,
@@ -607,6 +631,14 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         initialData={mcqInitialData}
         onClose={closeMcq}
         onInsert={config => insertShortcodeBlock('mcq', config)}
+      />
+
+      <ReadingMcqModal
+        isOpen={showReadingMcqModal}
+        position={modalPosition}
+        initialData={readingMcqInitialData}
+        onClose={closeReadingMcq}
+        onInsert={config => insertShortcodeBlock('reading_mcq', config)}
       />
 
       <AudioModal

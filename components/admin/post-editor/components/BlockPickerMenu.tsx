@@ -10,6 +10,7 @@ import {
   GripHorizontal,
   Send,
   FoldVertical,
+  BookOpen,
 } from 'lucide-react'
 import type { BlockModalType } from '../types'
 
@@ -19,6 +20,7 @@ interface BlockPickerMenuProps {
 
 const BLOCK_OPTIONS: Array<{ type: BlockModalType; label: string; icon: React.ReactNode }> = [
   { type: 'mcq', label: 'MCQ', icon: <SquarePlus size={14} /> },
+  { type: 'reading_mcq', label: 'Reading MCQ', icon: <BookOpen size={14} /> },
   { type: 'audio', label: 'Audio Player', icon: <Headphones size={14} /> },
   { type: 'fill', label: 'Fill In The Gaps', icon: <FileQuestion size={14} /> },
   { type: 'dropdown', label: 'Dropdown Gaps', icon: <ListChecks size={14} /> },

@@ -58,8 +58,20 @@ export type BlockModalType =
   | 'missingletters'
   | 'dragsentence'
   | 'collapsible'
+  | 'reading_mcq'
 
 export interface McqFormState {
+  question: string
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctIndex: number
+  explanation: string
+}
+
+export interface ReadingMcqFormState {
+  text: string
   question: string
   optionA: string
   optionB: string

@@ -8,6 +8,16 @@ interface UsePostEditorModalBindingsParams {
   mcqExplanation: string
   resetMcqForm: () => void
   closeMcqModal: () => void
+  readingMcqText: string
+  readingMcqQuestion: string
+  readingMcqOptionA: string
+  readingMcqOptionB: string
+  readingMcqOptionC: string
+  readingMcqOptionD: string
+  readingMcqCorrectIndex: number
+  readingMcqExplanation: string
+  resetReadingMcqForm: () => void
+  closeReadingMcqModal: () => void
   audioSrc: string
   audioTitle: string
   audioTranscript: string
@@ -95,6 +105,17 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     optionD: params.mcqOptionD,
     correctIndex: params.mcqCorrectIndex,
     explanation: params.mcqExplanation,
+  }
+
+  const readingMcqInitialData = {
+    text: params.readingMcqText,
+    question: params.readingMcqQuestion,
+    optionA: params.readingMcqOptionA,
+    optionB: params.readingMcqOptionB,
+    optionC: params.readingMcqOptionC,
+    optionD: params.readingMcqOptionD,
+    correctIndex: params.readingMcqCorrectIndex,
+    explanation: params.readingMcqExplanation,
   }
 
   const audioInitialData = {
@@ -185,6 +206,11 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     params.closeMcqModal()
   }
 
+  function closeReadingMcq() {
+    params.resetReadingMcqForm()
+    params.closeReadingMcqModal()
+  }
+
   function closeAudio() {
     params.resetAudioForm()
     params.closeAudioModal()
@@ -237,6 +263,7 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
 
   return {
     mcqInitialData,
+    readingMcqInitialData,
     audioInitialData,
     fillInitialData,
     dropdownInitialData,
@@ -249,6 +276,7 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     collapsibleInitialData,
     closeImageLibrary,
     closeMcq,
+    closeReadingMcq,
     closeAudio,
     closeFill,
     closeDropdown,
