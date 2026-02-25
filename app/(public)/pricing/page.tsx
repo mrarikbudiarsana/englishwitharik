@@ -45,7 +45,9 @@ export default async function PricingPage() {
         popular: pkg.popular,
       })
     }
-    const progPerks = perks.filter((p) => p.program_id === prog.id).map((p) => p.perk_text)
+    const progPerks = Array.from(new Set(
+      perks.filter((p) => p.program_id === prog.id).map((p) => p.perk_text)
+    ))
 
     return {
       id: prog.id,
