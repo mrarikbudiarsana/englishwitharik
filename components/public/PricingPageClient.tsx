@@ -31,155 +31,7 @@ interface Tab {
     features: string[]
 }
 
-const TABS: Tab[] = [
-    {
-        id: 'ielts',
-        label: 'IELTS',
-        tier: 'premium',
-        features: [
-            'Full preparation materials',
-            'Mock tests & band prediction',
-            'Personalized study plan',
-            'WhatsApp support',
-            'Progress tracking',
-        ],
-        sections: [
-            {
-                name: 'Full Preparation & Skill-Focused Training',
-                description: 'Covers all IELTS skills — Listening, Reading, Writing & Speaking.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 1,000,000', priceSemi: 'Rp 600,000' },
-                    { hours: 16, pricePrivate: 'Rp 2,000,000', priceSemi: 'Rp 1,200,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 3,000,000', priceSemi: 'Rp 1,800,000' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'pte',
-        label: 'PTE Academic',
-        tier: 'premium',
-        features: [
-            'AI-scored practice tests',
-            'PTE-specific strategies',
-            'Full skill coverage',
-            'WhatsApp support',
-            'Progress tracking',
-        ],
-        sections: [
-            {
-                name: 'Full Preparation & Skill-Focused Training',
-                description: 'Covers all PTE skills with computer-based exam techniques.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 1,000,000', priceSemi: 'Rp 600,000' },
-                    { hours: 16, pricePrivate: 'Rp 2,000,000', priceSemi: 'Rp 1,200,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 3,000,000', priceSemi: 'Rp 1,800,000' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'toefl-ibt',
-        label: 'TOEFL iBT',
-        tier: 'premium',
-        features: [
-            'Internet-based test strategies',
-            'Integrated task practice',
-            'Full skill coverage',
-            'WhatsApp support',
-            'Progress tracking',
-        ],
-        sections: [
-            {
-                name: 'Full Preparation & Skill-Focused Training',
-                description: 'Covers all TOEFL iBT sections including integrated tasks.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 1,000,000', priceSemi: 'Rp 600,000' },
-                    { hours: 16, pricePrivate: 'Rp 2,000,000', priceSemi: 'Rp 1,200,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 3,000,000', priceSemi: 'Rp 1,800,000' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'toefl-itp',
-        label: 'TOEFL ITP',
-        tier: 'standard',
-        features: [
-            'Paper-based test strategies',
-            'Grammar & structure focus',
-            'Full skill coverage',
-            'WhatsApp support',
-            'Progress tracking',
-        ],
-        sections: [
-            {
-                name: 'Full Preparation & Skill-Focused Training',
-                description: 'Paper-based test preparation covering Structure, Listening & Reading.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 800,000', priceSemi: 'Rp 500,000' },
-                    { hours: 16, pricePrivate: 'Rp 1,600,000', priceSemi: 'Rp 1,000,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 2,400,000', priceSemi: 'Rp 1,500,000' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'general',
-        label: 'General English',
-        tier: 'standard',
-        features: [
-            'A1–B2 levels available',
-            'Daily communication skills',
-            'Vocabulary & grammar',
-            'WhatsApp support',
-            'Completion certificate (optional)',
-        ],
-        sections: [
-            {
-                name: 'A1–A2 (Beginner to Elementary)',
-                description: 'Build your English foundation from the ground up.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 800,000', priceSemi: 'Rp 500,000' },
-                    { hours: 16, pricePrivate: 'Rp 1,600,000', priceSemi: 'Rp 1,000,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 2,400,000', priceSemi: 'Rp 1,500,000' },
-                ],
-            },
-            {
-                name: 'B1–B2 (Intermediate to Upper-Intermediate)',
-                description: 'Strengthen fluency and accuracy for academic or professional use.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 800,000', priceSemi: 'Rp 500,000' },
-                    { hours: 16, pricePrivate: 'Rp 1,600,000', priceSemi: 'Rp 1,000,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 2,400,000', priceSemi: 'Rp 1,500,000' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'business',
-        label: 'Business English',
-        tier: 'standard',
-        features: [
-            'Tourism, Business, Job Interview & more',
-            'Professional communication skills',
-            'Industry-specific vocabulary',
-            'WhatsApp support',
-            'Completion certificate (optional)',
-        ],
-        sections: [
-            {
-                name: 'English for Specific Purposes',
-                description: 'Business English, Tourism, Job Interviews, and other professional contexts.',
-                packages: [
-                    { hours: 8, pricePrivate: 'Rp 800,000', priceSemi: 'Rp 500,000' },
-                    { hours: 16, pricePrivate: 'Rp 1,600,000', priceSemi: 'Rp 1,000,000', popular: true },
-                    { hours: 24, pricePrivate: 'Rp 2,400,000', priceSemi: 'Rp 1,500,000' },
-                ],
-            },
-        ],
-    },
-]
+// Data is now passed as a prop from the server
 
 // Features shared across every programme and package tier
 const SHARED_FEATURES = [
@@ -342,11 +194,12 @@ function IncludedFeatures({ features }: { features: string[] }) {
    MAIN EXPORT
 ───────────────────────────────────────────── */
 
-export default function PricingPageClient() {
-    const [activeTab, setActiveTab] = useState<string>('ielts')
+export default function PricingPageClient({ tabs }: { tabs: Tab[] }) {
+    const [activeTab, setActiveTab] = useState<string>(tabs[0]?.id || '')
     const [sessionType, setSessionType] = useState<SessionType>('private')
 
-    const tab = TABS.find((t) => t.id === activeTab)!
+    const tab = tabs.find((t) => t.id === activeTab)
+    if (!tab) return <div className="py-20 text-center text-gray-400">Loading pricing...</div>
 
     return (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
@@ -376,7 +229,7 @@ export default function PricingPageClient() {
 
             {/* ── Programme Tabs ── */}
             <div className="flex flex-wrap justify-center gap-2 mb-8">
-                {TABS.map((t) => (
+                {tabs.map((t) => (
                     <button
                         key={t.id}
                         onClick={() => setActiveTab(t.id)}
