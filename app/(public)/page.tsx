@@ -162,14 +162,12 @@ export default async function HomePage() {
             >
               Free Consultation
             </a>
-            <a
-              href="https://rates.englishwitharik.com"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/pricing"
               className="w-full sm:w-auto bg-transparent border-2 border-[#08507f] text-[#08507f] hover:bg-[#08507f]/5 font-bold py-3 px-8 rounded-full transition-all uppercase tracking-wide text-sm"
             >
               View Pricing
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -538,14 +536,12 @@ export default async function HomePage() {
                 <span>Chat on WhatsApp</span>
               </div>
             </a>
-            <a
-              href="https://rates.englishwitharik.com"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/pricing"
               className="bg-transparent hover:bg-white/10 text-white font-bold py-4 px-10 rounded-xl transition-all border border-white/30"
             >
               View Pricing Options
-            </a>
+            </Link>
           </div>
         </div>
       </section>
