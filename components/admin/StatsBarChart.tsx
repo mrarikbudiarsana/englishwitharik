@@ -82,6 +82,7 @@ export default function StatsBarChart({ data, granularity = 'day', campaign }: P
         data={data}
         margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
         className={isClickable ? 'cursor-pointer' : ''}
+        style={{ outline: 'none' }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
         <XAxis
