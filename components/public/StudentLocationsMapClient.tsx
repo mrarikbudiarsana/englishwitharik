@@ -38,6 +38,8 @@ const internationalLocations = [
   { city: 'Adelaide', country: 'Australia', flag: '🇦🇺', lat: -34.9285, lng: 138.6007 },
   { city: 'Alice Springs', country: 'Australia', flag: '🇦🇺', lat: -23.6980, lng: 133.8807 },
   { city: 'Katherine', country: 'Australia', flag: '🇦🇺', lat: -14.4520, lng: 132.2711 },
+  { city: 'Millmerran', country: 'Australia', flag: '🇦🇺', lat: -27.8697, lng: 151.2732 },
+  { city: 'Perth', country: 'Australia', flag: '🇦🇺', lat: -31.9505, lng: 115.8605 },
   // Turkey
   { city: 'Istanbul', country: 'Turkey', flag: '🇹🇷', lat: 41.0082, lng: 28.9784 },
   // USA

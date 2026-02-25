@@ -77,12 +77,13 @@ export default function StatsBarChart({ data, granularity = 'day', campaign }: P
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <ResponsiveContainer width="100%" height={220} style={{ outline: 'none' }}>
       <BarChart
         data={data}
         margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
         className={isClickable ? 'cursor-pointer' : ''}
         style={{ outline: 'none' }}
+        tabIndex={-1}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
         <XAxis
