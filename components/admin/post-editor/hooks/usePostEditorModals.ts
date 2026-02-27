@@ -28,6 +28,7 @@ export function usePostEditorModals({
   const [showCollapsibleModal, setShowCollapsibleModal] = useState(false)
   const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
   const [showReadingMcqModal, setShowReadingMcqModal] = useState(false)
+  const [showLinkModal, setShowLinkModal] = useState(false)
 
   const openNearCursor = useCallback((open: () => void, panelWidth: number, panelHeight: number) => {
     setModalPosition(computeModalPosition(editor, panelWidth, panelHeight))
@@ -56,6 +57,11 @@ export function usePostEditorModals({
     openNearCursor(() => setShowImageLibraryModal(true), 900, 680)
   }, [onBeforeOpenAnyModal, openNearCursor])
 
+  const openLinkModal = useCallback(() => {
+    onBeforeOpenAnyModal?.()
+    openNearCursor(() => setShowLinkModal(true), 640, 260)
+  }, [onBeforeOpenAnyModal, openNearCursor])
+
   return {
     modalPosition,
     showMcqModal,
@@ -71,8 +77,10 @@ export function usePostEditorModals({
     showCollapsibleModal,
     showImageLibraryModal,
     showReadingMcqModal,
+    showLinkModal,
     openBlockModal,
     openImageLibraryModal,
+    openLinkModal,
     closeMcqModal: () => setShowMcqModal(false),
     closeAudioModal: () => setShowAudioModal(false),
     closeFillGapsModal: () => setShowFillGapsModal(false),
@@ -86,5 +94,6 @@ export function usePostEditorModals({
     closeCollapsibleModal: () => setShowCollapsibleModal(false),
     closeImageLibraryModal: () => setShowImageLibraryModal(false),
     closeReadingMcqModal: () => setShowReadingMcqModal(false),
+    closeLinkModal: () => setShowLinkModal(false),
   }
 }

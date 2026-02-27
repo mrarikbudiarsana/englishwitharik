@@ -36,6 +36,7 @@ interface UsePostEditorActionsParams {
   deleteCtaTemplate: (templateId: string) => void
   openImageLibraryModal: () => void
   closeImageLibraryModal: () => void
+  openLinkModal: () => void
   loadMediaResources: () => Promise<void>
   blockTemplates: BlockTemplate[]
   selectedBlockTemplateId: string
@@ -66,14 +67,20 @@ export function usePostEditorActions({
   deleteCtaTemplate,
   openImageLibraryModal,
   closeImageLibraryModal,
+  openLinkModal,
   loadMediaResources,
   blockTemplates,
   selectedBlockTemplateId,
 }: UsePostEditorActionsParams) {
   const addLink = useCallback(() => {
+    openLinkModal()
+  }, [openLinkModal])
+
+  const insertLinkFromUrl = useCallback((url: string) => {
     if (!editor) return
-    const url = window.prompt('Enter URL')
-    if (url) editor.chain().focus().setLink({ href: url }).run()
+    const href = url.trim()
+    if (!href) return
+    editor.chain().focus().setLink({ href }).run()
   }, [editor])
 
   const addImage = useCallback(() => {
@@ -184,6 +191,7 @@ export function usePostEditorActions({
 
   return {
     addLink,
+    insertLinkFromUrl,
     addImage,
     setSelectedImageWidth,
     insertImageFromMedia,

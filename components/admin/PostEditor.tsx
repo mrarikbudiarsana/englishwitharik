@@ -37,6 +37,7 @@ import {
   DragSentenceModal,
   CollapsibleModal,
   ImageLibraryModal,
+  UrlInputModal,
 } from './post-editor/modals'
 
 const ResizableImage = Image.extend({
@@ -70,6 +71,7 @@ const ResizableImage = Image.extend({
 export default function PostEditor({ content, onChange }: PostEditorProps) {
   const [showFloatingBlockPicker, setShowFloatingBlockPicker] = useState(false)
   const [showFormattingToolbar, setShowFormattingToolbar] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
   // Editor instance and core HTML synchronization.
   const editor = useEditor({
     immediatelyRender: false,
@@ -271,8 +273,10 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     showMissingLettersModal,
     showDragSentenceModal,
     showImageLibraryModal,
+    showLinkModal,
     openBlockModal,
     openImageLibraryModal,
+    openLinkModal,
     closeMcqModal,
     closeReadingMcqModal,
     closeAudioModal,
@@ -287,6 +291,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     closeCollapsibleModal,
     closeDragSentenceModal,
     closeImageLibraryModal,
+    closeLinkModal,
   } = usePostEditorModals({
     editor,
     onBeforeOpenBlockModal: prepareModalForType,
@@ -306,6 +311,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
   // Editor actions extracted from the orchestrator component.
   const {
     addLink,
+    insertLinkFromUrl,
     addImage,
     setSelectedImageWidth,
     insertImageFromMedia,
@@ -340,10 +346,25 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     deleteCtaTemplate,
     openImageLibraryModal,
     closeImageLibraryModal,
+    openLinkModal,
     loadMediaResources,
     blockTemplates,
     selectedBlockTemplateId,
   })
+
+  function closeLink() {
+    setLinkUrl('')
+    closeLinkModal()
+  }
+
+  function insertLink() {
+    if (!linkUrl.trim()) {
+      window.alert('Please enter a URL.')
+      return
+    }
+    insertLinkFromUrl(linkUrl)
+    closeLink()
+  }
 
   // Modal initial values and close handlers composed for concise JSX.
   const {
@@ -623,6 +644,20 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         onRefresh={() => { void loadMediaResources() }}
         onSelect={insertImageFromMedia}
         onClose={closeImageLibrary}
+      />
+
+      <UrlInputModal
+        isOpen={showLinkModal}
+        position={modalPosition}
+        title="Insert Link"
+        description="Enter the URL to apply to the selected text."
+        label="URL"
+        value={linkUrl}
+        onChange={setLinkUrl}
+        placeholder="https://example.com"
+        submitLabel="Apply link"
+        onSubmit={insertLink}
+        onClose={closeLink}
       />
 
       <McqModal

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { ModalPosition, CloudinaryResource } from '../types'
+import { UrlInputModal } from './UrlInputModal'
 
 interface ImageLibraryModalProps {
   isOpen: boolean
@@ -25,11 +27,27 @@ export function ImageLibraryModal({
   onSelect,
   onClose,
 }: ImageLibraryModalProps) {
+  const [showUrlModal, setShowUrlModal] = useState(false)
+  const [urlValue, setUrlValue] = useState('')
+
   if (!isOpen) return null
 
   const handleUseUrl = () => {
-    const url = window.prompt('Enter image URL')
-    if (url) onSelect(url)
+    setShowUrlModal(true)
+  }
+
+  const handleCloseUrlModal = () => {
+    setUrlValue('')
+    setShowUrlModal(false)
+  }
+
+  const handleSubmitUrlModal = () => {
+    if (!urlValue.trim()) {
+      window.alert('Please enter an image URL.')
+      return
+    }
+    onSelect(urlValue.trim())
+    handleCloseUrlModal()
   }
 
   return (
@@ -111,6 +129,18 @@ export function ImageLibraryModal({
           </div>
         )}
       </div>
+      <UrlInputModal
+        isOpen={showUrlModal}
+        position={position}
+        title="Insert Image by URL"
+        description="Paste a public image URL."
+        value={urlValue}
+        onChange={setUrlValue}
+        placeholder="https://example.com/image.jpg"
+        submitLabel="Use image"
+        onSubmit={handleSubmitUrlModal}
+        onClose={handleCloseUrlModal}
+      />
     </div>
   )
 }

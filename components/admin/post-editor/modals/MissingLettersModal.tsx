@@ -83,11 +83,11 @@ export function MissingLettersModal({ isOpen, position, initialData, onClose, on
         <div className="space-y-2">
           {form.items.map((row, index) => (
             <div key={`missing-row-${index}`} className="flex items-start gap-2">
-              <input
-                type="text"
+              <textarea
                 value={row}
                 onChange={e => updateItem(index, e.target.value)}
-                className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+                rows={3}
+                className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#08507f] resize-y min-h-[76px]"
                 placeholder="Archaeologists deter[[mined]] that..."
               />
               <button

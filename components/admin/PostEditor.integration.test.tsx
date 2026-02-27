@@ -112,6 +112,7 @@ vi.mock('./post-editor/modals', () => ({
   DragSentenceModal: () => null,
   CollapsibleModal: () => null,
   ImageLibraryModal: () => null,
+  UrlInputModal: () => null,
 }))
 
 vi.mock('./post-editor/hooks', async () => {
@@ -211,8 +212,10 @@ vi.mock('./post-editor/hooks', async () => {
       showDragSentenceModal: false,
       showCollapsibleModal: false,
       showImageLibraryModal: false,
+      showLinkModal: false,
       openBlockModal: vi.fn(),
       openImageLibraryModal: vi.fn(),
+      openLinkModal: vi.fn(),
       closeMcqModal: vi.fn(),
       closeReadingMcqModal: vi.fn(),
       closeAudioModal: vi.fn(),
@@ -226,6 +229,7 @@ vi.mock('./post-editor/hooks', async () => {
       closeDragSentenceModal: vi.fn(),
       closeCollapsibleModal: vi.fn(),
       closeImageLibraryModal: vi.fn(),
+      closeLinkModal: vi.fn(),
     })),
     useBlockEntries: vi.fn(() => ({
       blockEntries: [],

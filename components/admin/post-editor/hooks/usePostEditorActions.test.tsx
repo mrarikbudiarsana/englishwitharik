@@ -63,6 +63,7 @@ function createBaseParams() {
     deleteCtaTemplate: vi.fn(),
     openImageLibraryModal: vi.fn(),
     closeImageLibraryModal: vi.fn(),
+    openLinkModal: vi.fn(),
     loadMediaResources: vi.fn(async () => {}),
     blockTemplates: [{ id: 'b1', name: 'B1', blockType: 'mcq', shortcode: '[block:mcq:%7B%7D]' }],
     selectedBlockTemplateId: 'b1',
@@ -74,6 +75,17 @@ function createBaseParams() {
 describe('usePostEditorActions', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('opens link modal when add link is triggered', () => {
+    const { params } = createBaseParams()
+    const { result } = renderHook(() => usePostEditorActions(params))
+
+    act(() => {
+      result.current.addLink()
+    })
+
+    expect(params.openLinkModal).toHaveBeenCalledOnce()
   })
 
   it('replaces existing shortcode when editing the same block type', () => {
