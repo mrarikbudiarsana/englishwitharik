@@ -62,6 +62,29 @@ function parseItems(items: string[]) {
             parts.push({ type: 'text', value: item.slice(cursor) })
         }
 
+        // If a gap sits between two word fragments, strip accidental spaces
+        // around the gap so the word stays visually connected.
+        for (let index = 1; index < parts.length - 1; index++) {
+            const current = parts[index]
+            const prev = parts[index - 1]
+            const next = parts[index + 1]
+
+            if (current.type !== 'gap' || prev.type !== 'text' || next.type !== 'text') continue
+
+            const prevTrimmed = prev.value.trimEnd()
+            const nextTrimmed = next.value.trimStart()
+            const joinsWord =
+                prevTrimmed.length > 0 &&
+                nextTrimmed.length > 0 &&
+                endsWithWordChar(prevTrimmed) &&
+                startsWithWordChar(nextTrimmed)
+
+            if (!joinsWord) continue
+
+            prev.value = prevTrimmed
+            next.value = nextTrimmed
+        }
+
         parsedItems.push({ parts })
     }
 
