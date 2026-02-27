@@ -31,7 +31,7 @@ export default function StudentLocationsMap() {
             Our Students Come From
           </h2>
           <p className="text-gray-600 text-lg">
-            Join learners from across Indonesia and around the world.
+            Every marker represents Indonesian students, including those currently living abroad.
           </p>
         </div>
 
