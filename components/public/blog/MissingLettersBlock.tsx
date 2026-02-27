@@ -62,8 +62,8 @@ function parseItems(items: string[]) {
             parts.push({ type: 'text', value: item.slice(cursor) })
         }
 
-        // If a gap sits between two word fragments, strip accidental spaces
-        // around the gap so the word stays visually connected.
+        // Normalize accidental spaces around gaps so missing letters stay attached
+        // to the intended word fragment (prefix, infix, or suffix).
         for (let index = 1; index < parts.length - 1; index++) {
             const current = parts[index]
             const prev = parts[index - 1]
@@ -71,18 +71,25 @@ function parseItems(items: string[]) {
 
             if (current.type !== 'gap' || prev.type !== 'text' || next.type !== 'text') continue
 
-            const prevTrimmed = prev.value.trimEnd()
-            const nextTrimmed = next.value.trimStart()
-            const joinsWord =
-                prevTrimmed.length > 0 &&
-                nextTrimmed.length > 0 &&
-                endsWithWordChar(prevTrimmed) &&
-                startsWithWordChar(nextTrimmed)
+            const hasWordOnLeft = /[A-Za-z0-9]\s*$/.test(prev.value)
+            const hasWordOnRight = /^\s*[A-Za-z0-9]/.test(next.value)
+            const hasSpaceBeforeGap = /\s$/.test(prev.value)
+            const hasSpaceAfterGap = /^\s/.test(next.value)
 
-            if (!joinsWord) continue
+            if (hasWordOnLeft && hasWordOnRight) {
+                prev.value = prev.value.trimEnd()
+                next.value = next.value.trimStart()
+                continue
+            }
 
-            prev.value = prevTrimmed
-            next.value = nextTrimmed
+            if (hasWordOnLeft && hasSpaceAfterGap) {
+                prev.value = prev.value.trimEnd()
+                continue
+            }
+
+            if (hasSpaceBeforeGap && hasWordOnRight) {
+                next.value = next.value.trimStart()
+            }
         }
 
         parsedItems.push({ parts })
