@@ -3,6 +3,7 @@ import PostCard from '@/components/public/PostCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import StudentLocationsMap from '@/components/public/StudentLocationsMap'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import {
   BookOpen, Briefcase, Target, Building2,
@@ -32,6 +33,9 @@ export const metadata: Metadata = {
 }
 
 export const revalidate = 60
+
+const HERO_IMAGE_URL = 'https://res.cloudinary.com/english-tests-platform/image/upload/f_auto,q_auto,dpr_auto,w_1080/v1771332153/untitled-design-47_zrmjxa.webp'
+const HERO_POSTER_URL = 'https://res.cloudinary.com/english-tests-platform/image/upload/f_auto,q_auto,dpr_auto,w_900/v1771332153/untitled-design-47_zrmjxa.webp'
 
 const courses = [
   {
@@ -139,11 +143,16 @@ export default async function HomePage() {
       />
       {/* ===== HERO ===== */}
       <section
-        className="relative min-h-[calc(100vh-64px)] flex items-end justify-center pb-12 md:pb-24 bg-cover bg-center bg-no-repeat px-4"
-        style={{
-          backgroundImage: `url('https://res.cloudinary.com/english-tests-platform/image/upload/v1771332153/untitled-design-47_zrmjxa.webp')`,
-        }}
+        className="relative min-h-[calc(100vh-64px)] flex items-end justify-center pb-12 md:pb-24 px-4 overflow-hidden"
       >
+        <Image
+          src={HERO_IMAGE_URL}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
         {/* Content Card */}
         <div className="relative z-10 w-full max-w-4xl rounded-[28px] border border-white/30 bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] px-6 py-10 md:px-14 md:py-12 text-center">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
@@ -236,20 +245,19 @@ export default async function HomePage() {
                   loop
                   playsInline
                   preload="metadata"
-                  poster="https://res.cloudinary.com/english-tests-platform/image/upload/v1771332153/untitled-design-47_zrmjxa.webp" // Using hero image as poster fallback
+                  poster={HERO_POSTER_URL}
                 >
                   <source src="https://res.cloudinary.com/english-tests-platform/video/upload/v1771332452/video-web_optae0.mp4" type="video/mp4" />
                 </video>
-              </div>
-              {/* Optional Floating Badge */}
-              <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-xl border border-gray-100 hidden md:block">
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full text-yellow-600">
-                    <Star className="w-5 h-5 fill-current" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">5-Star Rated</p>
-                    <p className="text-xs text-gray-500">by Students</p>
+                <div className="absolute left-4 bottom-4 z-20 bg-white/95 p-4 rounded-xl shadow-xl border border-gray-100 hidden md:block">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-yellow-100 p-2 rounded-full text-yellow-600">
+                      <Star className="w-5 h-5 fill-current" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">5-Star Rated</p>
+                      <p className="text-xs text-gray-500">by Students</p>
+                    </div>
                   </div>
                 </div>
               </div>

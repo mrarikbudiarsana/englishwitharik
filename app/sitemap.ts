@@ -57,7 +57,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       ...entries,
       ...posts
-        .filter((post) => post.slug)
+        .filter((post) => {
+          if (!post.slug) return false
+          const slug = post.slug.trim().toLowerCase()
+          // Exclude known junk/legacy slugs from WordPress imports.
+          if (!slug || slug === '__trashed') return false
+          if (slug.startsWith('_')) return false
+          if (slug.includes('__trashed')) return false
+          return true
+        })
         .map((post) => ({
           url: `${siteUrl}/blog/${post.slug}`,
           lastModified: new Date(post.updated_at ?? post.published_at ?? now),
