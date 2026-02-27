@@ -23,6 +23,14 @@ interface Gap {
     answer: string
 }
 
+function endsWithWordChar(value: string) {
+    return /[A-Za-z0-9]$/.test(value)
+}
+
+function startsWithWordChar(value: string) {
+    return /^[A-Za-z0-9]/.test(value)
+}
+
 function parseItems(items: string[]) {
     const parsedItems: ParsedItem[] = []
     const gaps: Gap[] = []
@@ -163,13 +171,18 @@ export default function MissingLettersBlock({ config }: MissingLettersBlockProps
                             const gapIndex = part.gapIndex
                             const answer = part.answer
                             const currentGapInputs = userInputs[gapIndex] || []
+                            const prevPart = partIndex > 0 ? item.parts[partIndex - 1] : null
+                            const nextPart = partIndex < item.parts.length - 1 ? item.parts[partIndex + 1] : null
+                            const sticksToPrev = prevPart?.type === 'text' && endsWithWordChar(prevPart.value)
+                            const sticksToNext = nextPart?.type === 'text' && startsWithWordChar(nextPart.value)
 
                             // Check correctness
                             const userAnswerFull = currentGapInputs.join('')
                             const isWordCorrect = checked && userAnswerFull.toLowerCase() === answer.toLowerCase()
 
                             return (
-                                <span key={`gap-${gapIndex}`} className="mx-1 inline-flex flex-wrap items-baseline gap-1 align-baseline whitespace-nowrap">
+                                <span key={`gap-${gapIndex}`} className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-wrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
+                                    {sticksToPrev && <span aria-hidden="true">{'\u2060'}</span>}
                                     {answer.split('').map((_, charIndex) => {
                                         const charValue = currentGapInputs[charIndex] || ''
                                         const inputKey = `gap-${gapIndex}-char-${charIndex}`
@@ -215,6 +228,7 @@ export default function MissingLettersBlock({ config }: MissingLettersBlockProps
                                             />
                                         )
                                     })}
+                                    {sticksToNext && <span aria-hidden="true">{'\u2060'}</span>}
                                 </span>
                             )
                         })}

@@ -31,10 +31,12 @@ type ViewMode = 'grid' | 'list'
 
 const AUDIO_FORMATS = new Set(['mp3', 'wav', 'm4a', 'aac', 'ogg', 'oga', 'flac', 'opus', 'webm'])
 const DEFAULT_MAX_UPLOAD_SIZE_MB = 10
+const SERVER_SAFE_MAX_UPLOAD_SIZE_MB = 4
 const envMaxUploadSizeMb = Number(process.env.NEXT_PUBLIC_ADMIN_MEDIA_MAX_FILE_SIZE_MB)
-const MAX_UPLOAD_SIZE_MB = Number.isFinite(envMaxUploadSizeMb) && envMaxUploadSizeMb > 0
+const configuredMaxUploadSizeMb = Number.isFinite(envMaxUploadSizeMb) && envMaxUploadSizeMb > 0
     ? envMaxUploadSizeMb
     : DEFAULT_MAX_UPLOAD_SIZE_MB
+const MAX_UPLOAD_SIZE_MB = Math.min(configuredMaxUploadSizeMb, SERVER_SAFE_MAX_UPLOAD_SIZE_MB)
 const MAX_UPLOAD_SIZE_BYTES = Math.round(MAX_UPLOAD_SIZE_MB * 1024 * 1024)
 
 function inferMediaType(resource: CloudinaryResource): Exclude<MediaTypeFilter, 'all'> {
@@ -159,8 +161,25 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
                 formData.append('file', file)
                 const uploadRes = await fetch('/api/admin/media', { method: 'POST', body: formData })
                 if (!uploadRes.ok) {
-                    const payload = await uploadRes.json().catch(() => null)
-                    throw new Error(payload?.error ?? `Upload failed for ${file.name}`)
+                    const rawPayload = await uploadRes.text()
+                    let parsedPayload: { error?: string } | null = null
+                    if (rawPayload) {
+                        try {
+                            parsedPayload = JSON.parse(rawPayload) as { error?: string }
+                        } catch {
+                            parsedPayload = null
+                        }
+                    }
+
+                    if (uploadRes.status === 413) {
+                        throw new Error(
+                            `Upload failed for ${file.name}: request too large. Keep files at or below ${MAX_UPLOAD_SIZE_MB} MB.`
+                        )
+                    }
+
+                    throw new Error(
+                        parsedPayload?.error ?? `Upload failed for ${file.name} (HTTP ${uploadRes.status})`
+                    )
                 }
             }
 

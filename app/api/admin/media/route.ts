@@ -3,6 +3,7 @@ import { cloudinary, listImages, deleteImage, BLOG_FOLDER } from '@/lib/cloudina
 import { createClient } from '@/lib/supabase/server'
 
 const DEFAULT_MAX_FILE_SIZE_MB = 10
+const SERVER_SAFE_MAX_FILE_SIZE_MB = 4
 
 function getMaxFileSizeBytes() {
   const fromServerEnv = Number(process.env.ADMIN_MEDIA_MAX_FILE_SIZE_MB)
@@ -12,7 +13,7 @@ function getMaxFileSizeBytes() {
     : Number.isFinite(fromPublicEnv) && fromPublicEnv > 0
       ? fromPublicEnv
       : DEFAULT_MAX_FILE_SIZE_MB
-  return Math.round(maxMb * 1024 * 1024)
+  return Math.round(Math.min(maxMb, SERVER_SAFE_MAX_FILE_SIZE_MB) * 1024 * 1024)
 }
 
 async function checkAdmin() {
