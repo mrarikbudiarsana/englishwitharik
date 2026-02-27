@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef } from 'react'
 
 export interface MissingLettersConfig {
     items: string[]
@@ -23,13 +23,9 @@ interface Gap {
     answer: string
 }
 
-function endsWithWordChar(value: string) {
-    return /[A-Za-z0-9]$/.test(value)
-}
-
-function startsWithWordChar(value: string) {
-    return /^[A-Za-z0-9]/.test(value)
-}
+type RenderToken =
+    | { type: 'space'; value: string }
+    | { type: 'chunk'; parts: ParsedItem['parts'] }
 
 function parseItems(items: string[]) {
     const parsedItems: ParsedItem[] = []
@@ -62,40 +58,50 @@ function parseItems(items: string[]) {
             parts.push({ type: 'text', value: item.slice(cursor) })
         }
 
-        // Normalize accidental spaces around gaps so missing letters stay attached
-        // to the intended word fragment (prefix, infix, or suffix).
-        for (let index = 1; index < parts.length - 1; index++) {
-            const current = parts[index]
-            const prev = parts[index - 1]
-            const next = parts[index + 1]
-
-            if (current.type !== 'gap' || prev.type !== 'text' || next.type !== 'text') continue
-
-            const hasWordOnLeft = /[A-Za-z0-9]\s*$/.test(prev.value)
-            const hasWordOnRight = /^\s*[A-Za-z0-9]/.test(next.value)
-            const hasSpaceBeforeGap = /\s$/.test(prev.value)
-            const hasSpaceAfterGap = /^\s/.test(next.value)
-
-            if (hasWordOnLeft && hasWordOnRight) {
-                prev.value = prev.value.trimEnd()
-                next.value = next.value.trimStart()
-                continue
-            }
-
-            if (hasWordOnLeft && hasSpaceAfterGap) {
-                prev.value = prev.value.trimEnd()
-                continue
-            }
-
-            if (hasSpaceBeforeGap && hasWordOnRight) {
-                next.value = next.value.trimStart()
-            }
-        }
-
         parsedItems.push({ parts })
     }
 
     return { parsedItems, gaps }
+}
+
+function chunkParts(parts: ParsedItem['parts']): RenderToken[] {
+    const tokens: RenderToken[] = []
+    let currentChunk: ParsedItem['parts'] = []
+
+    const flushChunk = () => {
+        if (currentChunk.length > 0) {
+            tokens.push({ type: 'chunk', parts: currentChunk })
+            currentChunk = []
+        }
+    }
+
+    for (const part of parts) {
+        if (part.type === 'gap') {
+            currentChunk.push(part)
+            continue
+        }
+
+        const segments = part.value.split(/(\s+)/)
+        for (const segment of segments) {
+            if (!segment) continue
+
+            if (/^\s+$/.test(segment)) {
+                flushChunk()
+                tokens.push({ type: 'space', value: segment })
+                continue
+            }
+
+            const last = currentChunk[currentChunk.length - 1]
+            if (last?.type === 'text') {
+                last.value += segment
+            } else {
+                currentChunk.push({ type: 'text', value: segment })
+            }
+        }
+    }
+
+    flushChunk()
+    return tokens
 }
 
 export default function MissingLettersBlock({ config }: MissingLettersBlockProps) {
@@ -191,77 +197,75 @@ export default function MissingLettersBlock({ config }: MissingLettersBlockProps
 
             <div className="space-y-6 text-lg leading-relaxed text-slate-800 font-serif">
                 {parsedItems.map((item, itemIndex) => (
-                    <div key={`item-${itemIndex}`} className="leading-8">
-                        {item.parts.map((part, partIndex) => {
-                            if (part.type === 'text') {
-                                return <span key={`text-${itemIndex}-${partIndex}`}>{part.value}</span>
+                    <div key={`item-${itemIndex}`} className="leading-8 break-normal [word-break:normal] [overflow-wrap:normal]">
+                        {chunkParts(item.parts).map((token, tokenIndex) => {
+                            if (token.type === 'space') {
+                                return <span key={`space-${itemIndex}-${tokenIndex}`}>{token.value}</span>
                             }
 
-                            // If it is a gap
-                            const gapIndex = part.gapIndex
-                            const answer = part.answer
-                            const currentGapInputs = userInputs[gapIndex] || []
-                            const prevPart = partIndex > 0 ? item.parts[partIndex - 1] : null
-                            const nextPart = partIndex < item.parts.length - 1 ? item.parts[partIndex + 1] : null
-                            const sticksToPrev = prevPart?.type === 'text' && endsWithWordChar(prevPart.value)
-                            const sticksToNext = nextPart?.type === 'text' && startsWithWordChar(nextPart.value)
-
-                            // Check correctness
-                            const userAnswerFull = currentGapInputs.join('')
-                            const isWordCorrect = checked && userAnswerFull.toLowerCase() === answer.toLowerCase()
-
                             return (
-                                <Fragment key={`gap-${gapIndex}`}>
-                                    {sticksToPrev ? '\u2060' : null}
-                                    <span className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-nowrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
-                                        {answer.split('').map((_, charIndex) => {
-                                            const charValue = currentGapInputs[charIndex] || ''
-                                            const inputKey = `gap-${gapIndex}-char-${charIndex}`
+                                <span key={`chunk-${itemIndex}-${tokenIndex}`} className="inline-flex items-baseline whitespace-nowrap">
+                                    {token.parts.map((part, partIndex) => {
+                                        if (part.type === 'text') {
+                                            return <span key={`text-${itemIndex}-${tokenIndex}-${partIndex}`}>{part.value}</span>
+                                        }
 
-                                            // Styling logic
-                                            let borderColor = 'border-slate-300'
-                                            let bgColor = 'bg-slate-50'
-                                            let textColor = 'text-slate-900'
+                                        const gapIndex = part.gapIndex
+                                        const answer = part.answer
+                                        const currentGapInputs = userInputs[gapIndex] || []
+                                        const userAnswerFull = currentGapInputs.join('')
+                                        const isWordCorrect = checked && userAnswerFull.toLowerCase() === answer.toLowerCase()
 
-                                            if (checked) {
-                                                if (isWordCorrect) {
-                                                    borderColor = 'border-emerald-500'
-                                                    bgColor = 'bg-emerald-50'
-                                                    textColor = 'text-emerald-700'
-                                                } else {
-                                                    borderColor = 'border-red-300'
-                                                    bgColor = 'bg-red-50'
-                                                    textColor = 'text-red-700'
-                                                }
-                                            } else if (charValue) {
-                                                borderColor = 'border-slate-400'
-                                                bgColor = 'bg-white'
-                                            }
+                                        return (
+                                            <span key={`gap-${gapIndex}`} className="mx-0 inline-flex flex-nowrap items-baseline gap-1 align-baseline whitespace-nowrap">
+                                                {answer.split('').map((_, charIndex) => {
+                                                    const charValue = currentGapInputs[charIndex] || ''
+                                                    const inputKey = `gap-${gapIndex}-char-${charIndex}`
 
-                                            return (
-                                                <input
-                                                    key={inputKey}
-                                                    ref={(el) => {
-                                                        if (el) inputsRef.current.set(inputKey, el)
-                                                        else inputsRef.current.delete(inputKey)
-                                                    }}
-                                                    type="text"
-                                                    maxLength={1}
-                                                    value={charValue}
-                                                    onChange={(e) => handleInputChange(gapIndex, charIndex, e.target.value)}
-                                                    onKeyDown={(e) => handleKeyDown(e, gapIndex, charIndex)}
-                                                    className={`w-[2ch] h-[2em] p-0 text-center font-mono text-lg border-b-2 rounded-t-empty rounded-b-none 
+                                                    let borderColor = 'border-slate-300'
+                                                    let bgColor = 'bg-slate-50'
+                                                    let textColor = 'text-slate-900'
+
+                                                    if (checked) {
+                                                        if (isWordCorrect) {
+                                                            borderColor = 'border-emerald-500'
+                                                            bgColor = 'bg-emerald-50'
+                                                            textColor = 'text-emerald-700'
+                                                        } else {
+                                                            borderColor = 'border-red-300'
+                                                            bgColor = 'bg-red-50'
+                                                            textColor = 'text-red-700'
+                                                        }
+                                                    } else if (charValue) {
+                                                        borderColor = 'border-slate-400'
+                                                        bgColor = 'bg-white'
+                                                    }
+
+                                                    return (
+                                                        <input
+                                                            key={inputKey}
+                                                            ref={(el) => {
+                                                                if (el) inputsRef.current.set(inputKey, el)
+                                                                else inputsRef.current.delete(inputKey)
+                                                            }}
+                                                            type="text"
+                                                            maxLength={1}
+                                                            value={charValue}
+                                                            onChange={(e) => handleInputChange(gapIndex, charIndex, e.target.value)}
+                                                            onKeyDown={(e) => handleKeyDown(e, gapIndex, charIndex)}
+                                                            className={`w-[2ch] h-[2em] p-0 text-center font-mono text-lg border-b-2 rounded-t-empty rounded-b-none 
                                      focus:outline-none focus:border-[#08507f] focus:ring-0 focus:bg-blue-50/50 
                                      transition-colors duration-200
                                      ${borderColor} ${bgColor} ${textColor}`}
-                                                    autoComplete="off"
-                                                    spellCheck={false}
-                                                />
-                                            )
-                                        })}
-                                    </span>
-                                    {sticksToNext ? '\u2060' : null}
-                                </Fragment>
+                                                            autoComplete="off"
+                                                            spellCheck={false}
+                                                        />
+                                                    )
+                                                })}
+                                            </span>
+                                        )
+                                    })}
+                                </span>
                             )
                         })}
                     </div>
