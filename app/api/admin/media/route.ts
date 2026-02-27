@@ -22,25 +22,46 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   if (!await checkAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const formData = await req.formData()
-  const files = formData.getAll('file') as File[]
-  const results = []
+  try {
+    const formData = await req.formData()
+    const files = formData.getAll('file').filter((item): item is File => item instanceof File)
+    if (!files.length) {
+      return NextResponse.json({ error: 'No files uploaded' }, { status: 400 })
+    }
 
-  for (const file of files) {
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const base64 = `data:${file.type};base64,${buffer.toString('base64')}`
-    const isVideoOrAudio = file.type.startsWith('video/') || file.type.startsWith('audio/')
+    const results = []
 
-    const result = await cloudinary.uploader.upload(base64, {
-      folder: BLOG_FOLDER,
-      resource_type: isVideoOrAudio ? 'video' : 'image',
-      transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-    })
-    results.push(result)
+    for (const file of files) {
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const isVideoOrAudio = file.type.startsWith('video/') || file.type.startsWith('audio/')
+
+      const result = await new Promise<Awaited<ReturnType<typeof cloudinary.uploader.upload>>>((resolve, reject) => {
+        const upload = cloudinary.uploader.upload_stream(
+          {
+            folder: BLOG_FOLDER,
+            resource_type: isVideoOrAudio ? 'video' : 'image',
+            ...(isVideoOrAudio ? {} : { transformation: [{ quality: 'auto', fetch_format: 'auto' }] }),
+          },
+          (error, uploaded) => {
+            if (error || !uploaded) {
+              reject(error ?? new Error('Upload failed'))
+              return
+            }
+            resolve(uploaded)
+          }
+        )
+        upload.end(buffer)
+      })
+
+      results.push(result)
+    }
+
+    return NextResponse.json({ results })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Upload failed'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  return NextResponse.json({ results })
 }
 
 // DELETE - remove media

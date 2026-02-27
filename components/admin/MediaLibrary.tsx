@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     Upload,
+    RefreshCw,
     Copy,
     Trash2,
     Image as ImageIcon,
@@ -85,6 +86,7 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
     const [resources, setResources] = useState<CloudinaryResource[]>([])
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [copied, setCopied] = useState<string | null>(null)
     const [query, setQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState<MediaTypeFilter>('all')
@@ -94,6 +96,7 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
 
     async function requestMedia() {
         const res = await fetch('/api/admin/media')
+        if (!res.ok) throw new Error('Failed to load media')
         const data = await res.json()
         return data.resources ?? []
     }
@@ -105,11 +108,13 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
             .then((items) => {
                 if (!active) return
                 setResources(items)
+                setError(null)
                 setLoading(false)
             })
             .catch(() => {
                 if (!active) return
                 setResources([])
+                setError('Could not load media library.')
                 setLoading(false)
             })
 
@@ -126,9 +131,17 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
         const formData = new FormData()
         Array.from(files).forEach((file) => formData.append('file', file))
         try {
-            await fetch('/api/admin/media', { method: 'POST', body: formData })
+            setError(null)
+            const uploadRes = await fetch('/api/admin/media', { method: 'POST', body: formData })
+            if (!uploadRes.ok) {
+                const payload = await uploadRes.json().catch(() => null)
+                throw new Error(payload?.error ?? 'Upload failed')
+            }
             const items = await requestMedia()
             setResources(items)
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Upload failed'
+            setError(message)
         } finally {
             setLoading(false)
             setUploading(false)
@@ -242,6 +255,9 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
                         <p className="mt-1 text-sm text-slate-500">
                             {filteredResources.length} shown of {resources.length} files
                         </p>
+                        {error && (
+                            <p className="mt-2 text-sm text-red-600">{error}</p>
+                        )}
                     </div>
                     <label
                         className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#08507f] px-4 text-sm font-medium text-white transition-colors hover:bg-[#063a5c] ${uploading ? 'cursor-not-allowed opacity-50' : ''
@@ -299,6 +315,23 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
                         <option value="size-asc">Size (S)</option>
                         <option value="type">Type</option>
                     </select>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setLoading(true)
+                            setError(null)
+                            void requestMedia()
+                                .then((items) => setResources(items))
+                                .catch(() => setError('Could not load media library.'))
+                                .finally(() => setLoading(false))
+                        }}
+                        disabled={loading || uploading}
+                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                        Refresh
+                    </button>
 
                     <button
                         type="button"
