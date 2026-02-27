@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef } from 'react'
+import { Fragment, useMemo, useState, useRef } from 'react'
 
 export interface MissingLettersConfig {
     items: string[]
@@ -211,55 +211,57 @@ export default function MissingLettersBlock({ config }: MissingLettersBlockProps
                             const isWordCorrect = checked && userAnswerFull.toLowerCase() === answer.toLowerCase()
 
                             return (
-                                <span key={`gap-${gapIndex}`} className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-wrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
-                                    {sticksToPrev && <span aria-hidden="true">{'\u2060'}</span>}
-                                    {answer.split('').map((_, charIndex) => {
-                                        const charValue = currentGapInputs[charIndex] || ''
-                                        const inputKey = `gap-${gapIndex}-char-${charIndex}`
+                                <Fragment key={`gap-${gapIndex}`}>
+                                    {sticksToPrev ? '\u2060' : null}
+                                    <span className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-wrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
+                                        {answer.split('').map((_, charIndex) => {
+                                            const charValue = currentGapInputs[charIndex] || ''
+                                            const inputKey = `gap-${gapIndex}-char-${charIndex}`
 
-                                        // Styling logic
-                                        let borderColor = 'border-slate-300'
-                                        let bgColor = 'bg-slate-50'
-                                        let textColor = 'text-slate-900'
+                                            // Styling logic
+                                            let borderColor = 'border-slate-300'
+                                            let bgColor = 'bg-slate-50'
+                                            let textColor = 'text-slate-900'
 
-                                        if (checked) {
-                                            if (isWordCorrect) {
-                                                borderColor = 'border-emerald-500'
-                                                bgColor = 'bg-emerald-50'
-                                                textColor = 'text-emerald-700'
-                                            } else {
-                                                borderColor = 'border-red-300'
-                                                bgColor = 'bg-red-50'
-                                                textColor = 'text-red-700'
+                                            if (checked) {
+                                                if (isWordCorrect) {
+                                                    borderColor = 'border-emerald-500'
+                                                    bgColor = 'bg-emerald-50'
+                                                    textColor = 'text-emerald-700'
+                                                } else {
+                                                    borderColor = 'border-red-300'
+                                                    bgColor = 'bg-red-50'
+                                                    textColor = 'text-red-700'
+                                                }
+                                            } else if (charValue) {
+                                                borderColor = 'border-slate-400'
+                                                bgColor = 'bg-white'
                                             }
-                                        } else if (charValue) {
-                                            borderColor = 'border-slate-400'
-                                            bgColor = 'bg-white'
-                                        }
 
-                                        return (
-                                            <input
-                                                key={inputKey}
-                                                ref={(el) => {
-                                                    if (el) inputsRef.current.set(inputKey, el)
-                                                    else inputsRef.current.delete(inputKey)
-                                                }}
-                                                type="text"
-                                                maxLength={1}
-                                                value={charValue}
-                                                onChange={(e) => handleInputChange(gapIndex, charIndex, e.target.value)}
-                                                onKeyDown={(e) => handleKeyDown(e, gapIndex, charIndex)}
-                                                className={`w-[2ch] h-[2em] p-0 text-center font-mono text-lg border-b-2 rounded-t-empty rounded-b-none 
+                                            return (
+                                                <input
+                                                    key={inputKey}
+                                                    ref={(el) => {
+                                                        if (el) inputsRef.current.set(inputKey, el)
+                                                        else inputsRef.current.delete(inputKey)
+                                                    }}
+                                                    type="text"
+                                                    maxLength={1}
+                                                    value={charValue}
+                                                    onChange={(e) => handleInputChange(gapIndex, charIndex, e.target.value)}
+                                                    onKeyDown={(e) => handleKeyDown(e, gapIndex, charIndex)}
+                                                    className={`w-[2ch] h-[2em] p-0 text-center font-mono text-lg border-b-2 rounded-t-empty rounded-b-none 
                                      focus:outline-none focus:border-[#08507f] focus:ring-0 focus:bg-blue-50/50 
                                      transition-colors duration-200
                                      ${borderColor} ${bgColor} ${textColor}`}
-                                                autoComplete="off"
-                                                spellCheck={false}
-                                            />
-                                        )
-                                    })}
-                                    {sticksToNext && <span aria-hidden="true">{'\u2060'}</span>}
-                                </span>
+                                                    autoComplete="off"
+                                                    spellCheck={false}
+                                                />
+                                            )
+                                        })}
+                                    </span>
+                                    {sticksToNext ? '\u2060' : null}
+                                </Fragment>
                             )
                         })}
                     </div>
