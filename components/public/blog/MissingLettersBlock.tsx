@@ -213,7 +213,7 @@ export default function MissingLettersBlock({ config }: MissingLettersBlockProps
                             return (
                                 <Fragment key={`gap-${gapIndex}`}>
                                     {sticksToPrev ? '\u2060' : null}
-                                    <span className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-wrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
+                                    <span className={`${sticksToPrev || sticksToNext ? 'mx-0' : 'mx-1'} inline-flex flex-nowrap items-baseline gap-1 align-baseline whitespace-nowrap`}>
                                         {answer.split('').map((_, charIndex) => {
                                             const charValue = currentGapInputs[charIndex] || ''
                                             const inputKey = `gap-${gapIndex}-char-${charIndex}`
