@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cloudinary, listImages, deleteImage, BLOG_FOLDER } from '@/lib/cloudinary'
 import { createClient } from '@/lib/supabase/server'
 
+const DEFAULT_MAX_FILE_SIZE_MB = 10
+
+function getMaxFileSizeBytes() {
+  const fromServerEnv = Number(process.env.ADMIN_MEDIA_MAX_FILE_SIZE_MB)
+  const fromPublicEnv = Number(process.env.NEXT_PUBLIC_ADMIN_MEDIA_MAX_FILE_SIZE_MB)
+  const maxMb = Number.isFinite(fromServerEnv) && fromServerEnv > 0
+    ? fromServerEnv
+    : Number.isFinite(fromPublicEnv) && fromPublicEnv > 0
+      ? fromPublicEnv
+      : DEFAULT_MAX_FILE_SIZE_MB
+  return Math.round(maxMb * 1024 * 1024)
+}
+
 async function checkAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,6 +36,7 @@ export async function POST(req: NextRequest) {
   if (!await checkAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
+    const maxFileSizeBytes = getMaxFileSizeBytes()
     const formData = await req.formData()
     const files = formData.getAll('file').filter((item): item is File => item instanceof File)
     if (!files.length) {
@@ -32,6 +46,13 @@ export async function POST(req: NextRequest) {
     const results = []
 
     for (const file of files) {
+      if (file.size > maxFileSizeBytes) {
+        return NextResponse.json(
+          { error: `File "${file.name}" exceeds ${Math.round(maxFileSizeBytes / (1024 * 1024))}MB limit` },
+          { status: 413 }
+        )
+      }
+
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       const isVideoOrAudio = file.type.startsWith('video/') || file.type.startsWith('audio/')

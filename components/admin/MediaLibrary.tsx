@@ -30,6 +30,12 @@ type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'size-desc' |
 type ViewMode = 'grid' | 'list'
 
 const AUDIO_FORMATS = new Set(['mp3', 'wav', 'm4a', 'aac', 'ogg', 'oga', 'flac', 'opus', 'webm'])
+const DEFAULT_MAX_UPLOAD_SIZE_MB = 10
+const envMaxUploadSizeMb = Number(process.env.NEXT_PUBLIC_ADMIN_MEDIA_MAX_FILE_SIZE_MB)
+const MAX_UPLOAD_SIZE_MB = Number.isFinite(envMaxUploadSizeMb) && envMaxUploadSizeMb > 0
+    ? envMaxUploadSizeMb
+    : DEFAULT_MAX_UPLOAD_SIZE_MB
+const MAX_UPLOAD_SIZE_BYTES = Math.round(MAX_UPLOAD_SIZE_MB * 1024 * 1024)
 
 function inferMediaType(resource: CloudinaryResource): Exclude<MediaTypeFilter, 'all'> {
     const format = (resource.format ?? '').toLowerCase()
@@ -126,17 +132,38 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
     async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
         if (!files?.length) return
+        const selectedFiles = Array.from(files)
+        const oversizedFiles = selectedFiles.filter((file) => file.size > MAX_UPLOAD_SIZE_BYTES)
+        const uploadableFiles = selectedFiles.filter((file) => file.size <= MAX_UPLOAD_SIZE_BYTES)
+
+        if (oversizedFiles.length > 0) {
+            setError(
+                `Some files were skipped because they exceed ${formatBytes(MAX_UPLOAD_SIZE_BYTES)}: ${oversizedFiles
+                    .map((file) => file.name)
+                    .join(', ')}`
+            )
+        }
+        if (!uploadableFiles.length) {
+            if (fileRef.current) fileRef.current.value = ''
+            return
+        }
+
         setUploading(true)
         setLoading(true)
-        const formData = new FormData()
-        Array.from(files).forEach((file) => formData.append('file', file))
         try {
-            setError(null)
-            const uploadRes = await fetch('/api/admin/media', { method: 'POST', body: formData })
-            if (!uploadRes.ok) {
-                const payload = await uploadRes.json().catch(() => null)
-                throw new Error(payload?.error ?? 'Upload failed')
+            if (!oversizedFiles.length) setError(null)
+
+            // Upload one file per request to avoid hitting request-body limits.
+            for (const file of uploadableFiles) {
+                const formData = new FormData()
+                formData.append('file', file)
+                const uploadRes = await fetch('/api/admin/media', { method: 'POST', body: formData })
+                if (!uploadRes.ok) {
+                    const payload = await uploadRes.json().catch(() => null)
+                    throw new Error(payload?.error ?? `Upload failed for ${file.name}`)
+                }
             }
+
             const items = await requestMedia()
             setResources(items)
         } catch (err) {
@@ -254,6 +281,9 @@ export default function MediaLibrary({ onSelect, embedded = false }: MediaLibrar
                         <h1 className={`${embedded ? 'text-xl' : 'text-3xl'} font-bold tracking-tight text-slate-900`}>Media Library</h1>
                         <p className="mt-1 text-sm text-slate-500">
                             {filteredResources.length} shown of {resources.length} files
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                            Max upload size: {MAX_UPLOAD_SIZE_MB} MB per file
                         </p>
                         {error && (
                             <p className="mt-2 text-sm text-red-600">{error}</p>
