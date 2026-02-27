@@ -35,6 +35,15 @@ export function usePostEditorModals({
     open()
   }, [editor])
 
+  const openCentered = useCallback((open: () => void, panelWidth: number, top = 80) => {
+    const viewportPadding = 16
+    setModalPosition({
+      top,
+      left: Math.max(viewportPadding, (window.innerWidth - panelWidth) / 2),
+    })
+    open()
+  }, [])
+
   const openBlockModal = useCallback((type: BlockModalType) => {
     onBeforeOpenAnyModal?.()
     onBeforeOpenBlockModal(type)
@@ -59,8 +68,8 @@ export function usePostEditorModals({
 
   const openLinkModal = useCallback(() => {
     onBeforeOpenAnyModal?.()
-    openNearCursor(() => setShowLinkModal(true), 640, 260)
-  }, [onBeforeOpenAnyModal, openNearCursor])
+    openCentered(() => setShowLinkModal(true), 640, 120)
+  }, [onBeforeOpenAnyModal, openCentered])
 
   return {
     modalPosition,
