@@ -164,6 +164,13 @@ export function validateShortcode(shortcode: string): string | null {
     return null
   }
 
+  if (blockType === 'ordering') {
+    const items = Array.isArray(config.items) ? config.items : []
+    if (items.length < 2) return 'Ordering needs at least 2 items.'
+    if (items.some(item => typeof item !== 'string' || !item.trim())) return 'Ordering items must be non-empty strings.'
+    return null
+  }
+
   return `Unsupported block type: ${blockType}`
 }
 

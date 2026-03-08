@@ -63,7 +63,7 @@ export function OrderingModal({
                 </>
             }
         >
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+            <div className="space-y-4">
                 <FormField label="Title / Instructions">
                     <FormInput
                         value={title}
