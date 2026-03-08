@@ -59,6 +59,7 @@ export type BlockModalType =
   | 'dragsentence'
   | 'collapsible'
   | 'reading_mcq'
+  | 'ordering'
 
 export interface McqFormState {
   question: string
@@ -165,6 +166,13 @@ export interface DragSentenceFormState {
 export interface CollapsibleFormState {
   title: string
   content: string
+}
+
+export interface OrderingFormState {
+  [key: string]: unknown
+  title: string
+  items: string[]
+  explanation: string
 }
 
 export interface EditorContextValue {

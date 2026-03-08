@@ -36,6 +36,7 @@ import {
   MissingLettersModal,
   DragSentenceModal,
   CollapsibleModal,
+  OrderingModal,
   ImageLibraryModal,
   UrlInputModal,
 } from './post-editor/modals'
@@ -187,6 +188,9 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     missingLettersExplanation,
     collapsibleTitle,
     collapsibleContent,
+    orderingTitle,
+    orderingItems,
+    orderingExplanation,
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
@@ -201,6 +205,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     resetMissingLettersForm,
     resetDragSentenceForm,
     resetCollapsibleForm,
+    resetOrderingForm,
     prepareModalForType,
     getCtaConfig,
   } = usePostEditorForms(editor)
@@ -273,6 +278,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     showMissingLettersModal,
     showDragSentenceModal,
     showImageLibraryModal,
+    showOrderingModal,
     showLinkModal,
     openBlockModal,
     openImageLibraryModal,
@@ -291,6 +297,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     closeCollapsibleModal,
     closeDragSentenceModal,
     closeImageLibraryModal,
+    closeOrderingModal,
     closeLinkModal,
   } = usePostEditorModals({
     editor,
@@ -380,6 +387,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     matchingInitialData,
     dragSentenceInitialData,
     collapsibleInitialData,
+    orderingInitialData,
     closeImageLibrary,
     closeMcq,
     closeReadingMcq,
@@ -393,6 +401,7 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     closeMatching,
     closeDragSentence,
     closeCollapsible,
+    closeOrdering,
   } = usePostEditorModalBindings({
     mcqQuestion,
     mcqOptionA,
@@ -476,6 +485,11 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
     collapsibleContent,
     resetCollapsibleForm,
     closeCollapsibleModal,
+    orderingTitle,
+    orderingItems,
+    orderingExplanation,
+    resetOrderingForm,
+    closeOrderingModal,
     dragSentenceTitle,
     dragSentenceItems,
     dragSentenceExplanation,
@@ -751,6 +765,13 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         initialData={collapsibleInitialData}
         onClose={closeCollapsible}
         onInsert={config => insertShortcodeBlock('collapsible', config)}
+      />
+      <OrderingModal
+        isOpen={showOrderingModal}
+        position={modalPosition}
+        initialData={orderingInitialData}
+        onClose={closeOrdering}
+        onInsert={config => insertShortcodeBlock('ordering', config)}
       />
       <DragSentenceModal
         isOpen={showDragSentenceModal}

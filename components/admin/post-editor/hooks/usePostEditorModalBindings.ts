@@ -92,6 +92,11 @@ interface UsePostEditorModalBindingsParams {
   collapsibleContent: string
   resetCollapsibleForm: () => void
   closeCollapsibleModal: () => void
+  orderingTitle: string
+  orderingItems: string[]
+  orderingExplanation: string
+  resetOrderingForm: () => void
+  closeOrderingModal: () => void
   closeImageLibraryModal: () => void
   setMediaQuery: (value: string) => void
 }
@@ -196,6 +201,12 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     content: params.collapsibleContent,
   }
 
+  const orderingInitialData = {
+    title: params.orderingTitle,
+    items: params.orderingItems,
+    explanation: params.orderingExplanation,
+  }
+
   function closeImageLibrary() {
     params.closeImageLibraryModal()
     params.setMediaQuery('')
@@ -261,6 +272,11 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     params.closeCollapsibleModal()
   }
 
+  function closeOrdering() {
+    params.resetOrderingForm()
+    params.closeOrderingModal()
+  }
+
   return {
     mcqInitialData,
     readingMcqInitialData,
@@ -274,6 +290,7 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     matchingInitialData,
     dragSentenceInitialData,
     collapsibleInitialData,
+    orderingInitialData,
     closeImageLibrary,
     closeMcq,
     closeReadingMcq,
@@ -287,5 +304,6 @@ export function usePostEditorModalBindings(params: UsePostEditorModalBindingsPar
     closeMatching,
     closeDragSentence,
     closeCollapsible,
+    closeOrdering,
   }
 }

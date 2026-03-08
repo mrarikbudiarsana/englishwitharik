@@ -27,6 +27,7 @@ export const BLOCK_TYPE_MAP: Record<string, string> = {
   dragsentence: 'drag_sentence',
   collapsible: 'collapsible',
   reading_mcq: 'reading_mcq',
+  ordering: 'ordering',
 }
 
 export const BLOCK_TYPE_TO_MODAL: Record<string, string> = {
@@ -42,4 +43,5 @@ export const BLOCK_TYPE_TO_MODAL: Record<string, string> = {
   drag_sentence: 'dragsentence',
   collapsible: 'collapsible',
   reading_mcq: 'reading_mcq',
+  ordering: 'ordering',
 }

@@ -81,6 +81,9 @@ export function usePostEditorForms(editor: Editor | null) {
   const [missingLettersExplanation, setMissingLettersExplanation] = useState('')
   const [collapsibleTitle, setCollapsibleTitle] = useState('')
   const [collapsibleContent, setCollapsibleContent] = useState('')
+  const [orderingTitle, setOrderingTitle] = useState('')
+  const [orderingItems, setOrderingItems] = useState<string[]>([''])
+  const [orderingExplanation, setOrderingExplanation] = useState('')
   const [editingShortcode, setEditingShortcode] = useState<{ from: number; to: number; blockType: string } | null>(null)
 
   function resetMcqForm() {
@@ -194,6 +197,13 @@ export function usePostEditorForms(editor: Editor | null) {
     setEditingShortcode(null)
   }
 
+  function resetOrderingForm() {
+    setOrderingTitle('')
+    setOrderingItems([''])
+    setOrderingExplanation('')
+    setEditingShortcode(null)
+  }
+
   function getActiveShortcodeContext() {
     if (!editor) return null
     const { $from } = editor.state.selection
@@ -237,6 +247,7 @@ export function usePostEditorForms(editor: Editor | null) {
       if (type === 'dragsentence') resetDragSentenceForm()
       if (type === 'collapsible') resetCollapsibleForm()
       if (type === 'reading_mcq') resetReadingMcqForm()
+      if (type === 'ordering') resetOrderingForm()
       return
     }
 
@@ -252,6 +263,7 @@ export function usePostEditorForms(editor: Editor | null) {
       if (type === 'missingletters') resetMissingLettersForm()
       if (type === 'dragsentence') resetDragSentenceForm()
       if (type === 'reading_mcq') resetReadingMcqForm()
+      if (type === 'ordering') resetOrderingForm()
       return
     }
 
@@ -387,6 +399,12 @@ export function usePostEditorForms(editor: Editor | null) {
     if (type === 'collapsible') {
       setCollapsibleTitle(typeof c.title === 'string' ? c.title : '')
       setCollapsibleContent(typeof c.content === 'string' ? c.content : '')
+    }
+
+    if (type === 'ordering') {
+      setOrderingTitle(typeof c.title === 'string' ? c.title : '')
+      setOrderingItems(Array.isArray(c.items) ? c.items.map(item => String(item)) : [''])
+      setOrderingExplanation(typeof c.explanation === 'string' ? c.explanation : '')
     }
   }
 
@@ -536,6 +554,12 @@ export function usePostEditorForms(editor: Editor | null) {
     setCollapsibleTitle,
     collapsibleContent,
     setCollapsibleContent,
+    orderingTitle,
+    setOrderingTitle,
+    orderingItems,
+    setOrderingItems,
+    orderingExplanation,
+    setOrderingExplanation,
     editingShortcode,
     setEditingShortcode,
     resetMcqForm,
@@ -550,6 +574,7 @@ export function usePostEditorForms(editor: Editor | null) {
     resetMissingLettersForm,
     resetDragSentenceForm,
     resetCollapsibleForm,
+    resetOrderingForm,
     prepareModalForType,
     getCtaConfig,
   }

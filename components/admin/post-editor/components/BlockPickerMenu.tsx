@@ -11,6 +11,7 @@ import {
   Send,
   FoldVertical,
   BookOpen,
+  ListOrdered,
 } from 'lucide-react'
 import type { BlockModalType } from '../types'
 
@@ -29,6 +30,7 @@ const BLOCK_OPTIONS: Array<{ type: BlockModalType; label: string; icon: React.Re
   { type: 'missingletters', label: 'Missing Letters', icon: <AlignJustify size={14} /> },
   { type: 'emailwriting', label: 'Email Writing', icon: <Mail size={14} /> },
   { type: 'dragsentence', label: 'Drag Sentence', icon: <GripHorizontal size={14} /> },
+  { type: 'ordering', label: 'Ordering', icon: <ListOrdered size={14} /> },
   { type: 'collapsible', label: 'Collapsible Text', icon: <FoldVertical size={14} /> },
   { type: 'cta', label: 'CTA Form', icon: <Send size={14} /> },
 ]

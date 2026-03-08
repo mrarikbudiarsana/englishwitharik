@@ -28,6 +28,7 @@ export function usePostEditorModals({
   const [showCollapsibleModal, setShowCollapsibleModal] = useState(false)
   const [showImageLibraryModal, setShowImageLibraryModal] = useState(false)
   const [showReadingMcqModal, setShowReadingMcqModal] = useState(false)
+  const [showOrderingModal, setShowOrderingModal] = useState(false)
   const [showLinkModal, setShowLinkModal] = useState(false)
 
   const openNearCursor = useCallback((open: () => void, panelWidth: number, panelHeight: number) => {
@@ -59,6 +60,7 @@ export function usePostEditorModals({
     if (type === 'dragsentence') openNearCursor(() => setShowDragSentenceModal(true), 768, 760)
     if (type === 'collapsible') openNearCursor(() => setShowCollapsibleModal(true), 768, 480)
     if (type === 'reading_mcq') openNearCursor(() => setShowReadingMcqModal(true), 900, 760)
+    if (type === 'ordering') openNearCursor(() => setShowOrderingModal(true), 768, 760)
   }, [onBeforeOpenAnyModal, onBeforeOpenBlockModal, openNearCursor])
 
   const openImageLibraryModal = useCallback(() => {
@@ -86,6 +88,7 @@ export function usePostEditorModals({
     showCollapsibleModal,
     showImageLibraryModal,
     showReadingMcqModal,
+    showOrderingModal,
     showLinkModal,
     openBlockModal,
     openImageLibraryModal,
@@ -103,6 +106,7 @@ export function usePostEditorModals({
     closeCollapsibleModal: () => setShowCollapsibleModal(false),
     closeImageLibraryModal: () => setShowImageLibraryModal(false),
     closeReadingMcqModal: () => setShowReadingMcqModal(false),
+    closeOrderingModal: () => setShowOrderingModal(false),
     closeLinkModal: () => setShowLinkModal(false),
   }
 }
