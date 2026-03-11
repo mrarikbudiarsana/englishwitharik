@@ -64,8 +64,8 @@ export default function OrderingBlock({ config }: OrderingBlockProps) {
             setHasStarted(true)
 
             let draggedItem: OrderItem;
-            let newSource = [...sourceItems]
-            let newTarget = [...targetItems]
+            const newSource = [...sourceItems]
+            const newTarget = [...targetItems]
 
             // Remove from original list
             if (dragListName === 'source') {
@@ -109,8 +109,8 @@ export default function OrderingBlock({ config }: OrderingBlockProps) {
         setHasStarted(true)
 
         let draggedItem: OrderItem;
-        let newSource = [...sourceItems]
-        let newTarget = [...targetItems]
+        const newSource = [...sourceItems]
+        const newTarget = [...targetItems]
 
         if (fromList === 'source') {
             draggedItem = newSource[index];

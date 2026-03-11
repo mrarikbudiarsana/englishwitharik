@@ -18,6 +18,7 @@ import {
   Star,
   Share2,
   DollarSign,
+  GraduationCap
 } from 'lucide-react'
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/media', label: 'Media', icon: Image },
   { href: '/admin/categories', label: 'Categories', icon: Tag },
   { href: '/admin/pricing', label: 'Pricing', icon: DollarSign },
+  { href: '/admin/toefl', label: 'TOEFL Tests', icon: GraduationCap },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
