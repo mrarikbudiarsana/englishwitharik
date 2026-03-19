@@ -2,11 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { TOEFL_SECTION_LABELS, TOEFL_SECTIONS } from '@/lib/toefl/catalog'
 
 export interface ToeflAttemptItem {
   id: string
   studentName: string
   email: string
+  userId: string
+  testSetId: string
+  testSetTitle: string
+  testSetSlug: string
   section: string
   score: number | null
   total: number | null
@@ -20,8 +25,6 @@ interface ToeflAttemptsTableProps {
   attempts: ToeflAttemptItem[]
 }
 
-type SectionFilter = 'all' | 'listening' | 'structure' | 'reading'
-
 function escapeCsv(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replaceAll('"', '""')}"`
   return value
@@ -32,6 +35,9 @@ function downloadCsv(filename: string, rows: ToeflAttemptItem[]) {
     'attempt_id',
     'student_name',
     'student_email',
+    'student_user_id',
+    'test_set_title',
+    'test_set_slug',
     'section',
     'score',
     'total',
@@ -46,6 +52,9 @@ function downloadCsv(filename: string, rows: ToeflAttemptItem[]) {
       escapeCsv(row.id),
       escapeCsv(row.studentName),
       escapeCsv(row.email),
+      escapeCsv(row.userId),
+      escapeCsv(row.testSetTitle),
+      escapeCsv(row.testSetSlug),
       escapeCsv(row.section),
       row.score === null ? '' : String(row.score),
       row.total === null ? '' : String(row.total),
@@ -68,25 +77,36 @@ function downloadCsv(filename: string, rows: ToeflAttemptItem[]) {
 
 export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps) {
   const router = useRouter()
-  const [sectionFilter, setSectionFilter] = useState<SectionFilter>('all')
+  const [testSetFilter, setTestSetFilter] = useState('all')
+  const [sectionFilter, setSectionFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deletingOneId, setDeletingOneId] = useState<string | null>(null)
   const [bulkDeleting, setBulkDeleting] = useState(false)
 
+  const testSetOptions = useMemo(() => {
+    const options = new Map<string, { id: string; title: string }>()
+    for (const attempt of attempts) {
+      options.set(attempt.testSetId, { id: attempt.testSetId, title: attempt.testSetTitle })
+    }
+    return Array.from(options.values()).sort((a, b) => a.title.localeCompare(b.title))
+  }, [attempts])
+
   const filteredAttempts = useMemo(() => {
-    if (sectionFilter === 'all') return attempts
-    return attempts.filter((attempt) => attempt.section.toLowerCase() === sectionFilter)
-  }, [attempts, sectionFilter])
+    return attempts.filter((attempt) => {
+      if (testSetFilter !== 'all' && attempt.testSetId !== testSetFilter) return false
+      if (sectionFilter !== 'all' && attempt.section.toLowerCase() !== sectionFilter) return false
+      return true
+    })
+  }, [attempts, sectionFilter, testSetFilter])
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selectedRows = filteredAttempts.filter((row) => selectedSet.has(row.id))
-
   const allSelected = filteredAttempts.length > 0 && selectedRows.length === filteredAttempts.length
   const hasSelection = selectedIds.length > 0
 
   useEffect(() => {
     setSelectedIds([])
-  }, [sectionFilter])
+  }, [sectionFilter, testSetFilter])
 
   function toggleSelectAll() {
     if (allSelected) {
@@ -103,9 +123,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   }
 
   async function deleteAttempt(id: string, studentName: string) {
-    const confirmed = window.confirm(
-      `Delete this attempt for "${studentName}"? This cannot be undone.`
-    )
+    const confirmed = window.confirm(`Delete this attempt for "${studentName}"? This cannot be undone.`)
     if (!confirmed) return
 
     setDeletingOneId(id)
@@ -126,9 +144,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
 
   async function deleteSelected() {
     if (!hasSelection) return
-    const confirmed = window.confirm(
-      `Delete ${selectedIds.length} selected attempt(s)? This cannot be undone.`
-    )
+    const confirmed = window.confirm(`Delete ${selectedIds.length} selected attempt(s)? This cannot be undone.`)
     if (!confirmed) return
 
     setBulkDeleting(true)
@@ -153,24 +169,39 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   }
 
   const dateSuffix = new Date().toISOString().slice(0, 10)
-  const filenameSuffix = sectionFilter === 'all' ? 'all-sections' : sectionFilter
+  const filenameSuffix = `${testSetFilter === 'all' ? 'all-sets' : testSetFilter}-${sectionFilter === 'all' ? 'all-sections' : sectionFilter}`
 
   return (
     <div className="bg-white/80 backdrop-blur-sm border rounded-2xl shadow-sm overflow-hidden border-orange-100">
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-orange-100 bg-orange-50/30">
         <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-700">
-          <span>Section</span>
+          <span>Test Set</span>
           <select
-            value={sectionFilter}
-            onChange={(event) => setSectionFilter(event.target.value as SectionFilter)}
+            value={testSetFilter}
+            onChange={(event) => setTestSetFilter(event.target.value)}
             className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#08507f]"
           >
             <option value="all">All</option>
-            <option value="listening">Listening</option>
-            <option value="structure">Structure</option>
-            <option value="reading">Reading</option>
+            {testSetOptions.map((option) => (
+              <option key={option.id} value={option.id}>{option.title}</option>
+            ))}
           </select>
         </label>
+
+        <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-700">
+          <span>Section</span>
+          <select
+            value={sectionFilter}
+            onChange={(event) => setSectionFilter(event.target.value)}
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+          >
+            <option value="all">All</option>
+            {TOEFL_SECTIONS.map((section) => (
+              <option key={section} value={section}>{TOEFL_SECTION_LABELS[section]}</option>
+            ))}
+          </select>
+        </label>
+
         <button
           type="button"
           onClick={deleteSelected}
@@ -185,7 +216,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
           disabled={filteredAttempts.length === 0}
           className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Download CSV (Current Section)
+          Download CSV (Current Filter)
         </button>
         <button
           type="button"
@@ -214,6 +245,8 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
               </th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Student</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Email</th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">UserID</th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Test Set</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Section</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Score</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Status</th>
@@ -240,8 +273,11 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
                     {attempt.studentName}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {attempt.email}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.userId}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="font-medium text-slate-900">{attempt.testSetTitle}</div>
+                  <div className="text-xs text-slate-500">{attempt.testSetSlug}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
@@ -262,9 +298,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {attempt.startedAtLabel}
-                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.startedAtLabel}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     type="button"
@@ -280,8 +314,8 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
 
             {filteredAttempts.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                  No attempts found for this section.
+                <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
+                  No attempts found for the current filters.
                 </td>
               </tr>
             )}

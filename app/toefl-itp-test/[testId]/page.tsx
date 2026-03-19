@@ -2,33 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TestInterface from './TestInterface'
-import { TOEFLReadingTest, TOEFLStructureTest, TOEFLTestTemplate, TOEFLListeningTest } from '@/lib/toefl/types'
-
-function normalizeTemplateData(
-  section: string,
-  rawTestData: unknown,
-): TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest | null {
-  if (!rawTestData || typeof rawTestData !== 'object') {
-    return null
-  }
-
-  const candidate = rawTestData as Record<string, unknown>
-
-  if ('title' in candidate) {
-    return rawTestData as unknown as TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest
-  }
-
-  if (
-    candidate.type === section &&
-    'test' in candidate &&
-    candidate.test &&
-    typeof candidate.test === 'object'
-  ) {
-    return candidate.test as unknown as TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest
-  }
-
-  return null
-}
+import { isTOEFLSection, toTemplate, TOEFL_SECTION_LABELS } from '@/lib/toefl/catalog'
+import type { TOEFLTestSection } from '@/lib/toefl/types'
 
 export default async function TOEFLTestPage({
   params,
@@ -40,25 +15,32 @@ export default async function TOEFLTestPage({
 
   const supabase = await createAdminClient()
 
-  // 1. Fetch the attempt to see which section they are taking
   const { data: attempt, error } = await supabase
     .from('toefl_attempts')
-    .select(`*, toefl_participants(name)`)
+    .select(`
+      *,
+      toefl_participants(name),
+      toefl_test_sets(title, slug)
+    `)
     .eq('id', testId)
     .single()
 
-  if (error || !attempt) {
+  if (error || !attempt || !isTOEFLSection(attempt.section)) {
     console.error('Error fetching attempt:', error)
     redirect('/toefl-itp-test')
   }
 
+  const section = attempt.section as TOEFLTestSection
+
   if (attempt.completed_at) {
-    // If they already finished, show results instead or redirect
+    const testSet = Array.isArray(attempt.toefl_test_sets) ? attempt.toefl_test_sets[0] : attempt.toefl_test_sets
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
         <div className="bg-white p-10 rounded-xl shadow-md max-w-lg w-full text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Test Completed!</h1>
-          <p className="text-gray-600 mb-8">You have already submitted this test section.</p>
+          <p className="text-gray-600 mb-3">
+            You have already submitted {TOEFL_SECTION_LABELS[section]} for {testSet?.title ?? 'this test set'}.
+          </p>
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-8">
             <span className="block text-sm text-blue-600 font-semibold mb-1">Your Score</span>
             <span className="text-5xl font-extrabold text-blue-900">{attempt.score} <span className="text-2xl text-blue-600">/ {attempt.total}</span></span>
@@ -72,18 +54,24 @@ export default async function TOEFLTestPage({
             Daftar kelas TOEFL ITP sekarang.
           </a>
           <div>
-            <Link href="/toefl-itp-test" className="text-blue-600 hover:text-blue-800 font-medium">&larr; Go back to sections</Link>
+            <Link
+              href={testSet?.slug ? `/toefl-itp-test/sets/${testSet.slug}` : '/toefl-itp-test'}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              &larr; Go back to test set
+            </Link>
           </div>
         </div>
       </div>
     )
   }
 
-  // 2. Load the corresponding dynamic template from DB
   const { data: templateRecord, error: templateError } = await supabase
-    .from('toefl_templates')
-    .select('test_data')
-    .eq('id', attempt.section)
+    .from('toefl_test_set_sections')
+    .select('test_data, title, description')
+    .eq('test_set_id', attempt.test_set_id)
+    .eq('section', section)
+    .eq('is_enabled', true)
     .single()
 
   if (templateError || !templateRecord) {
@@ -91,34 +79,29 @@ export default async function TOEFLTestPage({
     return (
       <div className="p-8 text-center bg-white rounded-lg shadow-sm border m-6">
         <h2 className="text-xl font-bold text-red-600 mb-2">Configuration Error</h2>
-        <p className="text-gray-600">The test template for &quot;{attempt.section}&quot; could not be loaded from the database.</p>
-        <p className="text-sm text-gray-400 mt-4">Please contact the administrator or check the Supabase &quot;toefl_templates&quot; table.</p>
+        <p className="text-gray-600">The test template for &quot;{section}&quot; could not be loaded from the database.</p>
+        <p className="text-sm text-gray-400 mt-4">Please contact the administrator or check the TOEFL test set section records.</p>
       </div>
     )
   }
 
-  const normalizedTest = normalizeTemplateData(attempt.section, templateRecord.test_data)
+  const sectionContent = toTemplate(section, templateRecord.test_data)
 
-  if (!normalizedTest) {
+  if (!sectionContent) {
     return (
       <div className="p-8 text-center bg-white rounded-lg shadow-sm border m-6">
         <h2 className="text-xl font-bold text-red-600 mb-2">Invalid Template Data</h2>
-        <p className="text-gray-600">The stored template for &quot;{attempt.section}&quot; is not in a supported format.</p>
-        <p className="text-sm text-gray-400 mt-4">Open the template editor and save only the inner test object, or let the app normalize a wrapped template.</p>
+        <p className="text-gray-600">The stored template for &quot;{section}&quot; is not in a supported format.</p>
+        <p className="text-sm text-gray-400 mt-4">Open the section editor and save only the inner test object, or let the app normalize a wrapped template.</p>
       </div>
     )
   }
 
-  const sectionContent = {
-    type: attempt.section,
-    test: normalizedTest,
-  } as TOEFLTestTemplate
-
-  // 3. Render the interactive test UI (Client Component)
   return (
-    <TestInterface 
+    <TestInterface
       attempt={attempt}
-      template={sectionContent} 
+      template={sectionContent}
+      testSetTitle={(Array.isArray(attempt.toefl_test_sets) ? attempt.toefl_test_sets[0] : attempt.toefl_test_sets)?.title ?? 'TOEFL ITP'}
     />
   )
 }

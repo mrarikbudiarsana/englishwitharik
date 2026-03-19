@@ -83,6 +83,21 @@ function createParams() {
     closeCollapsibleModal: vi.fn(),
     closeImageLibraryModal: vi.fn(),
     setMediaQuery: vi.fn(),
+    readingMcqText: 'text',
+    readingMcqQuestion: 'q',
+    readingMcqOptionA: 'a',
+    readingMcqOptionB: 'b',
+    readingMcqOptionC: 'c',
+    readingMcqOptionD: 'd',
+    readingMcqCorrectIndex: 1,
+    readingMcqExplanation: 'exp',
+    resetReadingMcqForm: vi.fn(),
+    closeReadingMcqModal: vi.fn(),
+    orderingTitle: 't',
+    orderingItems: ['a'],
+    orderingExplanation: 'e',
+    resetOrderingForm: vi.fn(),
+    closeOrderingModal: vi.fn(),
   }
 }
 

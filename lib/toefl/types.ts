@@ -4,18 +4,45 @@ export interface TOEFLParticipant {
   id: string; // uuid
   name: string;
   email: string;
+  user_id: string | null;
   created_at: string;
 }
 
 export interface TOEFLAttempt {
   id: string; // uuid
   participant_id: string;
+  test_set_id: string;
   section: TOEFLTestSection;
   started_at: string;
   completed_at: string | null;
   score: number | null;
   total: number | null;
   answers: Record<string, string | number>; // question_id -> answer
+}
+
+export interface TOEFLTestSet {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  is_published: boolean;
+  cover_image_url: string | null;
+  cta_label: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TOEFLTestSetSection {
+  id: string;
+  test_set_id: string;
+  section: TOEFLTestSection;
+  title: string;
+  description: string;
+  sort_order: number;
+  is_enabled: boolean;
+  test_data: unknown;
+  created_at: string;
+  updated_at: string;
 }
 
 // Typing structure for hardcoded test templates

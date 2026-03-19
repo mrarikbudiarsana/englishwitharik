@@ -1,70 +1,34 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { TOEFLTestTemplate, TOEFLListeningTest, TOEFLStructureTest, TOEFLReadingTest } from '@/lib/toefl/types'
-
-function calculateScore(answers: Record<string, number>, template: TOEFLTestTemplate) {
-  let score = 0
-  let total = 0
-
-  if (template.type === 'listening') {
-    const listeningTest = template.test as TOEFLListeningTest
-    // Score Part A
-    listeningTest.parts.A.questions.forEach(q => {
-      total++
-      if (answers[q.id] === q.correctAnswerIndex) score++
-    })
-    // Score Part B
-    listeningTest.parts.B.passages.forEach(p => {
-      p.questions.forEach(q => {
-        total++
-        if (answers[q.id] === q.correctAnswerIndex) score++
-      })
-    })
-    // Score Part C
-    listeningTest.parts.C.passages.forEach(p => {
-      p.questions.forEach(q => {
-        total++
-        if (answers[q.id] === q.correctAnswerIndex) score++
-      })
-    })
-  } else if (template.type === 'structure') {
-    const structureTest = template.test as TOEFLStructureTest
-     structureTest.parts.A.questions.forEach(q => {
-      total++
-      if (answers[q.id] === q.correctAnswerIndex) score++
-    })
-    structureTest.parts.B.questions.forEach(q => {
-      total++
-      if (answers[q.id] === q.correctAnswerIndex) score++
-    })
-  } else if (template.type === 'reading') {
-    const readingTest = template.test as TOEFLReadingTest
-    readingTest.passages.forEach(p => {
-      p.questions.forEach(q => {
-        total++
-        if (answers[q.id] === q.correctAnswerIndex) score++
-      })
-    })
-  }
-
-  return { score, total }
-}
+import { calculateScore, isTOEFLSection, toTemplate } from '@/lib/toefl/catalog'
 
 export async function POST(request: Request) {
   try {
-    const { attemptId, answers, section } = await request.json()
+    const { attemptId, answers } = await request.json()
 
-    if (!attemptId || !section || !answers) {
+    if (!attemptId || !answers) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const supabase = await createAdminClient()
 
-    // Fetch the dynamic template from DB to judge the score
+    const { data: attempt, error: attemptError } = await supabase
+      .from('toefl_attempts')
+      .select('id, test_set_id, section')
+      .eq('id', attemptId)
+      .single()
+
+    if (attemptError || !attempt || !isTOEFLSection(attempt.section)) {
+      console.error('Error fetching attempt for submit:', attemptError)
+      return NextResponse.json({ error: 'Attempt not found' }, { status: 404 })
+    }
+
     const { data: templateRecord, error: templateError } = await supabase
-      .from('toefl_templates')
+      .from('toefl_test_set_sections')
       .select('test_data')
-      .eq('id', section)
+      .eq('test_set_id', attempt.test_set_id)
+      .eq('section', attempt.section)
+      .eq('is_enabled', true)
       .single()
 
     if (templateError || !templateRecord) {
@@ -72,19 +36,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Test template not found in database' }, { status: 404 })
     }
 
-    if (section !== 'listening' && section !== 'structure' && section !== 'reading') {
-      return NextResponse.json({ error: 'Invalid section' }, { status: 400 })
+    const templateData = toTemplate(attempt.section, templateRecord.test_data)
+
+    if (!templateData) {
+      return NextResponse.json({ error: 'Stored test template is invalid' }, { status: 500 })
     }
 
-    const templateData = {
-      type: section,
-      test: templateRecord.test_data
-    } as TOEFLTestTemplate
-
-    // Server-side scoring
     const { score, total } = calculateScore(answers, templateData)
 
-    // Update attempt
     const { error } = await supabase
       .from('toefl_attempts')
       .update({
@@ -93,7 +52,7 @@ export async function POST(request: Request) {
         total,
         completed_at: new Date().toISOString()
       })
-      .eq('id', attemptId)
+      .eq('id', attempt.id)
 
     if (error) {
       console.error('Submit error:', error)
@@ -101,7 +60,6 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, score, total })
-
   } catch (error) {
     console.error('Submit Error:', error)
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })

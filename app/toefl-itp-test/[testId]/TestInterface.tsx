@@ -10,9 +10,11 @@ import ReadingInterface from './components/ReadingInterface'
 export default function TestInterface({
   attempt,
   template,
+  testSetTitle,
 }: {
   attempt: TOEFLAttempt & { toefl_participants: { name: string } }
   template: TOEFLTestTemplate
+  testSetTitle: string
 }) {
   const router = useRouter()
   // Flatten questions based on section type
@@ -46,7 +48,6 @@ export default function TestInterface({
         body: JSON.stringify({
           attemptId: attempt.id,
           answers,
-          section: attempt.section
         }),
       })
 
@@ -84,6 +85,7 @@ export default function TestInterface({
         <div>
           <h1 className="font-bold text-gray-900 text-base sm:text-lg">{template.test.title}</h1>
           <p className="text-sm text-gray-500">Participant: {attempt.toefl_participants?.name}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#08507f]">{testSetTitle}</p>
         </div>
         <div className="flex items-center justify-between gap-4 sm:gap-6">
           <div className={`text-xl sm:text-2xl font-mono font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>

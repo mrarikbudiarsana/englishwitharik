@@ -1,116 +1,113 @@
-"use client"
+import Image from 'next/image'
+import Link from 'next/link'
+import { createAdminClient } from '@/lib/supabase/server'
+import { TOEFL_SECTION_LABELS } from '@/lib/toefl/catalog'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+interface TestSetRow {
+  id: string
+  slug: string
+  title: string
+  description: string
+  cta_label: string
+  cover_image_url: string | null
+  toefl_test_set_sections: Array<{
+    id: string
+    section: 'listening' | 'structure' | 'reading'
+    is_enabled: boolean
+    sort_order: number
+  }> | null
+}
 
-type TestSection = 'listening' | 'structure' | 'reading'
+export default async function TOEFLITPLandingPage() {
+  const supabase = await createAdminClient()
+  const { data: testSets, error } = await supabase
+    .from('toefl_test_sets')
+    .select(`
+      id,
+      slug,
+      title,
+      description,
+      cta_label,
+      cover_image_url,
+      toefl_test_set_sections (
+        id,
+        section,
+        is_enabled,
+        sort_order
+      )
+    `)
+    .eq('is_published', true)
+    .order('updated_at', { ascending: false })
 
-export default function TOEFLITPLandingPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [section, setSection] = useState<TestSection>('listening')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
-  const handleStartTest = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      // 1. Register or find student and start attempt in the database
-      const res = await fetch('/api/toefl-itp/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, section }),
-      })
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null)
-        throw new Error(errData ? JSON.stringify(errData, null, 2) : 'Failed to start test')
-      }
-      
-      const { attemptId } = await res.json()
-      
-      // 2. Redirect to the test page with the attempt ID
-      router.push(`/toefl-itp-test/${attemptId}`)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      console.error(error)
-      alert(`Error starting test:\n${message}`)
-      setLoading(false)
-    }
+  if (error) {
+    return <div className="p-8 text-red-500">Error loading TOEFL test catalog: {error.message}</div>
   }
 
+  const publishedSets = ((testSets ?? []) as TestSetRow[]).map((set) => ({
+    ...set,
+    sections: (set.toefl_test_set_sections ?? [])
+      .filter((section) => section.is_enabled)
+      .sort((a, b) => a.sort_order - b.sort_order),
+  }))
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            TOEFL ITP Training
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please enter your details to begin the practice test.
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#08507f]">TOEFL ITP Practice</p>
+          <h1 className="mt-3 text-4xl font-extrabold text-gray-900">Choose a TOEFL ITP test set</h1>
+          <p className="mt-3 text-base text-gray-600">
+            Use one shareable URL per set, or send students straight to a specific section.
           </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleStartTest}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="name" className="sr-only">Full Name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-1">Select Test Section</label>
-              <select
-                id="section"
-                name="section"
-                required
-                value={section}
-                onChange={(e) => setSection(e.target.value as TestSection)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              >
-                <option value="listening">Day 1: Listening Comprehension (35 mins)</option>
-                <option value="structure">Day 2: Structure & Written Expression (25 mins)</option>
-                <option value="reading">Day 3: Reading Comprehension (55 mins)</option>
-              </select>
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {publishedSets.map((testSet) => (
+            <Link
+              key={testSet.id}
+              href={`/toefl-itp-test/sets/${testSet.slug}`}
+              className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             >
-              {loading ? 'Starting...' : 'Start Test'}
-            </button>
-          </div>
-        </form>
+              {testSet.cover_image_url ? (
+                <div className="relative aspect-[16/9] w-full bg-slate-100">
+                  <Image
+                    src={testSet.cover_image_url}
+                    alt={testSet.title}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  />
+                </div>
+              ) : null}
+
+              <div className="p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#08507f]">{testSet.slug}</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">{testSet.title}</h2>
+                  </div>
+                  <span className="rounded-full bg-[#08507f]/10 px-3 py-1 text-xs font-semibold text-[#08507f]">
+                    {testSet.sections.length} sections
+                  </span>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-slate-600">
+                  {testSet.description || 'Shareable TOEFL ITP practice set.'}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {testSet.sections.map((section) => (
+                    <span
+                      key={section.id}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                    >
+                      {TOEFL_SECTION_LABELS[section.section]}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-6 text-sm font-semibold text-[#08507f]">{testSet.cta_label} →</p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

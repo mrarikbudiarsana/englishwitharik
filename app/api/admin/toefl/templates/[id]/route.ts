@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 function validateTemplateShape(templateId: string, value: unknown) {
   if (!value || typeof value !== 'object') {
@@ -36,27 +36,38 @@ function validateTemplateShape(templateId: string, value: unknown) {
 }
 
 async function authorize() {
-  const supabase = await createAdminClient()
+  const supabase = await createClient()
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    return { supabase, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
 
-  return { supabase, error: null }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || (profile.role !== 'admin' && !profile.is_admin)) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+
+  return { error: null }
 }
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, error: authError } = await authorize()
+  const { error: authError } = await authorize()
   if (authError) return authError
 
   const { id } = await params
+  const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('toefl_templates')
     .select('id, type, test_data, updated_at')
@@ -74,7 +85,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, error: authError } = await authorize()
+  const { error: authError } = await authorize()
   if (authError) return authError
 
   const { id } = await params
@@ -83,6 +94,7 @@ export async function POST(
     const body = await request.json() as { testData: unknown }
     validateTemplateShape(id, body.testData)
 
+    const supabase = await createAdminClient()
     const { error } = await supabase
       .from('toefl_templates')
       .update({

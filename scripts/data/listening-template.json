@@ -1,0 +1,634 @@
+{
+  "type": "listening",
+  "test": {
+    "title": "Listening Comprehension",
+    "durationMinutes": 35,
+    "parts": {
+      "A": {
+        "instructions": "In Part A, you will hear short conversations between two people. After each conversation, you will hear a question about the conversation. The conversations and questions will not be repeated. After you hear a question, read the four possible answers and choose the best answer.",
+        "questions": [
+          {
+            "id": "l-a-1",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q1.mp3",
+            "options": [
+              "A) She lost the man's calculator.",
+              "B) She will lend the man her calculator.",
+              "C) The calculator may be under the man's book.",
+              "D) The man will not have time to find the calculator."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-2",
+            "text": "What does the man suggest the woman do?",
+            "audioUrl": "https://example.com/audio/listening/q2.mp3",
+            "options": [
+              "A) Work in the astronomy department",
+              "B) Add another course next spring",
+              "C) Find a job for the summer",
+              "D) Take an astronomy course in the summer"
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-3",
+            "text": "What does the woman imply about the man?",
+            "audioUrl": "https://example.com/audio/listening/q3.mp3",
+            "options": [
+              "A) He should work at home.",
+              "B) He can use the lab on the weekend.",
+              "C) He will have to repeat the experiment next week.",
+              "D) He forgot to return the key to security."
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-4",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q4.mp3",
+            "options": [
+              "A) He and his parents plan to visit Japan.",
+              "B) He recently returned from Japan.",
+              "C) His sweatshirt came from Japan.",
+              "D) The weather can be very cold in some parts of Japan."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-5",
+            "text": "What does the woman mean?",
+            "audioUrl": "https://example.com/audio/listening/q5.mp3",
+            "options": [
+              "A) She will go to the restaurant with the man.",
+              "B) She will meet the man and his friends later in the evening.",
+              "C) She has already had dinner.",
+              "D) She will not change her original plans."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-6",
+            "text": "What can be inferred about the man?",
+            "audioUrl": "https://example.com/audio/listening/q6.mp3",
+            "options": [
+              "A) He will register for the conference.",
+              "B) He has nearly completed all his research.",
+              "C) He is not teaching any classes today.",
+              "D) He went to the wrong Web site."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-7",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q7.mp3",
+            "options": [
+              "A) The bicycle is too big for her.",
+              "B) She bought the bicycle at a good price.",
+              "C) She did not know about the store on Harrison Street.",
+              "D) She has not used her bike all summer."
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-8",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q8.mp3",
+            "options": [
+              "A) She did not buy the ticket.",
+              "B) The ticket was expensive.",
+              "C) She does not know how much the ticket cost.",
+              "D) There are still a few tickets left."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-9",
+            "text": "What does the professor mean?",
+            "audioUrl": "https://example.com/audio/listening/q9.mp3",
+            "options": [
+              "A) She will extend the deadline for the paper.",
+              "B) She has already made an exception for the student.",
+              "C) She does not accept late papers.",
+              "D) She cannot meet with the student in the library."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-10",
+            "text": "What can be inferred about the man?",
+            "audioUrl": "https://example.com/audio/listening/q10.mp3",
+            "options": [
+              "A) He lives far from the university.",
+              "B) He is moving next month.",
+              "C) He prefers living on campus.",
+              "D) He might be able to help the woman."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-11",
+            "text": "What does the woman mean?",
+            "audioUrl": "https://example.com/audio/listening/q11.mp3",
+            "options": [
+              "A) She agrees with the man.",
+              "B) She would like to see the movie a second time.",
+              "C) She has not seen the movie.",
+              "D) She does not understand the man's point."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-12",
+            "text": "What does the man imply about his sister?",
+            "audioUrl": "https://example.com/audio/listening/q12.mp3",
+            "options": [
+              "A) She delayed submitting her application.",
+              "B) She does not know if her application will be accepted.",
+              "C) She was glad to finally receive the letter.",
+              "D) She started her classes several weeks ago."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-13",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q13.mp3",
+            "options": [
+              "A) She was also late for the meeting.",
+              "B) She is waiting for Mark to fix her car.",
+              "C) The meeting has not started yet.",
+              "D) The bus did not arrive on time."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-14",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q14.mp3",
+            "options": [
+              "A) He does not like to wake up early in the morning.",
+              "B) The woman seems unusually sad.",
+              "C) There is no special reason for his good mood.",
+              "D) He was not in a good mood when he woke up."
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-15",
+            "text": "What does the woman mean?",
+            "audioUrl": "https://example.com/audio/listening/q15.mp3",
+            "options": [
+              "A) She took a history class last year.",
+              "B) She does not trust the man's opinion.",
+              "C) She probably will not take any history classes.",
+              "D) She did not like her sociology professor."
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-16",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q16.mp3",
+            "options": [
+              "A) He is very busy now.",
+              "B) He has to check his schedule.",
+              "C) He can meet the woman at six o'clock.",
+              "D) He prefers to meet the woman some other time."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-17",
+            "text": "What does the man imply?",
+            "audioUrl": "https://example.com/audio/listening/q17.mp3",
+            "options": [
+              "A) The course is too difficult.",
+              "B) The professor changed his mind.",
+              "C) The final exam was cancelled.",
+              "D) The woman misunderstood the professor."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-18",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q18.mp3",
+            "options": [
+              "A) The woman deserves the recognition.",
+              "B) The woman should tell her friends how she feels.",
+              "C) The woman's friends do not know about the scholarship.",
+              "D) The woman should apply for a scholarship."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-19",
+            "text": "What will the woman probably do next?",
+            "audioUrl": "https://example.com/audio/listening/q19.mp3",
+            "options": [
+              "A) Ask the man to help her figure out how to use her new computer",
+              "B) Let the man use her computer",
+              "C) Take her computer to a repair shop",
+              "D) Help the man fix his computer"
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-20",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q20.mp3",
+            "options": [
+              "A) He was at the health center earlier today.",
+              "B) He intends to get his blood pressure checked.",
+              "C) He does not have time to wait in line today.",
+              "D) He is not concerned about his blood pressure."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-21",
+            "text": "What does the woman mean?",
+            "audioUrl": "https://example.com/audio/listening/q21.mp3",
+            "options": [
+              "A) She plans to visit the man occasionally.",
+              "B) She hopes the man is able to find a job.",
+              "C) She would like to hear from the man.",
+              "D) She wants to know when the man will return."
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-22",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q22.mp3",
+            "options": [
+              "A) She does not know where her pen is.",
+              "B) The man may borrow her pen.",
+              "C) She does not buy expensive pens.",
+              "D) The man has found her missing pen."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-23",
+            "text": "What can be inferred from this conversation?",
+            "audioUrl": "https://example.com/audio/listening/q23.mp3",
+            "options": [
+              "A) The man's directions were not very good.",
+              "B) The woman forgot to take the man's directions with her.",
+              "C) The woman was not able to drive to the conference.",
+              "D) The conference was not very interesting."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-24",
+            "text": "What does the woman mean?",
+            "audioUrl": "https://example.com/audio/listening/q24.mp3",
+            "options": [
+              "A) She will meet the man at the cafe.",
+              "B) She has not yet read the proposal.",
+              "C) The proposal has been approved.",
+              "D) The cafe does not need renovations."
+            ],
+            "correctAnswerIndex": 1
+          },
+          {
+            "id": "l-a-25",
+            "text": "What does the woman suggest the man do?",
+            "audioUrl": "https://example.com/audio/listening/q25.mp3",
+            "options": [
+              "A) Buy a different kind of medicine",
+              "B) See a doctor",
+              "C) Take a second pill",
+              "D) Avoid taking any medication"
+            ],
+            "correctAnswerIndex": 2
+          },
+          {
+            "id": "l-a-26",
+            "text": "What does the man imply about Phil?",
+            "audioUrl": "https://example.com/audio/listening/q26.mp3",
+            "options": [
+              "A) He changed his plans about school.",
+              "B) His parents are coming out to visit him.",
+              "C) He was only out of school one semester.",
+              "D) He is going to take next semester off."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-27",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q27.mp3",
+            "options": [
+              "A) The man should follow the florist's advice.",
+              "B) The man should go to a different florist.",
+              "C) She bought flowers from the same florist.",
+              "D) Cutting flowers does not make them last longer."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-28",
+            "text": "What does the man imply?",
+            "audioUrl": "https://example.com/audio/listening/q28.mp3",
+            "options": [
+              "A) There was not enough time for questions.",
+              "B) The lecture topic was not interesting.",
+              "C) The speaker was difficult to hear.",
+              "D) The audience's questions were not interesting."
+            ],
+            "correctAnswerIndex": 3
+          },
+          {
+            "id": "l-a-29",
+            "text": "What does the man mean?",
+            "audioUrl": "https://example.com/audio/listening/q29.mp3",
+            "options": [
+              "A) He wants to give the woman more information.",
+              "B) He does not mind waiting to see the dentist.",
+              "C) He does not remember where he put the dentist's card.",
+              "D) He will take the woman to the dentist's office soon."
+            ],
+            "correctAnswerIndex": 0
+          },
+          {
+            "id": "l-a-30",
+            "text": "What does the woman imply?",
+            "audioUrl": "https://example.com/audio/listening/q30.mp3",
+            "options": [
+              "A) She also has a presentation to do.",
+              "B) She enjoys speaking in front of other people.",
+              "C) The man's presentation will be a success.",
+              "D) The man should practice his presentation."
+            ],
+            "correctAnswerIndex": 2
+          }
+        ]
+      },
+      "B": {
+        "instructions": "In Part B, you will hear longer conversations. After each conversation, you will hear several questions. The conversations and questions will not be repeated. After you hear a question, read the four possible answers and choose the best answer.",
+        "passages": [
+          {
+            "id": "l-b-passage-1",
+            "audioUrl": "https://example.com/audio/listening/part-b-passage-1.mp3",
+            "questions": [
+              {
+                "id": "l-b-31",
+                "text": "What are the students mainly discussing?",
+                "options": [
+                  "A) A swimming competition",
+                  "B) A singing contest",
+                  "C) The water temperature at the beach",
+                  "D) The woman's schedule this semester"
+                ],
+                "correctAnswerIndex": 1
+              },
+              {
+                "id": "l-b-32",
+                "text": "What does the woman say about the winners of the competition?",
+                "options": [
+                  "A) They have won for the past three years.",
+                  "B) They placed second last year.",
+                  "C) They practiced for three months prior to the competition.",
+                  "D) She thought they did not perform well."
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-b-33",
+                "text": "How did the man spend his weekend?",
+                "options": [
+                  "A) Studying in the library",
+                  "B) Practicing his singing",
+                  "C) Walking on the beach",
+                  "D) Swimming in the ocean"
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-b-34",
+                "text": "What does the woman say about her weekend schedule?",
+                "options": [
+                  "A) She spent many hours on a bus.",
+                  "B) She was too busy to enjoy the beach.",
+                  "C) She had plenty of time to study.",
+                  "D) She did not have time to watch the competition."
+                ],
+                "correctAnswerIndex": 1
+              }
+            ]
+          }
+        ]
+      },
+      "C": {
+        "instructions": "In Part C, you will hear several talks. After each talk, you will hear some questions. The talks and questions will not be repeated. After you hear a question, read the four possible answers and choose the best answer.",
+        "passages": [
+          {
+            "id": "l-c-passage-1",
+            "audioUrl": "https://example.com/audio/listening/part-c-passage-1.mp3",
+            "questions": [
+              {
+                "id": "l-c-35",
+                "text": "What is the conversation mainly about?",
+                "options": [
+                  "A) The first Japanese artist to start an art school in the United States",
+                  "B) Two artists' efforts to promote Japanese art in Europe",
+                  "C) One artist's struggle to overcome financial difficulties",
+                  "D) Influences on one artist's work"
+                ],
+                "correctAnswerIndex": 3
+              },
+              {
+                "id": "l-c-36",
+                "text": "What kind of work did Noguchi's father do?",
+                "options": [
+                  "A) He wrote poetry.",
+                  "B) He built houses.",
+                  "C) He designed gardens.",
+                  "D) He created modern sculptures."
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-c-37",
+                "text": "According to the professor, what did Noguchi learn to do when he was a child in Japan?",
+                "options": [
+                  "A) Draw the human figure",
+                  "B) See similarities between poetry and visual art",
+                  "C) Appreciate and work with natural materials",
+                  "D) Use money wisely"
+                ],
+                "correctAnswerIndex": 2
+              }
+            ]
+          },
+          {
+            "id": "l-c-passage-2",
+            "audioUrl": "https://example.com/audio/listening/part-c-passage-2.mp3",
+            "questions": [
+              {
+                "id": "l-c-38",
+                "text": "What is the main purpose of the lecture?",
+                "options": [
+                  "A) To analyze the importance of touch in marketing",
+                  "B) To compare marketing strategies involving touch and smell",
+                  "C) To explain why shoppers rely more on touch than on their other senses",
+                  "D) To introduce a new way to conduct market research"
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-c-39",
+                "text": "According to the professor, what psychological feeling do shoppers tend to have when they touch an item of merchandise?",
+                "options": [
+                  "A) That they have more time to make a purchasing decision",
+                  "B) That they are highly valued by the owner of the store",
+                  "C) That the item they are touching is already theirs",
+                  "D) That the price of the item is too high"
+                ],
+                "correctAnswerIndex": 2
+              },
+              {
+                "id": "l-c-40",
+                "text": "What does the professor imply about marketers who sell items online?",
+                "options": [
+                  "A) Their customers like that the products are not touched by others.",
+                  "B) They get more returned items than traditional stores do.",
+                  "C) Their descriptions ought to help shoppers imagine how items feel.",
+                  "D) Their photographs are often ineffective."
+                ],
+                "correctAnswerIndex": 2
+              },
+              {
+                "id": "l-c-41",
+                "text": "What does the professor emphasize as an important characteristic of shoppers?",
+                "options": [
+                  "A) They are usually willing to pay more for items they can touch.",
+                  "B) They are reluctant to buy items that were touched repeatedly by other shoppers.",
+                  "C) They touch only items that they intend to buy.",
+                  "D) They are less likely to touch items when the store owner is watching."
+                ],
+                "correctAnswerIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "l-c-passage-3",
+            "audioUrl": "https://example.com/audio/listening/part-c-passage-3.mp3",
+            "questions": [
+              {
+                "id": "l-c-42",
+                "text": "What is the main purpose of the talk?",
+                "options": [
+                  "A) To summarize the history of mathematics",
+                  "B) To show how Mesopotamian science influenced Greek science",
+                  "C) To discuss a mistaken historical interpretation",
+                  "D) To explain why tablets are reliable historical records"
+                ],
+                "correctAnswerIndex": 2
+              },
+              {
+                "id": "l-c-43",
+                "text": "What was on the Mesopotamian tablet mentioned in the talk?",
+                "options": [
+                  "A) Names of mathematicians",
+                  "B) Mathematical calculations",
+                  "C) Measurements of buildings",
+                  "D) Measurements of various shapes"
+                ],
+                "correctAnswerIndex": 1
+              },
+              {
+                "id": "l-c-44",
+                "text": "According to the professor, what had been assumed about the Mesopotamians?",
+                "options": [
+                  "A) All records of their mathematics had been lost.",
+                  "B) They created various types of measuring devices.",
+                  "C) They did not use tablets to record information.",
+                  "D) They could calculate measurements of triangles."
+                ],
+                "correctAnswerIndex": 3
+              },
+              {
+                "id": "l-c-45",
+                "text": "According to the professor, how was the tablet most likely used by the Mesopotamians?",
+                "options": [
+                  "A) As a math exercise sheet",
+                  "B) As a record of business transactions",
+                  "C) As a geometry textbook",
+                  "D) As a plan for a new building"
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-c-46",
+                "text": "What does the professor imply about the ancient Greeks?",
+                "options": [
+                  "A) They learned geometry from Mesopotamia.",
+                  "B) They were less advanced in mathematics than the Mesopotamians.",
+                  "C) They improved the quality of stone tablets.",
+                  "D) They knew how to measure angles."
+                ],
+                "correctAnswerIndex": 3
+              }
+            ]
+          },
+          {
+            "id": "l-c-passage-4",
+            "audioUrl": "https://example.com/audio/listening/part-c-passage-4.mp3",
+            "questions": [
+              {
+                "id": "l-c-47",
+                "text": "What is the talk mainly about?",
+                "options": [
+                  "A) How the age of a fossil is determined",
+                  "B) How fossilized impressions were made on the seafloor",
+                  "C) Techniques for excavating fossils from the sea",
+                  "D) Recently discovered fossilized footprints"
+                ],
+                "correctAnswerIndex": 3
+              },
+              {
+                "id": "l-c-48",
+                "text": "According to the professor, what question does the discovery in Canada help answer?",
+                "options": [
+                  "A) When animals first emerged from the sea",
+                  "B) Where fossils are most easily found",
+                  "C) How footprints on the seafloor are preserved",
+                  "D) Why some animals became extinct"
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-c-49",
+                "text": "Why does the professor mention stonecutters?",
+                "options": [
+                  "A) To illustrate the variety of stone found in Canada",
+                  "B) To show that the fossils were found by luck",
+                  "C) To explain why sandstone often contains fossils",
+                  "D) To tell why fossils are sometimes damaged"
+                ],
+                "correctAnswerIndex": 1
+              },
+              {
+                "id": "l-c-50",
+                "text": "What evidence is given to show whether the footprints were made by animals on land or underwater?",
+                "options": [
+                  "A) The hardness of the sandstone",
+                  "B) The depth of the footprints",
+                  "C) The type of animal that made the footprints",
+                  "D) The location of the rock layer"
+                ],
+                "correctAnswerIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

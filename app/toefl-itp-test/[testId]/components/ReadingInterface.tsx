@@ -1,8 +1,98 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 import { TOEFLReadingTest } from '@/lib/toefl/types'
+
+function ReadingPassagePanel({
+  title,
+  content
+}: {
+  title: string
+  content: string
+}) {
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const [lineHeight, setLineHeight] = useState(36)
+  const [lineMarkers, setLineMarkers] = useState<number[]>([])
+
+  useEffect(() => {
+    const element = contentRef.current
+
+    if (!element || typeof window === 'undefined') {
+      return
+    }
+
+    let frameId = 0
+
+    const updateLineMarkers = () => {
+      const computedStyles = window.getComputedStyle(element)
+      const computedLineHeight = Number.parseFloat(computedStyles.lineHeight)
+
+      if (!Number.isFinite(computedLineHeight) || computedLineHeight <= 0) {
+        return
+      }
+
+      const totalLines = Math.max(1, Math.round(element.scrollHeight / computedLineHeight))
+      const nextMarkers: number[] = []
+
+      for (let line = 5; line <= totalLines; line += 5) {
+        nextMarkers.push(line)
+      }
+
+      setLineHeight(computedLineHeight)
+      setLineMarkers(nextMarkers)
+    }
+
+    const scheduleUpdate = () => {
+      window.cancelAnimationFrame(frameId)
+      frameId = window.requestAnimationFrame(updateLineMarkers)
+    }
+
+    scheduleUpdate()
+
+    let resizeObserver: ResizeObserver | null = null
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(scheduleUpdate)
+      resizeObserver.observe(element)
+    }
+
+    window.addEventListener('resize', scheduleUpdate)
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', scheduleUpdate)
+    }
+  }, [content])
+
+  return (
+    <section className="min-h-0 overflow-y-auto p-5 sm:p-6 lg:p-8 lg:border-r border-gray-200">
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">{title}</h3>
+
+      <div className="relative pl-12">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 border-r border-gray-100">
+          {lineMarkers.map((line) => (
+            <span
+              key={line}
+              className="absolute right-2 text-xs font-semibold tabular-nums text-gray-400"
+              style={{ top: `${(line - 1) * lineHeight}px` }}
+            >
+              {line}
+            </span>
+          ))}
+        </div>
+
+        <div
+          ref={contentRef}
+          className="prose max-w-none prose-blue text-gray-800 leading-9"
+          style={{ lineHeight: `${lineHeight}px` } as CSSProperties}
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      </div>
+    </section>
+  )
+}
 
 export default function ReadingInterface({
   test,
@@ -26,7 +116,6 @@ export default function ReadingInterface({
   const allQuestionsData: { id: string, slideIndex: number, number: number, passageIndex: number }[] = []
   let questionCounter = 1
 
-  // Push main section instruction
   slides.push({
     type: 'instruction',
     partName: 'Reading Comprehension',
@@ -80,34 +169,33 @@ export default function ReadingInterface({
               </h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6">
+            <div className="flex-1 min-h-0 px-4 sm:px-8 py-5 sm:py-6">
               {currentSlide.type === 'instruction' && (
-                <div className="flex flex-col items-center justify-center py-6 px-4 shadow-sm rounded-lg border border-blue-100 bg-blue-50/50">
-                  <svg className="w-12 h-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Instructions</h3>
-                  <p className="text-base text-gray-700 leading-relaxed text-center max-w-2xl">{currentSlide.instructions}</p>
-                  <button
-                    onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
-                    className="mt-6 px-8 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300"
-                  >
-                    Start Reading Section
-                  </button>
+                <div className="h-full overflow-y-auto">
+                  <div className="flex flex-col items-center justify-center py-6 px-4 shadow-sm rounded-lg border border-blue-100 bg-blue-50/50">
+                    <svg className="w-12 h-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Instructions</h3>
+                    <p className="text-base text-gray-700 leading-relaxed text-center max-w-2xl">{currentSlide.instructions}</p>
+                    <button
+                      onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
+                      className="mt-6 px-8 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300"
+                    >
+                      Start Reading Section
+                    </button>
+                  </div>
                 </div>
               )}
 
               {currentSlide.type === 'question' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-                  <section className="p-5 sm:p-6 lg:p-8 lg:border-r border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">{currentSlide.passage.title}</h3>
-                    <div
-                      className="prose max-w-none prose-blue text-gray-800 leading-loose"
-                      dangerouslySetInnerHTML={{ __html: currentSlide.passage.content }}
-                    />
-                  </section>
+                <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2 gap-0">
+                  <ReadingPassagePanel
+                    title={currentSlide.passage.title}
+                    content={currentSlide.passage.content}
+                  />
 
-                  <section className="p-5 sm:p-6 lg:p-8">
+                  <section className="min-h-0 overflow-y-auto p-5 sm:p-6 lg:p-8">
                     <div className="mb-6 text-lg font-medium text-gray-900 leading-relaxed w-full">
                       <span className="bg-gray-100 text-gray-700 w-8 h-8 inline-flex items-center justify-center rounded-full text-sm mr-3 font-bold align-middle">
                         {currentQuestionNumber}
