@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function TemplateEditorPage() {
   const { id } = useParams()
-  const supabase = useMemo(() => createClient(), [])
   
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -15,60 +13,21 @@ export default function TemplateEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const validateTemplateShape = (templateId: string | string[] | undefined, value: unknown) => {
-    if (!value || typeof value !== 'object') {
-      throw new Error('Template JSON must be an object.')
-    }
-
-    const data = value as Record<string, unknown>
-
-    if ('type' in data && 'test' in data) {
-      throw new Error('Save only the inner test object. Remove the outer "type" and "test" wrapper before saving.')
-    }
-
-    if (typeof data.title !== 'string' || typeof data.durationMinutes !== 'number') {
-      throw new Error('Template must include "title" and numeric "durationMinutes".')
-    }
-
-    if (templateId === 'listening') {
-      const parts = data.parts as Record<string, unknown> | undefined
-      if (!parts?.A || !parts?.B || !parts?.C) {
-        throw new Error('Listening template must include parts A, B, and C.')
-      }
-    }
-
-    if (templateId === 'structure') {
-      const parts = data.parts as Record<string, unknown> | undefined
-      if (!parts?.A || !parts?.B) {
-        throw new Error('Structure template must include parts A and B.')
-      }
-    }
-
-    if (templateId === 'reading') {
-      if (!Array.isArray(data.passages)) {
-        throw new Error('Reading template must include a passages array.')
-      }
-    }
-  }
-
   useEffect(() => {
     async function fetchTemplate() {
-      const { data, error } = await supabase
-        .from('toefl_templates')
-        .select('test_data')
-        .eq('id', id)
-        .single()
+      const res = await fetch(`/api/admin/toefl/templates/${id}`)
+      const data = await res.json().catch(() => null)
 
-      if (error) {
+      if (!res.ok || !data) {
         setError('Failed to load template')
-      } else if (data) {
+      } else {
         setJsonData(JSON.stringify(data.test_data, null, 2))
       }
       setLoading(false)
     }
 
     fetchTemplate()
-  }, [id, supabase])
+  }, [id])
 
   const handleSave = async () => {
     setSaving(true)
@@ -77,17 +36,16 @@ export default function TemplateEditorPage() {
 
     try {
       const parsedData = JSON.parse(jsonData)
-      validateTemplateShape(id, parsedData)
-      
-      const { error: updateError } = await supabase
-        .from('toefl_templates')
-        .update({ 
-          test_data: parsedData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
+      const res = await fetch(`/api/admin/toefl/templates/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testData: parsedData }),
+      })
 
-      if (updateError) throw updateError
+      const payload = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(payload?.error ?? 'Failed to save template')
+      }
       
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
