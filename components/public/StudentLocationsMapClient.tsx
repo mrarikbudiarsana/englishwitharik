@@ -149,6 +149,7 @@ export default function StudentLocationsMapClient() {
           >
             <Popup>
               <div className="text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={countryCodeToFlagIconUrl(loc.countryCode)}
                   alt={`${loc.country} flag`}

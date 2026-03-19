@@ -72,10 +72,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Test template not found in database' }, { status: 404 })
     }
 
+    if (section !== 'listening' && section !== 'structure' && section !== 'reading') {
+      return NextResponse.json({ error: 'Invalid section' }, { status: 400 })
+    }
+
     const templateData = {
       type: section,
       test: templateRecord.test_data
-    } as any
+    } as TOEFLTestTemplate
 
     // Server-side scoring
     const { score, total } = calculateScore(answers, templateData)

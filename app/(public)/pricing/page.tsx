@@ -12,6 +12,20 @@ export const metadata: Metadata = buildPageMetadata({
 
 export const revalidate = 3600
 
+interface PricingSectionView {
+  name: string
+  description: string
+  packages: Array<{
+    id: string
+    hours: number
+    rawPricePrivate: number
+    rawPriceSemi: number
+    pricePrivate: string
+    priceSemi: string
+    popular: boolean
+  }>
+}
+
 export default async function PricingPage() {
   const supabase = await createClient()
 
@@ -27,7 +41,7 @@ export default async function PricingPage() {
 
   const tabs = programs.map((prog) => {
     const progPackages = packages.filter((p) => p.program_id === prog.id)
-    const sectionsMap = new Map<string, any>()
+    const sectionsMap = new Map<string, PricingSectionView>()
     for (const pkg of progPackages) {
       if (!sectionsMap.has(pkg.section_name)) {
         sectionsMap.set(pkg.section_name, { name: pkg.section_name, description: pkg.section_desc, packages: [] })

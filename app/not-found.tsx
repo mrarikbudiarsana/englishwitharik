@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function NotFound() {
   return (
@@ -6,9 +7,11 @@ export default function NotFound() {
       {/* Minimal header */}
       <header className="border-b border-gray-100 px-6 h-16 flex items-center">
         <Link href="/">
-          <img
+          <Image
             src="https://scobvornehcncgsqngag.supabase.co/storage/v1/object/public/Public/Logo%20fix.svg"
             alt="English with Arik"
+            width={120}
+            height={40}
             className="h-10 w-auto"
           />
         </Link>

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
 
@@ -36,9 +37,11 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <img
+          <Image
             src="https://scobvornehcncgsqngag.supabase.co/storage/v1/object/public/Public/Logo%20fix.svg"
             alt="English with Arik Logo"
+            width={120}
+            height={40}
             className="h-10 w-auto"
           />
         </Link>

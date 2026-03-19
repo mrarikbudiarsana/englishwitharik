@@ -6,6 +6,18 @@ export const metadata: Metadata = {
     title: 'Manage Pricing | Admin',
 }
 
+interface PricingSectionEditorView {
+    name: string
+    description: string
+    packages: Array<{
+        id: string
+        hours: number
+        rawPricePrivate: number
+        rawPriceSemi: number
+        popular: boolean
+    }>
+}
+
 export default async function AdminPricingPage() {
     const supabase = await createAdminClient()
 
@@ -23,7 +35,7 @@ export default async function AdminPricingPage() {
 
     const tabs = programs.map((prog) => {
         const progPackages = packages.filter((p) => p.program_id === prog.id)
-        const sectionsMap = new Map<string, any>()
+        const sectionsMap = new Map<string, PricingSectionEditorView>()
 
         for (const pkg of progPackages) {
             if (!sectionsMap.has(pkg.section_name)) {

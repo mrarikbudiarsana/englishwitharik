@@ -101,10 +101,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ attemptId: newAttempt.id })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : String(error)
     console.error('Test Start Error:', error)
     return NextResponse.json(
-      { error: 'An unexpected error occurred', details: error?.message || String(error) },
+      { error: 'An unexpected error occurred', details },
       { status: 500 }
     )
   }

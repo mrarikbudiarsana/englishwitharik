@@ -50,16 +50,12 @@ export default function AboutStory() {
                         className="order-1 lg:order-2 relative"
                     >
                         <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10">
-                            {/* Note: Using standard img tag for external URL if not configured in next.config.js, 
-                                but prefer Image component if allowed. 
-                                Since we don't know if the wordpress domain is allowed, we'll try Image first, 
-                                but in the actual implementation I'll use a standard img tag with optimized classes 
-                                to avoid configuration errors during this automated step. 
-                             */}
-                            <img
+                            <Image
                                 src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_n3l5dhn3l5dhn3l5-1.png?w=800"
                                 alt="Arik Budiarsana Teaching"
-                                className="object-cover w-full h-full transform hover:scale-105 transition-transform duration-700"
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                className="object-cover transform hover:scale-105 transition-transform duration-700"
                             />
                             <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl" />
                         </div>

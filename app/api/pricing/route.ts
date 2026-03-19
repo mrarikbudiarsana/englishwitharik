@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+interface PricingSectionResponse {
+    name: string
+    description: string
+    packages: Array<{
+        id: string
+        hours: number
+        rawPricePrivate: number
+        rawPriceSemi: number
+        pricePrivate: string
+        priceSemi: string
+        popular: boolean
+    }>
+}
+
 export async function GET() {
     const supabase = await createClient()
 
@@ -23,7 +37,7 @@ export async function GET() {
         const progPackages = packages.filter((p) => p.program_id === prog.id)
 
         // Group packages by section
-        const sectionsMap = new Map<string, any>()
+        const sectionsMap = new Map<string, PricingSectionResponse>()
         for (const pkg of progPackages) {
             if (!sectionsMap.has(pkg.section_name)) {
                 sectionsMap.set(pkg.section_name, {

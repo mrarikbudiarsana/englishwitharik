@@ -110,6 +110,7 @@ vi.mock('./post-editor/modals', () => ({
   EmailWritingModal: () => null,
   MissingLettersModal: () => null,
   DragSentenceModal: () => null,
+  OrderingModal: () => null,
   CollapsibleModal: () => null,
   ImageLibraryModal: () => null,
   UrlInputModal: () => null,

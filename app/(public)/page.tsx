@@ -7,10 +7,10 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import {
   BookOpen, Briefcase, Target, Building2,
-  GraduationCap, Library, Video, Calendar, DollarSign,
-  MapPin, Phone, Clock, MessageCircle, Star, Quote,
-  ChevronRight, ArrowRight, CheckCircle2,
-  FileText, BarChart3, Globe, Trophy
+  GraduationCap, Library,
+  MapPin, Phone, Clock, MessageCircle, Star,
+  ChevronRight, ArrowRight,
+  BarChart3, Globe, Trophy
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -61,47 +61,6 @@ const courses = [
     href: '/contact',
     icon: <Building2 className="w-8 h-8 text-[#08507f]" />,
     desc: 'Industry-tailored instruction for tourism, hospitality, healthcare, and other specialized fields.',
-  },
-]
-
-const whyChooseUs = [
-  {
-    icon: <GraduationCap className="w-6 h-6 text-[#08507f]" />,
-    title: 'Experienced & Qualified Teacher',
-    desc: 'Learn from I Putu Arik Budiarsana with expertise in multiple English specializations.',
-  },
-  {
-    icon: <Library className="w-6 h-6 text-[#08507f]" />,
-    title: 'High-Quality Learning Materials',
-    desc: 'Access comprehensive PDF materials delivered via Google Classroom.',
-  },
-  {
-    icon: <Video className="w-6 h-6 text-[#08507f]" />,
-    title: 'Class Recordings Available',
-    desc: 'Review your lessons anytime with recorded sessions for better retention.',
-  },
-  {
-    icon: <Calendar className="w-6 h-6 text-[#08507f]" />,
-    title: 'Flexible Scheduling Options',
-    desc: 'Book sessions 7 days a week, 7:00 AM – 11:00 PM (GMT+8). Rescheduling available with 30 min notice.',
-  },
-  {
-    icon: <DollarSign className="w-6 h-6 text-[#08507f]" />,
-    title: 'Affordable & Transparent Pricing',
-    desc: 'Quality education at competitive rates with no hidden fees.',
-  },
-]
-
-const testimonials = [
-  {
-    name: 'Bagas Falah Muhammad',
-    role: 'Civil Engineer, Padang',
-    quote: 'I achieved my required IELTS band score for Australian university admission after completing the private 24-hour program. The focus on writing and speaking really helped me improve quickly.',
-  },
-  {
-    name: 'Zati Adila Nurifa',
-    role: 'Data Specialist, Madura',
-    quote: "The instructor's patient approach and emphasis on students' understanding made all the difference. My IELTS strategies improved significantly through consistent practice exercises.",
   },
 ]
 
@@ -278,7 +237,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {courses.map((course, idx) => (
+            {courses.map((course) => (
               <Link
                 key={course.href}
                 href={course.href}
@@ -556,3 +515,4 @@ export default async function HomePage() {
     </>
   )
 }
+

@@ -37,6 +37,7 @@ export default function OrderingBlock({ config }: OrderingBlockProps) {
     const [score, setScore] = useState(0)
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSourceItems(shuffleItems(config.items))
         setTargetItems([])
     }, [config.items])

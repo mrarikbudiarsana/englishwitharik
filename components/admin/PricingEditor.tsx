@@ -74,10 +74,10 @@ export default function PricingEditor({ initialTabs }: { initialTabs: TabData[] 
                 body: JSON.stringify({ tabs }),
             })
             if (!res.ok) throw new Error('Failed to save')
-            setMessage('✓ Saved successfully')
+            setMessage('Saved successfully')
             setTimeout(() => setMessage(''), 3000)
-        } catch (e: any) {
-            setMessage('❌ Error saving changes')
+        } catch {
+            setMessage('Error saving changes')
         } finally {
             setIsSaving(false)
         }
@@ -155,7 +155,7 @@ export default function PricingEditor({ initialTabs }: { initialTabs: TabData[] 
                                                     onChange={(e) => updatePackage(sIdx, pIdx, { popular: e.target.checked })}
                                                     className="w-4 h-4 text-[#F5A623] border-gray-300 rounded focus:ring-[#F5A623]"
                                                 />
-                                                <span className="text-xs font-semibold text-gray-500 mt-1 whitespace-nowrap">"Most Popular"</span>
+                                                <span className="text-xs font-semibold text-gray-500 mt-1 whitespace-nowrap">&quot;Most Popular&quot;</span>
                                             </label>
                                         </div>
 
@@ -231,3 +231,4 @@ export default function PricingEditor({ initialTabs }: { initialTabs: TabData[] 
         </div>
     )
 }
+

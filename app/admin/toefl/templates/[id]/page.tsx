@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function TemplateEditorPage() {
   const { id } = useParams()
-  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   
   const [loading, setLoading] = useState(true)
@@ -55,8 +54,9 @@ export default function TemplateEditorPage() {
       
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-    } catch (err: any) {
-      setError(err.message || 'Invalid JSON format or database error')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid JSON format or database error'
+      setError(message)
     } finally {
       setSaving(false)
     }

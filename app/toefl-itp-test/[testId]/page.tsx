@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import TestInterface from './TestInterface'
+import { TOEFLTestTemplate } from '@/lib/toefl/types'
 
 export default async function TOEFLTestPage({
   params,
@@ -35,7 +37,17 @@ export default async function TOEFLTestPage({
             <span className="block text-sm text-blue-600 font-semibold mb-1">Your Score</span>
             <span className="text-5xl font-extrabold text-blue-900">{attempt.score} <span className="text-2xl text-blue-600">/ {attempt.total}</span></span>
           </div>
-          <a href="/toefl-itp-test" className="text-blue-600 hover:text-blue-800 font-medium">&larr; Go back to sections</a>
+          <a
+            href="https://wa.me/6282144223581?text=Halo%2C%20saya%20sudah%20selesai%20TOEFL%20ITP%20section%20dan%20ingin%20daftar%20kelas%20TOEFL%20ITP."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center mb-5 px-6 py-3 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+          >
+            Daftar kelas TOEFL ITP sekarang.
+          </a>
+          <div>
+            <Link href="/toefl-itp-test" className="text-blue-600 hover:text-blue-800 font-medium">&larr; Go back to sections</Link>
+          </div>
         </div>
       </div>
     )
@@ -53,8 +65,8 @@ export default async function TOEFLTestPage({
     return (
       <div className="p-8 text-center bg-white rounded-lg shadow-sm border m-6">
         <h2 className="text-xl font-bold text-red-600 mb-2">Configuration Error</h2>
-        <p className="text-gray-600">The test template for "{attempt.section}" could not be loaded from the database.</p>
-        <p className="text-sm text-gray-400 mt-4">Please contact the administrator or check the Supabase "toefl_templates" table.</p>
+        <p className="text-gray-600">The test template for &quot;{attempt.section}&quot; could not be loaded from the database.</p>
+        <p className="text-sm text-gray-400 mt-4">Please contact the administrator or check the Supabase &quot;toefl_templates&quot; table.</p>
       </div>
     )
   }
@@ -62,7 +74,7 @@ export default async function TOEFLTestPage({
   const sectionContent = {
     type: attempt.section,
     test: templateRecord.test_data
-  } as any // Cast for now to match the expected interface
+  } as TOEFLTestTemplate
 
   // 3. Render the interactive test UI (Client Component)
   return (

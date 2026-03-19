@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostEditor from '@/components/admin/PostEditor'
-import { Save, Send, Eye, ArrowLeft } from 'lucide-react'
+import { Save, Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 function generateSlug(title: string) {

@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
+interface PricingPayload {
+    tabs: Array<{
+        id: string
+        label: string
+        tier: 'premium' | 'standard'
+        sortOrder?: number
+        features: string[]
+        sections: Array<{
+            name: string
+            description: string
+            packages: Array<{
+                hours: number
+                rawPricePrivate: number
+                rawPriceSemi: number
+                popular?: boolean
+            }>
+        }>
+    }>
+}
+
 // The incoming payload shape matches what PricingEditor sends
 export async function POST(request: Request) {
     const supabase = await createAdminClient()
@@ -12,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     try {
-        const payload = await request.json()
+        const payload = await request.json() as PricingPayload
 
         // 1. Delete all existing packages and perks to replace them cleanly
         // Wait, it's safer to just delete and insert to handle removed items.
@@ -45,7 +65,7 @@ export async function POST(request: Request) {
             // Insert new packages
             let pkgSort = 1
             for (const section of tab.sections) {
-                const pkgsToInsert = section.packages.map((pkg: any) => ({
+                const pkgsToInsert = section.packages.map((pkg) => ({
                     program_id: tab.id,
                     section_name: section.name,
                     section_desc: section.description,
@@ -63,8 +83,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true })
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error('Pricing Update Error:', e)
-        return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 })
+        const message = e instanceof Error ? e.message : 'Internal error'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

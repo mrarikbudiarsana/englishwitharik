@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 function LoginForm() {
   const router = useRouter()
@@ -35,9 +36,11 @@ function LoginForm() {
       {/* Logo */}
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-          <img
+          <Image
             src="https://scobvornehcncgsqngag.supabase.co/storage/v1/object/public/Public/Logo%20fix.svg"
             alt="English with Arik"
+            width={120}
+            height={40}
             className="h-10 w-auto"
           />
         </div>

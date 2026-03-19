@@ -14,7 +14,6 @@ import PagePerformanceTable from '@/components/admin/PagePerformanceTable'
 // ---------------------------------------------------------------------------
 
 type Granularity = 'hour' | 'day' | 'month'
-const PAGE_PERFORMANCE_PAGE_SIZE = 10
 
 interface ParsedRange {
   from: Date

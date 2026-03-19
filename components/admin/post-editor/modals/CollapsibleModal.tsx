@@ -63,6 +63,7 @@ export function CollapsibleModal({
     // Sync state when modal opens
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTitle(initialData.title || '')
             if (contentEditor) {
                 contentEditor.commands.setContent(initialData.content || '')

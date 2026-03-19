@@ -24,6 +24,7 @@ export function OrderingModal({
 
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTitle(initialData.title)
             setItems(initialData.items.length > 0 ? initialData.items : [''])
             setExplanation(initialData.explanation)

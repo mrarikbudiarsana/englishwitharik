@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+type TestSection = 'listening' | 'structure' | 'reading'
+
 export default function TOEFLITPLandingPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [section, setSection] = useState<'listening' | 'structure' | 'reading'>('listening')
+  const [section, setSection] = useState<TestSection>('listening')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -33,9 +35,10 @@ export default function TOEFLITPLandingPage() {
       
       // 2. Redirect to the test page with the attempt ID
       router.push(`/toefl-itp-test/${attemptId}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
       console.error(error)
-      alert(`Error starting test:\n${error.message}`)
+      alert(`Error starting test:\n${message}`)
       setLoading(false)
     }
   }
@@ -88,7 +91,7 @@ export default function TOEFLITPLandingPage() {
                 name="section"
                 required
                 value={section}
-                onChange={(e) => setSection(e.target.value as any)}
+                onChange={(e) => setSection(e.target.value as TestSection)}
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               >
                 <option value="listening">Day 1: Listening Comprehension (35 mins)</option>

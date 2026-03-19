@@ -15,11 +15,6 @@ function extractOne(str, tag) {
   return (str.match(re)?.[1] ?? '').trim();
 }
 
-function extractAttr(str, tag, attr) {
-  const re = new RegExp(`<${tag}[^>]*${attr}="([^"]*)"[^>]*>`);
-  return str.match(re)?.[1] ?? '';
-}
-
 function decodeCDATA(s) {
   return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, inner) => inner).trim();
 }

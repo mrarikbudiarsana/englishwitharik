@@ -22,7 +22,7 @@ async function migrateTemplates() {
   console.log('Checking information_schema for table existence...')
   
   // Try to query pg_tables (requires service_role)
-  const { data: tables, error: tableError } = await supabase
+  const { error: tableError } = await supabase
     .from('toefl_participants') // Checking a known table
     .select('count')
     .limit(1)

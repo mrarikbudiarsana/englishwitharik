@@ -38,6 +38,28 @@ export const revalidate = 60
 
 const PAGE_SIZE = 9
 
+interface BlogCategoryRow {
+  id: string
+  name: string
+  slug: string
+}
+
+interface BlogPostCategoryRow {
+  category_id: string
+  categories: BlogCategoryRow | BlogCategoryRow[] | null
+}
+
+interface RawBlogPostRow {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  featured_image_url: string | null
+  published_at: string | null
+  created_at: string
+  post_categories: BlogPostCategoryRow[] | null
+}
+
 export default async function BlogPage({
   searchParams,
 }: {
@@ -78,9 +100,9 @@ export default async function BlogPage({
     .order('published_at', { ascending: false })
     .range(from, to)
 
-  const posts = (rawPosts ?? []).map((post: any) => ({
+  const posts = ((rawPosts ?? []) as RawBlogPostRow[]).map((post) => ({
     ...post,
-    categories: (post.post_categories ?? []).flatMap((pc: any) =>
+    categories: (post.post_categories ?? []).flatMap((pc) =>
       Array.isArray(pc.categories) ? pc.categories : [pc.categories]
     ).filter(Boolean),
   }))

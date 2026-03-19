@@ -101,7 +101,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     isAuthorized = !!user
-  } catch (err) {
+  } catch {
     // Ignore auth errors during static generation or crawler visits
   }
 
@@ -170,7 +170,7 @@ export default async function BlogPostPage({ params }: Props) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     isAuthorized = !!user
-  } catch (err) {
+  } catch {
     // Ignore auth errors during crawler visits
   }
 

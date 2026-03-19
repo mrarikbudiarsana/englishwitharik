@@ -25,6 +25,7 @@ export default function BlogFilters({ categories }: BlogFiltersProps) {
     const [inputValue, setInputValue] = useState(currentQ || '')
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setInputValue(currentQ || '')
     }, [currentQ])
 
