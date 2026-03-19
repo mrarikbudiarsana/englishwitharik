@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
+import ToeflAttemptsTable, { type ToeflAttemptItem } from '@/components/admin/ToeflAttemptsTable'
 
 export default async function TOEFLAdminPage() {
   const supabase = await createAdminClient()
@@ -80,68 +81,34 @@ export default async function TOEFLAdminPage() {
 
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm border rounded-2xl shadow-sm overflow-hidden border-orange-100">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-orange-100">
-            <thead className="bg-orange-50/50">
-              <tr>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Student</th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Email</th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Section</th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Score</th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Status</th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-orange-800 uppercase tracking-wider">Started</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-orange-50">
-              {attempts?.map((attempt) => (
-                <tr key={attempt.id} className="hover:bg-orange-50/30 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900 group-hover:text-orange-900 transition-colors">
-                       {/* @ts-ignore - Supabase nested joins typing isn't perfect here */}
-                      {attempt.toefl_participants?.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {/* @ts-ignore */}
-                    {attempt.toefl_participants?.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                      {attempt.section}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {attempt.score !== null ? `${attempt.score} / ${attempt.total}` : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {attempt.completed_at ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Completed
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        In Progress
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(new Date(attempt.started_at), 'MMM d, yyyy h:mm a')}
-                  </td>
-                </tr>
-              ))}
-              
-              {(!attempts || attempts.length === 0) && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No test attempts recorded yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ToeflAttemptsTable
+        attempts={((attempts ?? []) as Array<{
+          id: string
+          section: string
+          started_at: string
+          completed_at: string | null
+          score: number | null
+          total: number | null
+          toefl_participants: { name: string | null; email: string | null } | Array<{ name: string | null; email: string | null }> | null
+        }>).map((attempt): ToeflAttemptItem => {
+          const participant = Array.isArray(attempt.toefl_participants)
+            ? attempt.toefl_participants[0]
+            : attempt.toefl_participants
+
+          return {
+            id: attempt.id,
+            studentName: participant?.name ?? 'Unknown student',
+            email: participant?.email ?? '-',
+            section: attempt.section,
+            score: attempt.score,
+            total: attempt.total,
+            status: attempt.completed_at ? 'Completed' : 'In Progress',
+            startedAtLabel: format(new Date(attempt.started_at), 'MMM d, yyyy h:mm a'),
+            startedAtRaw: attempt.started_at,
+            completedAtRaw: attempt.completed_at,
+          }
+        })}
+      />
     </div>
   )
 }
