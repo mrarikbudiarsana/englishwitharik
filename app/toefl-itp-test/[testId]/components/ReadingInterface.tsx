@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 import { TOEFLReadingTest } from '@/lib/toefl/types'
 
 export default function ReadingInterface({
@@ -12,7 +13,16 @@ export default function ReadingInterface({
   answers: Record<string, string | number>
   onAnswerSelect: (questionId: string, answerIndex: number) => void
 }) {
-  const slides: any[] = []
+  type ReadingSlide =
+    | { type: 'instruction'; partName: 'Reading Comprehension'; instructions: string }
+    | {
+      type: 'question'
+      passage: TOEFLReadingTest['passages'][number]
+      question: TOEFLReadingTest['passages'][number]['questions'][number]
+      passageIndex: number
+    }
+
+  const slides: ReadingSlide[] = []
   const allQuestionsData: { id: string, slideIndex: number, number: number, passageIndex: number }[] = []
   let questionCounter = 1
 
@@ -37,102 +47,70 @@ export default function ReadingInterface({
   })
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
+  const [flaggedSlides, setFlaggedSlides] = useState<Record<number, boolean>>({})
   const currentSlide = slides[currentSlideIndex]
+  const canMarkCurrentSlide = currentSlide?.type === 'question'
 
   const handleAnswerSelection = (questionId: string, answerIndex: number) => {
     onAnswerSelect(questionId, answerIndex)
   }
 
+  const toggleFlagForCurrentSlide = () => {
+    if (!canMarkCurrentSlide) return
+
+    setFlaggedSlides(prev => ({
+      ...prev,
+      [currentSlideIndex]: !prev[currentSlideIndex]
+    }))
+  }
+
+  const answeredCount = allQuestionsData.filter((q) => answers[q.id] !== undefined).length
+  const currentQuestionNumber = allQuestionsData.find(q => q.slideIndex === currentSlideIndex)?.number
+
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-gray-100">
-
-      {/* Main Content Area */}
-      {currentSlide.type === 'instruction' ? (
-        <div className="flex-1 overflow-y-auto p-6 flex items-center justify-center">
-            <div className="max-w-2xl w-full flex flex-col items-center justify-center py-12 px-8 shadow-sm rounded-xl border border-blue-100 bg-white">
-              <svg className="w-16 h-16 text-blue-500 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <h3 className="text-3xl font-bold text-gray-900 mb-6 text-center">Reading Comprehension</h3>
-              <p className="text-lg text-gray-700 leading-relaxed text-center max-w-xl">{currentSlide.instructions}</p>
-              <button
-                onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
-                className="mt-10 px-10 py-3.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-md"
-              >
-                Start Reading Section
-              </button>
-            </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col overflow-hidden max-h-full">
-          
-          {/* Top Panel: Navigation & Progress Grid */}
-          <div className="w-full bg-white border-b border-gray-200 px-6 py-3 shadow-sm z-10 shrink-0 flex items-center justify-between gap-6">
-            
-            {/* Left: Previous / Next & Counter */}
-             <div className="flex items-center gap-4 shrink-0">
-                <button
-                  onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
-                  disabled={currentSlideIndex === 0}
-                  className="px-4 py-1.5 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm font-medium text-gray-700 transition"
-                >
-                  &larr; Prev
-                </button>
-                <button
-                  onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
-                  disabled={currentSlideIndex === slides.length - 1}
-                  className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md disabled:opacity-50 hover:bg-blue-700 transition"
-                >
-                  Next &rarr;
-                </button>
-             </div>
-
-             {/* Right: Scrollable Question Grid */}
-             <div className="flex-1 flex gap-2 overflow-x-auto p-1 items-center justify-end scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {allQuestionsData.map((q) => {
-                  const isAnswered = answers[q.id] !== undefined
-                  const isCurrentSlide = currentSlideIndex === q.slideIndex
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentSlideIndex(q.slideIndex)}
-                      className={`w-8 h-8 rounded text-sm font-medium flex items-center justify-center border transition-colors shrink-0 ${
-                        isCurrentSlide ? 'ring-2 ring-blue-500 ring-offset-1 z-10' : ''
-                      } ${
-                        isAnswered ? 'bg-green-500 text-white border-green-600 shadow-sm' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                      }`}
-                      title={`Passage ${q.passageIndex + 1}, Question ${q.number}`}
-                    >
-                      {q.number}
-                    </button>
-                  )
-                })}
-             </div>
-          </div>
-
-          {/* Bottom Panel: Two Columns */}
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
-            
-            {/* Left Panel: Reading Passage */}
-            <div className="w-full lg:w-1/2 h-1/2 lg:h-full overflow-y-auto bg-white border-b lg:border-b-0 lg:border-r border-gray-200 p-6 lg:p-10 shrink-0 lg:shrink">
-              <div className="max-w-3xl mx-auto">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">{currentSlide.passage.title}</h3>
-                  <div 
-                    className="prose max-w-none prose-blue text-gray-800 leading-loose"
-                    dangerouslySetInnerHTML={{ __html: currentSlide.passage.content }}
-                  />
-              </div>
+    <div className="h-full w-full">
+      <div className="h-full bg-white overflow-hidden">
+        <div className="h-full grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-h-0 flex flex-col">
+            <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">
+                {currentSlide.type === 'instruction'
+                  ? 'Reading Comprehension'
+                  : `Passage ${currentSlide.passageIndex + 1}`}
+              </h2>
             </div>
 
-            {/* Right Panel: Single Question Display */}
-            <div className="w-full lg:w-1/2 h-1/2 lg:h-full overflow-y-auto bg-white p-6 lg:p-10 shrink-0 lg:shrink">
-              <div className="max-w-xl mx-auto flex flex-col gap-6">
-                  
-                  {/* Single Question Display */}
-                  <div className="w-full">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6">
+              {currentSlide.type === 'instruction' && (
+                <div className="flex flex-col items-center justify-center py-6 px-4 shadow-sm rounded-lg border border-blue-100 bg-blue-50/50">
+                  <svg className="w-12 h-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Instructions</h3>
+                  <p className="text-base text-gray-700 leading-relaxed text-center max-w-2xl">{currentSlide.instructions}</p>
+                  <button
+                    onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
+                    className="mt-6 px-8 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300"
+                  >
+                    Start Reading Section
+                  </button>
+                </div>
+              )}
+
+              {currentSlide.type === 'question' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                  <section className="p-5 sm:p-6 lg:p-8 lg:border-r border-gray-200">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">{currentSlide.passage.title}</h3>
+                    <div
+                      className="prose max-w-none prose-blue text-gray-800 leading-loose"
+                      dangerouslySetInnerHTML={{ __html: currentSlide.passage.content }}
+                    />
+                  </section>
+
+                  <section className="p-5 sm:p-6 lg:p-8">
                     <div className="mb-6 text-lg font-medium text-gray-900 leading-relaxed w-full">
                       <span className="bg-gray-100 text-gray-700 w-8 h-8 inline-flex items-center justify-center rounded-full text-sm mr-3 font-bold align-middle">
-                          {allQuestionsData.find(q => q.slideIndex === currentSlideIndex)?.number}
+                        {currentQuestionNumber}
                       </span>
                       <span className="align-middle">{currentSlide.question.text}</span>
                     </div>
@@ -141,14 +119,14 @@ export default function ReadingInterface({
                       {currentSlide.question.options.map((opt: string, optIdx: number) => {
                         const isSelected = answers[currentSlide.question.id] === optIdx
                         return (
-                          <label 
-                            key={optIdx} 
+                          <label
+                            key={optIdx}
                             className={`flex items-start p-3 border rounded-lg cursor-pointer transition-colors ${
                               isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:bg-gray-50'
                             }`}
                           >
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               name={`question-${currentSlide.question.id}`}
                               className="mt-1 w-5 h-5 text-blue-600 focus:ring-blue-500 border-gray-300 shrink-0"
                               checked={isSelected}
@@ -159,14 +137,113 @@ export default function ReadingInterface({
                         )
                       })}
                     </div>
-                  </div>
-
-              </div>
+                  </section>
+                </div>
+              )}
             </div>
 
+            <div className="shrink-0 border-t border-gray-200 bg-white/95 backdrop-blur px-4 sm:px-8 py-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
+                  disabled={currentSlideIndex === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm font-medium text-gray-700 transition"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </button>
+
+                {canMarkCurrentSlide && (
+                  <button
+                    onClick={toggleFlagForCurrentSlide}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 border rounded-md text-sm font-medium transition ${
+                      flaggedSlides[currentSlideIndex]
+                        ? 'border-amber-300 bg-amber-50 text-amber-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Flag className="w-4 h-4" />
+                    {flaggedSlides[currentSlideIndex] ? 'Marked for Review' : 'Mark for Review'}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
+                  disabled={currentSlideIndex === slides.length - 1}
+                  className="ml-auto inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md disabled:opacity-50 hover:bg-blue-700 transition"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
+
+          <aside className="w-full xl:w-[320px] min-h-0 shrink-0 border-t xl:border-t-0 xl:border-l border-gray-200 bg-gray-50/40">
+            <div className="p-4 sm:p-6 h-full overflow-y-auto">
+              <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider text-center">Question Progress</h3>
+
+              <div className="flex xl:hidden gap-2 mb-5 overflow-x-auto pb-1">
+                {allQuestionsData.map((q) => {
+                  const isAnswered = answers[q.id] !== undefined
+                  const isCurrentSlide = currentSlideIndex === q.slideIndex
+                  const isFlagged = !!flaggedSlides[q.slideIndex]
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentSlideIndex(q.slideIndex)}
+                      className={`h-9 min-w-9 px-2 rounded text-sm font-semibold flex items-center justify-center border transition-colors ${
+                        isCurrentSlide ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+                      } ${
+                        isAnswered
+                          ? 'bg-green-500 text-white border-green-600'
+                          : isFlagged
+                            ? 'bg-amber-50 text-amber-700 border-amber-300'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      title={`Passage ${q.passageIndex + 1}, Question ${q.number}${isFlagged ? ' (Marked for review)' : ''}`}
+                    >
+                      {q.number}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="hidden xl:grid grid-cols-6 gap-2 mb-5">
+                {allQuestionsData.map((q) => {
+                  const isAnswered = answers[q.id] !== undefined
+                  const isCurrentSlide = currentSlideIndex === q.slideIndex
+                  const isFlagged = !!flaggedSlides[q.slideIndex]
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentSlideIndex(q.slideIndex)}
+                      className={`h-9 rounded text-sm font-semibold flex items-center justify-center border transition-colors ${
+                        isCurrentSlide ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+                      } ${
+                        isAnswered
+                          ? 'bg-green-500 text-white border-green-600'
+                          : isFlagged
+                            ? 'bg-amber-50 text-amber-700 border-amber-300'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      title={`Passage ${q.passageIndex + 1}, Question ${q.number}${isFlagged ? ' (Marked for review)' : ''}`}
+                    >
+                      {q.number}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 text-xs text-gray-600 font-medium text-center">
+                <span className="text-blue-600 font-bold">{answeredCount}</span> of {allQuestionsData.length} answered
+              </div>
+            </div>
+          </aside>
         </div>
-      )}
+      </div>
     </div>
   )
 }

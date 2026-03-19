@@ -4,7 +4,7 @@ export const toeflTemplate: Record<string, TOEFLTestTemplate> = {
   listening: {
     type: 'listening',
     test: {
-      title: "TOEFL ITP Listening Comprehension",
+      title: "Listening Comprehension",
       durationMinutes: 35,
       parts: {
         A: {
@@ -74,7 +74,7 @@ export const toeflTemplate: Record<string, TOEFLTestTemplate> = {
   structure: {
     type: 'structure',
     test: {
-      title: "TOEFL ITP Structure and Written Expression",
+      title: "Structure and Written Expression",
       durationMinutes: 25,
       parts: {
         A: {
@@ -115,7 +115,7 @@ export const toeflTemplate: Record<string, TOEFLTestTemplate> = {
   reading: {
     type: 'reading',
     test: {
-      title: "TOEFL ITP Reading Comprehension",
+      title: "Reading Comprehension",
       durationMinutes: 55,
       instructions: "In this section you will read several passages. Each one is followed by a number of questions about it. You are to choose the one best answer, (A), (B), (C), or (D), to each question.",
       passages: [
