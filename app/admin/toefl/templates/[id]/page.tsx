@@ -15,6 +15,42 @@ export default function TemplateEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  const validateTemplateShape = (templateId: string | string[] | undefined, value: unknown) => {
+    if (!value || typeof value !== 'object') {
+      throw new Error('Template JSON must be an object.')
+    }
+
+    const data = value as Record<string, unknown>
+
+    if ('type' in data && 'test' in data) {
+      throw new Error('Save only the inner test object. Remove the outer "type" and "test" wrapper before saving.')
+    }
+
+    if (typeof data.title !== 'string' || typeof data.durationMinutes !== 'number') {
+      throw new Error('Template must include "title" and numeric "durationMinutes".')
+    }
+
+    if (templateId === 'listening') {
+      const parts = data.parts as Record<string, unknown> | undefined
+      if (!parts?.A || !parts?.B || !parts?.C) {
+        throw new Error('Listening template must include parts A, B, and C.')
+      }
+    }
+
+    if (templateId === 'structure') {
+      const parts = data.parts as Record<string, unknown> | undefined
+      if (!parts?.A || !parts?.B) {
+        throw new Error('Structure template must include parts A and B.')
+      }
+    }
+
+    if (templateId === 'reading') {
+      if (!Array.isArray(data.passages)) {
+        throw new Error('Reading template must include a passages array.')
+      }
+    }
+  }
+
   useEffect(() => {
     async function fetchTemplate() {
       const { data, error } = await supabase
@@ -41,6 +77,7 @@ export default function TemplateEditorPage() {
 
     try {
       const parsedData = JSON.parse(jsonData)
+      validateTemplateShape(id, parsedData)
       
       const { error: updateError } = await supabase
         .from('toefl_templates')

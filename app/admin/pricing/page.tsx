@@ -38,14 +38,16 @@ export default async function AdminPricingPage() {
         const sectionsMap = new Map<string, PricingSectionEditorView>()
 
         for (const pkg of progPackages) {
-            if (!sectionsMap.has(pkg.section_name)) {
-                sectionsMap.set(pkg.section_name, {
+            let section = sectionsMap.get(pkg.section_name)
+            if (!section) {
+                section = {
                     name: pkg.section_name,
                     description: pkg.section_desc,
                     packages: [],
-                })
+                }
+                sectionsMap.set(pkg.section_name, section)
             }
-            sectionsMap.get(pkg.section_name).packages.push({
+            section.packages.push({
                 id: pkg.id,
                 hours: pkg.hours,
                 rawPricePrivate: pkg.price_private,

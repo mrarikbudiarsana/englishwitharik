@@ -2,7 +2,33 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TestInterface from './TestInterface'
-import { TOEFLTestTemplate } from '@/lib/toefl/types'
+import { TOEFLReadingTest, TOEFLStructureTest, TOEFLTestTemplate, TOEFLListeningTest } from '@/lib/toefl/types'
+
+function normalizeTemplateData(
+  section: string,
+  rawTestData: unknown,
+): TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest | null {
+  if (!rawTestData || typeof rawTestData !== 'object') {
+    return null
+  }
+
+  const candidate = rawTestData as Record<string, unknown>
+
+  if ('title' in candidate) {
+    return rawTestData as unknown as TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest
+  }
+
+  if (
+    candidate.type === section &&
+    'test' in candidate &&
+    candidate.test &&
+    typeof candidate.test === 'object'
+  ) {
+    return candidate.test as unknown as TOEFLListeningTest | TOEFLStructureTest | TOEFLReadingTest
+  }
+
+  return null
+}
 
 export default async function TOEFLTestPage({
   params,
@@ -71,9 +97,21 @@ export default async function TOEFLTestPage({
     )
   }
 
+  const normalizedTest = normalizeTemplateData(attempt.section, templateRecord.test_data)
+
+  if (!normalizedTest) {
+    return (
+      <div className="p-8 text-center bg-white rounded-lg shadow-sm border m-6">
+        <h2 className="text-xl font-bold text-red-600 mb-2">Invalid Template Data</h2>
+        <p className="text-gray-600">The stored template for &quot;{attempt.section}&quot; is not in a supported format.</p>
+        <p className="text-sm text-gray-400 mt-4">Open the template editor and save only the inner test object, or let the app normalize a wrapped template.</p>
+      </div>
+    )
+  }
+
   const sectionContent = {
     type: attempt.section,
-    test: templateRecord.test_data
+    test: normalizedTest,
   } as TOEFLTestTemplate
 
   // 3. Render the interactive test UI (Client Component)

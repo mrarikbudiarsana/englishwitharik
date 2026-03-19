@@ -39,12 +39,14 @@ export async function GET() {
         // Group packages by section
         const sectionsMap = new Map<string, PricingSectionResponse>()
         for (const pkg of progPackages) {
-            if (!sectionsMap.has(pkg.section_name)) {
-                sectionsMap.set(pkg.section_name, {
+            let section = sectionsMap.get(pkg.section_name)
+            if (!section) {
+                section = {
                     name: pkg.section_name,
                     description: pkg.section_desc,
                     packages: [],
-                })
+                }
+                sectionsMap.set(pkg.section_name, section)
             }
 
             const formattedPricePrivate = new Intl.NumberFormat('id-ID', {
@@ -59,7 +61,7 @@ export async function GET() {
                 minimumFractionDigits: 0,
             }).format(pkg.price_semi)
 
-            sectionsMap.get(pkg.section_name).packages.push({
+            section.packages.push({
                 id: pkg.id,
                 hours: pkg.hours,
                 rawPricePrivate: pkg.price_private,
