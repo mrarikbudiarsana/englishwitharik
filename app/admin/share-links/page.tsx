@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LinkToolsPanel from '@/components/admin/LinkToolsPanel'
 
 const baseUrl = 'https://englishwitharik.com'
 const businessEnglishPath = '/id/kursus-business-english-indonesia'
@@ -51,6 +52,10 @@ export default function AdminShareLinksPage() {
         <p className="text-sm text-gray-500 mt-1">
           Use these links when sharing so Campaign Attribution can show what worked.
         </p>
+      </div>
+
+      <div className="mb-6">
+        <LinkToolsPanel />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">

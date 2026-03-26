@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { FileText, Eye, TrendingUp, PenSquare } from 'lucide-react'
 import Link from 'next/link'
 import MetricsDashboard from '@/components/admin/MetricsDashboard'
+import LinkToolsPanel from '@/components/admin/LinkToolsPanel'
 
 async function getStats() {
   const supabase = await createClient()
@@ -103,6 +104,10 @@ export default async function AdminDashboardPage() {
             <p className="text-3xl font-bold text-gray-900">{card.value.toLocaleString()}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mb-8">
+        <LinkToolsPanel />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

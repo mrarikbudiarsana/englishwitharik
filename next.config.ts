@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'i2.wp.com' },
       { protocol: 'https', hostname: 'englishwitharik.wordpress.com' },
       { protocol: 'https', hostname: 'englishwitharik.com' },
+      { protocol: 'https', hostname: 'api.qrserver.com' },
     ],
   },
 };
