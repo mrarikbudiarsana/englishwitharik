@@ -80,21 +80,21 @@ export default function TestInterface({
   return (
     <div className="flex flex-col h-full w-full bg-gray-50 relative min-h-0">
       {/* Fixed Top Header */}
-      <div className="shrink-0 z-40 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-bold text-gray-900 text-base sm:text-lg">{template.test.title}</h1>
-          <p className="text-sm text-gray-500">Participant: {attempt.toefl_participants?.name}</p>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#08507f]">{testSetTitle}</p>
+      <div className="shrink-0 z-40 bg-white border-b border-gray-200 px-4 sm:px-6 py-2.5 sm:py-4 shadow-sm">
+        <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-bold text-gray-900 text-[15px] sm:text-lg leading-tight">{template.test.title}</h1>
+          <p className="text-xs sm:text-sm text-gray-500 truncate">Participant: {attempt.toefl_participants?.name}</p>
+          <p className="text-[11px] sm:text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-[#08507f] truncate">{testSetTitle}</p>
         </div>
-        <div className="flex items-center justify-between gap-4 sm:gap-6">
-          <div className={`text-xl sm:text-2xl font-mono font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
+        <div className="flex items-center justify-between gap-3 sm:gap-6">
+          <div className={`text-3xl sm:text-2xl font-mono font-bold leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
             {formatTime(timeLeft)}
           </div>
           <button
             onClick={handleFinalSubmit}
             disabled={isSubmitting}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 rounded-md font-medium text-sm sm:text-base"
+            className="bg-green-600 hover:bg-green-700 text-white px-3.5 sm:px-6 py-2 rounded-md font-medium text-sm sm:text-base whitespace-nowrap"
           >
             {isSubmitting ? 'Submitting...' : 'Finish Test'}
           </button>
