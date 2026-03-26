@@ -75,6 +75,8 @@ export default function ListeningTestInterface({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasPlayed, setHasPlayed] = useState<Record<string, boolean>>({})
+  const [audioError, setAudioError] = useState<string | null>(null)
+  const [volume, setVolume] = useState(1)
   const [flaggedSlides, setFlaggedSlides] = useState<Record<number, boolean>>({})
   
   const currentSlide = slides[currentSlideIndex]
@@ -98,29 +100,59 @@ export default function ListeningTestInterface({
     return questions
   }, [slides])
 
+  const getCurrentAudioId = () => {
+    if (currentSlide.type === 'part-a') return currentSlide.question.id
+    if (currentSlide.type === 'part-bc') return currentSlide.passage.id
+    return null
+  }
+
+  const startPlayback = async () => {
+    const audioId = getCurrentAudioId()
+    if (!audioRef.current || !audioId) return
+    if (hasPlayed[audioId]) return
+
+    setAudioError(null)
+    audioRef.current.currentTime = 0
+    audioRef.current.volume = volume
+
+    try {
+      await audioRef.current.play()
+      setIsPlaying(true)
+      setHasPlayed((prev) => ({ ...prev, [audioId]: true }))
+    } catch (error) {
+      setIsPlaying(false)
+      setAudioError('Click Play Audio to start playback.')
+      console.error('Audio playback failed:', error)
+    }
+  }
+
   useEffect(() => {
     // Reset audio state when slide changes
     setIsPlaying(false)
+    setAudioError(null)
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
+      audioRef.current.volume = volume
     }
 
     // Autoplay for current slide
     if (currentSlide?.type === 'part-a' || currentSlide?.type === 'part-bc') {
-       const timer = setTimeout(() => {
-         const slide = currentSlide;
-         const audioId = slide.type === 'part-a' ? slide.question.id : slide.passage.id;
-         
-         if (!hasPlayed[audioId] && audioRef.current) {
-            audioRef.current.play().catch(e => console.error("Autoplay prevented by browser:", e));
-            setIsPlaying(true);
-            setHasPlayed(prev => ({ ...prev, [audioId]: true }));
-         }
-       }, 500);
-       return () => clearTimeout(timer);
+      const audioId = currentSlide.type === 'part-a' ? currentSlide.question.id : currentSlide.passage.id
+      const timer = setTimeout(() => {
+        if (!hasPlayed[audioId]) {
+          void startPlayback()
+        }
+      }, 250)
+      return () => clearTimeout(timer)
     }
-  }, [currentSlide, currentSlideIndex, hasPlayed])
+  }, [currentSlide, currentSlideIndex, volume])
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [volume, currentSlideIndex])
 
   const handleAudioEnded = () => {
     setIsPlaying(false)
@@ -191,6 +223,13 @@ export default function ListeningTestInterface({
                     ref={audioRef}
                     src={currentSlide.question.audioUrl}
                     onEnded={handleAudioEnded}
+                    onLoadedMetadata={() => {
+                      if (audioRef.current) audioRef.current.volume = volume
+                    }}
+                    onError={() => {
+                      setIsPlaying(false)
+                      setAudioError('Audio failed to load. Please check the audio URL.')
+                    }}
                     className="hidden"
                   />
 
@@ -205,8 +244,29 @@ export default function ListeningTestInterface({
                       Finished
                     </div>
                   ) : (
-                    <div className="px-4 sm:px-6 py-2 sm:py-2.5 shrink-0 rounded-full bg-gray-100 text-gray-400 font-medium">Ready</div>
+                    <button
+                      type="button"
+                      onClick={() => void startPlayback()}
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 shrink-0 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+                    >
+                      Play Audio
+                    </button>
                   )}
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label htmlFor="audio-volume-a" className="text-sm font-medium text-gray-700">Volume</label>
+                  <input
+                    id="audio-volume-a"
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={volume}
+                    onChange={(event) => setVolume(Number(event.target.value))}
+                    className="w-40 accent-blue-600"
+                  />
+                  <span className="text-sm text-gray-500">{Math.round(volume * 100)}%</span>
+                  {audioError && <span className="text-sm text-red-600">{audioError}</span>}
                 </div>
 
                 <div className="w-full">
@@ -253,6 +313,13 @@ export default function ListeningTestInterface({
                     ref={audioRef}
                     src={currentSlide.passage.audioUrl}
                     onEnded={handleAudioEnded}
+                    onLoadedMetadata={() => {
+                      if (audioRef.current) audioRef.current.volume = volume
+                    }}
+                    onError={() => {
+                      setIsPlaying(false)
+                      setAudioError('Audio failed to load. Please check the audio URL.')
+                    }}
                     className="hidden"
                   />
 
@@ -267,8 +334,29 @@ export default function ListeningTestInterface({
                       Finished
                     </div>
                   ) : (
-                    <div className="px-4 sm:px-6 py-2 sm:py-2.5 shrink-0 rounded-full bg-gray-100 text-gray-400 font-medium">Ready</div>
+                    <button
+                      type="button"
+                      onClick={() => void startPlayback()}
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 shrink-0 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+                    >
+                      Play Audio
+                    </button>
                   )}
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label htmlFor="audio-volume-bc" className="text-sm font-medium text-gray-700">Volume</label>
+                  <input
+                    id="audio-volume-bc"
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={volume}
+                    onChange={(event) => setVolume(Number(event.target.value))}
+                    className="w-40 accent-blue-600"
+                  />
+                  <span className="text-sm text-gray-500">{Math.round(volume * 100)}%</span>
+                  {audioError && <span className="text-sm text-red-600">{audioError}</span>}
                 </div>
 
                 <div className="w-full space-y-8 mt-4">
