@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { TOEFL_SECTION_LABELS } from '@/lib/toefl/catalog'
@@ -13,10 +13,23 @@ interface SectionPayload {
   test_data?: unknown
 }
 
+type EditorMode = 'guided' | 'json'
+
+function nextNumberedId(items: string[], prefix: string) {
+  const max = items.reduce((acc, id) => {
+    if (!id.startsWith(prefix)) return acc
+    const suffix = Number(id.slice(prefix.length))
+    return Number.isNaN(suffix) ? acc : Math.max(acc, suffix)
+  }, 0)
+
+  return `${prefix}${max + 1}`
+}
+
 export default function ToeflTestSetSectionEditorPage() {
   const params = useParams<{ id: string; section: 'listening' | 'structure' | 'reading' }>()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editorMode, setEditorMode] = useState<EditorMode>('guided')
   const [jsonData, setJsonData] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -24,6 +37,64 @@ export default function ToeflTestSetSectionEditorPage() {
   const [enabled, setEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const parsedData = useMemo(() => {
+    try {
+      return JSON.parse(jsonData) as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }, [jsonData])
+
+  const listeningData = useMemo(() => {
+    if (params.section !== 'listening' || !parsedData) return null
+
+    const titleValue = parsedData.title
+    const durationValue = parsedData.durationMinutes
+    const partsValue = parsedData.parts as Record<string, unknown> | undefined
+
+    if (
+      typeof titleValue !== 'string' ||
+      typeof durationValue !== 'number' ||
+      !partsValue?.A ||
+      !partsValue?.B ||
+      !partsValue?.C
+    ) {
+      return null
+    }
+
+    return parsedData as {
+      title: string
+      durationMinutes: number
+      parts: {
+        A: { instructions: string; questions: Array<{ id: string }> }
+        B: { instructions: string; passages: Array<{ id: string; audioUrl: string; questions: Array<{ id: string }> }> }
+        C: { instructions: string; passages: Array<{ id: string; audioUrl: string; questions: Array<{ id: string }> }> }
+      }
+    }
+  }, [params.section, parsedData])
+
+  function patchJson(mutator: (draft: Record<string, unknown>) => void) {
+    try {
+      const draft = JSON.parse(jsonData) as Record<string, unknown>
+      mutator(draft)
+      setJsonData(JSON.stringify(draft, null, 2))
+      setError(null)
+    } catch {
+      setError('JSON is invalid. Fix JSON mode first before using guided edits.')
+    }
+  }
+
+  async function copyJson() {
+    try {
+      await navigator.clipboard.writeText(jsonData)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setError('Failed to copy JSON to clipboard.')
+    }
+  }
 
   useEffect(() => {
     async function fetchSection() {
@@ -78,6 +149,82 @@ export default function ToeflTestSetSectionEditorPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  function updateListeningField(field: 'title' | 'durationMinutes', value: string | number) {
+    patchJson((draft) => {
+      draft[field] = value
+    })
+  }
+
+  function updateListeningInstruction(part: 'A' | 'B' | 'C', value: string) {
+    patchJson((draft) => {
+      const data = draft as {
+        parts: Record<string, { instructions?: string }>
+      }
+      data.parts[part].instructions = value
+    })
+  }
+
+  function addListeningPartAQuestion() {
+    patchJson((draft) => {
+      const data = draft as {
+        parts: { A: { questions: Array<{ id: string; text: string; audioUrl: string; options: string[]; correctAnswerIndex: number }> } }
+      }
+      const ids = data.parts.A.questions.map((q) => q.id)
+      const nextId = nextNumberedId(ids, 'l-a-')
+      data.parts.A.questions.push({
+        id: nextId,
+        text: 'New Part A question',
+        audioUrl: 'https://example.com/audio/listening/new-part-a.mp3',
+        options: ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
+        correctAnswerIndex: 0,
+      })
+    })
+  }
+
+  function addListeningPassage(part: 'B' | 'C') {
+    patchJson((draft) => {
+      const data = draft as {
+        parts: {
+          B: { passages: Array<{ id: string; audioUrl: string; questions: Array<{ id: string; text: string; options: string[]; correctAnswerIndex: number }> }> }
+          C: { passages: Array<{ id: string; audioUrl: string; questions: Array<{ id: string; text: string; options: string[]; correctAnswerIndex: number }> }> }
+        }
+      }
+
+      const passages = data.parts[part].passages
+      const passagePrefix = part === 'B' ? 'l-b-passage-' : 'l-c-passage-'
+      const questionPrefix = part === 'B' ? 'l-b-' : 'l-c-'
+
+      const nextPassageId = nextNumberedId(passages.map((p) => p.id), passagePrefix)
+      const allQuestionIds = passages.flatMap((p) => p.questions.map((q) => q.id))
+      const nextQuestionId = nextNumberedId(allQuestionIds, questionPrefix)
+
+      passages.push({
+        id: nextPassageId,
+        audioUrl: `https://example.com/audio/listening/${nextPassageId}.mp3`,
+        questions: [
+          {
+            id: nextQuestionId,
+            text: `New Part ${part} question`,
+            options: ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
+            correctAnswerIndex: 0,
+          },
+        ],
+      })
+    })
+  }
+
+  function removeListeningPassage(part: 'B' | 'C', index: number) {
+    patchJson((draft) => {
+      const data = draft as {
+        parts: {
+          B: { passages: unknown[] }
+          C: { passages: unknown[] }
+        }
+      }
+      data.parts[part].passages.splice(index, 1)
+    })
   }
 
   if (loading) {
@@ -155,23 +302,142 @@ export default function ToeflTestSetSectionEditorPage() {
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[700px]">
           <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
             <div className="text-xs font-mono text-gray-500 capitalize">JSON Content: {params.section}</div>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-orange-700 transition disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditorMode('guided')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${editorMode === 'guided' ? 'bg-[#08507f] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+              >
+                Guided
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorMode('json')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${editorMode === 'json' ? 'bg-[#08507f] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+              >
+                Raw JSON
+              </button>
+              <button
+                type="button"
+                onClick={copyJson}
+                className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-100 transition"
+              >
+                {copied ? 'Copied' : 'Copy JSON'}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-orange-700 transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
 
-          <textarea
-            value={jsonData}
-            onChange={(e) => setJsonData(e.target.value)}
-            spellCheck={false}
-            className="flex-1 p-6 font-mono text-sm focus:outline-none resize-none bg-white text-slate-900 leading-relaxed min-h-[600px]"
-            placeholder="{ ... }"
-          />
+          {editorMode === 'json' && (
+            <textarea
+              value={jsonData}
+              onChange={(e) => setJsonData(e.target.value)}
+              spellCheck={false}
+              className="flex-1 p-6 font-mono text-sm focus:outline-none resize-none bg-white text-slate-900 leading-relaxed min-h-[600px]"
+              placeholder="{ ... }"
+            />
+          )}
+
+          {editorMode === 'guided' && params.section === 'listening' && listeningData && (
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50">
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Test title
+                  <input
+                    value={listeningData.title}
+                    onChange={(event) => updateListeningField('title', event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Duration (minutes)
+                  <input
+                    type="number"
+                    value={listeningData.durationMinutes}
+                    onChange={(event) => updateListeningField('durationMinutes', Number(event.target.value) || 0)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">Part A</h3>
+                  <button
+                    type="button"
+                    onClick={addListeningPartAQuestion}
+                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Add Question
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Questions: {listeningData.parts.A.questions.length}</p>
+                <textarea
+                  value={listeningData.parts.A.instructions}
+                  onChange={(event) => updateListeningInstruction('A', event.target.value)}
+                  className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  rows={3}
+                />
+              </div>
+
+              {(['B', 'C'] as const).map((part) => (
+                <div key={part} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-900">Part {part}</h3>
+                    <button
+                      type="button"
+                      onClick={() => addListeningPassage(part)}
+                      className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Add Passage
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Passages: {listeningData.parts[part].passages.length} | Questions: {listeningData.parts[part].passages.reduce((total, passage) => total + passage.questions.length, 0)}
+                  </p>
+                  <textarea
+                    value={listeningData.parts[part].instructions}
+                    onChange={(event) => updateListeningInstruction(part, event.target.value)}
+                    className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    rows={3}
+                  />
+                  <div className="mt-4 space-y-3">
+                    {listeningData.parts[part].passages.map((passage, index) => (
+                      <div key={`${passage.id}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-xs text-slate-600">
+                            <div className="font-semibold text-slate-800">{passage.id}</div>
+                            <div>{passage.audioUrl}</div>
+                            <div>Questions: {passage.questions.length}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeListeningPassage(part, index)}
+                            className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {editorMode === 'guided' && (params.section !== 'listening' || !listeningData) && (
+            <div className="flex-1 p-6 text-sm text-slate-600 bg-slate-50">
+              Guided mode is currently optimized for listening templates with valid JSON shape. Switch to Raw JSON to edit this section.
+            </div>
+          )}
         </div>
       </div>
     </div>

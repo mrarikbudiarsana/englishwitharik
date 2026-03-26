@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TOEFL_SECTION_LABELS, TOEFL_SECTIONS } from '@/lib/toefl/catalog'
 
@@ -19,6 +19,17 @@ export interface ToeflAttemptItem {
   startedAtLabel: string
   startedAtRaw: string
   completedAtRaw: string | null
+  report?: {
+    totalQuestions: number
+    doneCount: number
+    missedCount: number
+    correctCount: number
+    incorrectCount: number
+    doneNumbers: number[]
+    missedNumbers: number[]
+    correctNumbers: number[]
+    incorrectNumbers: number[]
+  }
 }
 
 interface ToeflAttemptsTableProps {
@@ -82,6 +93,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deletingOneId, setDeletingOneId] = useState<string | null>(null)
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null)
 
   const testSetOptions = useMemo(() => {
     const options = new Map<string, { id: string; title: string }>()
@@ -170,6 +182,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
 
   const dateSuffix = new Date().toISOString().slice(0, 10)
   const filenameSuffix = `${testSetFilter === 'all' ? 'all-sets' : testSetFilter}-${sectionFilter === 'all' ? 'all-sections' : sectionFilter}`
+  const formatNumberList = (values: number[]) => (values.length > 0 ? values.join(', ') : '-')
 
   return (
     <div className="bg-white/80 backdrop-blur-sm border rounded-2xl shadow-sm overflow-hidden border-orange-100">
@@ -256,60 +269,95 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
           </thead>
           <tbody className="bg-white divide-y divide-orange-50">
             {filteredAttempts.map((attempt) => (
-              <tr key={attempt.id} className="hover:bg-orange-50/30 transition-colors group">
-                <td className="w-12 px-3 py-4 whitespace-nowrap align-middle">
-                  <div className="flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedSet.has(attempt.id)}
-                      onChange={() => toggleSelect(attempt.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-[#08507f] focus:ring-[#08507f]"
-                      aria-label={`Select attempt ${attempt.id}`}
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium text-gray-900 group-hover:text-orange-900 transition-colors">
-                    {attempt.studentName}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.userId}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium text-slate-900">{attempt.testSetTitle}</div>
-                  <div className="text-xs text-slate-500">{attempt.testSetSlug}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                    {attempt.section}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  {attempt.score !== null ? `${attempt.score} / ${attempt.total}` : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {attempt.status === 'Completed' ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completed
+              <Fragment key={attempt.id}>
+                <tr className="hover:bg-orange-50/30 transition-colors group">
+                  <td className="w-12 px-3 py-4 whitespace-nowrap align-middle">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedSet.has(attempt.id)}
+                        onChange={() => toggleSelect(attempt.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#08507f] focus:ring-[#08507f]"
+                        aria-label={`Select attempt ${attempt.id}`}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedAttemptId((current) => (current === attempt.id ? null : attempt.id))}
+                      className="font-medium text-gray-900 group-hover:text-orange-900 transition-colors text-left hover:underline"
+                    >
+                      {attempt.studentName}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.userId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-medium text-slate-900">{attempt.testSetTitle}</div>
+                    <div className="text-xs text-slate-500">{attempt.testSetSlug}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                      {attempt.section}
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      In Progress
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.startedAtLabel}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    type="button"
-                    onClick={() => deleteAttempt(attempt.id, attempt.studentName)}
-                    disabled={deletingOneId === attempt.id || bulkDeleting}
-                    className="inline-flex items-center rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {deletingOneId === attempt.id ? 'Deleting...' : 'Delete'}
-                  </button>
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    {attempt.score !== null ? `${attempt.score} / ${attempt.total}` : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {attempt.status === 'Completed' ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Completed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        In Progress
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attempt.startedAtLabel}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => deleteAttempt(attempt.id, attempt.studentName)}
+                      disabled={deletingOneId === attempt.id || bulkDeleting}
+                      className="inline-flex items-center rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingOneId === attempt.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </td>
+                </tr>
+
+                {expandedAttemptId === attempt.id && (
+                  <tr className="bg-orange-50/20">
+                    <td colSpan={10} className="px-6 py-4">
+                      {attempt.report ? (
+                        <div className="rounded-xl border border-orange-100 bg-white p-4">
+                          <p className="text-sm font-semibold text-slate-900">Attempt Detail Report</p>
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-5">
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Total: <span className="font-semibold">{attempt.report.totalQuestions}</span></div>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Done: <span className="font-semibold">{attempt.report.doneCount}</span></div>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">Missed: <span className="font-semibold">{attempt.report.missedCount}</span></div>
+                            <div className="rounded-lg border border-green-200 bg-green-50 p-2">Correct: <span className="font-semibold text-green-700">{attempt.report.correctCount}</span></div>
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-2">Incorrect: <span className="font-semibold text-red-700">{attempt.report.incorrectCount}</span></div>
+                          </div>
+                          <div className="mt-4 grid gap-2 text-xs text-slate-700">
+                            <p><span className="font-semibold">Done numbers:</span> {formatNumberList(attempt.report.doneNumbers)}</p>
+                            <p><span className="font-semibold">Missed numbers:</span> {formatNumberList(attempt.report.missedNumbers)}</p>
+                            <p><span className="font-semibold">Correct numbers:</span> {formatNumberList(attempt.report.correctNumbers)}</p>
+                            <p><span className="font-semibold">Incorrect numbers:</span> {formatNumberList(attempt.report.incorrectNumbers)}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800">
+                          Report details are unavailable for this attempt (missing template data).
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
 
             {filteredAttempts.length === 0 && (

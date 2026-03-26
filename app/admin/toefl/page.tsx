@@ -3,6 +3,94 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
 import ToeflAttemptsTable, { type ToeflAttemptItem } from '@/components/admin/ToeflAttemptsTable'
 import CopyToClipboardButton from '@/components/admin/CopyToClipboardButton'
+import { isTOEFLSection, normalizeTemplateData } from '@/lib/toefl/catalog'
+import type { TOEFLListeningTest, TOEFLReadingTest, TOEFLStructureTest, TOEFLTestSection } from '@/lib/toefl/types'
+
+type AnswerRecord = Record<string, string | number>
+type SectionQuestionMeta = { id: string; correctAnswerIndex: number }
+
+function getQuestionMetaForSection(
+  section: TOEFLTestSection,
+  rawTestData: unknown,
+): SectionQuestionMeta[] {
+  const normalized = normalizeTemplateData(section, rawTestData)
+  if (!normalized) return []
+
+  if (section === 'listening') {
+    const test = normalized as TOEFLListeningTest
+    return [
+      ...test.parts.A.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+      ...test.parts.B.passages.flatMap((passage) =>
+        passage.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+      ),
+      ...test.parts.C.passages.flatMap((passage) =>
+        passage.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+      ),
+    ]
+  }
+
+  if (section === 'structure') {
+    const test = normalized as TOEFLStructureTest
+    return [
+      ...test.parts.A.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+      ...test.parts.B.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+    ]
+  }
+
+  const test = normalized as TOEFLReadingTest
+  return test.passages.flatMap((passage) =>
+    passage.questions.map((q) => ({ id: q.id, correctAnswerIndex: q.correctAnswerIndex })),
+  )
+}
+
+function computeAttemptReport(
+  answers: unknown,
+  questionMeta: SectionQuestionMeta[],
+) {
+  const safeAnswers =
+    answers && typeof answers === 'object'
+      ? (answers as AnswerRecord)
+      : ({} as AnswerRecord)
+
+  const doneNumbers: number[] = []
+  const missedNumbers: number[] = []
+  const correctNumbers: number[] = []
+  const incorrectNumbers: number[] = []
+
+  questionMeta.forEach((question, index) => {
+    const questionNumber = index + 1
+    const answerValue = safeAnswers[question.id]
+    const hasAnswer =
+      answerValue !== undefined &&
+      answerValue !== null &&
+      !(typeof answerValue === 'string' && answerValue.trim() === '')
+
+    if (!hasAnswer) {
+      missedNumbers.push(questionNumber)
+      return
+    }
+
+    doneNumbers.push(questionNumber)
+    const normalizedAnswer = typeof answerValue === 'string' ? Number(answerValue) : answerValue
+    if (Number.isFinite(normalizedAnswer) && normalizedAnswer === question.correctAnswerIndex) {
+      correctNumbers.push(questionNumber)
+    } else {
+      incorrectNumbers.push(questionNumber)
+    }
+  })
+
+  return {
+    totalQuestions: questionMeta.length,
+    doneCount: doneNumbers.length,
+    missedCount: missedNumbers.length,
+    correctCount: correctNumbers.length,
+    incorrectCount: incorrectNumbers.length,
+    doneNumbers,
+    missedNumbers,
+    correctNumbers,
+    incorrectNumbers,
+  }
+}
 
 export default async function TOEFLAdminPage() {
   const supabase = await createAdminClient()
@@ -10,6 +98,7 @@ export default async function TOEFLAdminPage() {
   const [
     attemptsResponse,
     testSetsResponse,
+    sectionTemplatesResponse,
   ] = await Promise.all([
     supabase
       .from('toefl_attempts')
@@ -21,6 +110,7 @@ export default async function TOEFLAdminPage() {
         completed_at,
         score,
         total,
+        answers,
         toefl_participants (
           name,
           email,
@@ -47,6 +137,10 @@ export default async function TOEFLAdminPage() {
         )
       `)
       .order('updated_at', { ascending: false }),
+    supabase
+      .from('toefl_test_set_sections')
+      .select('test_set_id, section, test_data')
+      .eq('is_enabled', true),
   ])
 
   let attempts: unknown[] | null = attemptsResponse.data as unknown[] | null
@@ -63,6 +157,7 @@ export default async function TOEFLAdminPage() {
         completed_at,
         score,
         total,
+        answers,
         toefl_participants (
           name,
           email
@@ -84,6 +179,20 @@ export default async function TOEFLAdminPage() {
 
   if (testSetsResponse.error) {
     return <div className="p-8 text-red-500">Error loading TOEFL test sets: {testSetsResponse.error.message}</div>
+  }
+  if (sectionTemplatesResponse.error) {
+    return <div className="p-8 text-red-500">Error loading TOEFL section templates: {sectionTemplatesResponse.error.message}</div>
+  }
+
+  const templateQuestionMap = new Map<string, SectionQuestionMeta[]>()
+  for (const row of (sectionTemplatesResponse.data ?? []) as Array<{
+    test_set_id: string
+    section: string
+    test_data: unknown
+  }>) {
+    if (!isTOEFLSection(row.section)) continue
+    const key = `${row.test_set_id}:${row.section}`
+    templateQuestionMap.set(key, getQuestionMetaForSection(row.section, row.test_data))
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -181,6 +290,7 @@ export default async function TOEFLAdminPage() {
           completed_at: string | null
           score: number | null
           total: number | null
+          answers: unknown
           toefl_participants:
             | { name: string | null; email: string | null; user_id?: string | null }
             | Array<{ name: string | null; email: string | null; user_id?: string | null }>
@@ -196,6 +306,9 @@ export default async function TOEFLAdminPage() {
           const testSet = Array.isArray(attempt.toefl_test_sets)
             ? attempt.toefl_test_sets[0]
             : attempt.toefl_test_sets
+          const sectionKey = `${attempt.test_set_id}:${attempt.section}`
+          const questionMeta = templateQuestionMap.get(sectionKey)
+          const report = questionMeta ? computeAttemptReport(attempt.answers, questionMeta) : undefined
 
           return {
             id: attempt.id,
@@ -212,6 +325,7 @@ export default async function TOEFLAdminPage() {
             startedAtLabel: format(new Date(attempt.started_at), 'MMM d, yyyy h:mm a'),
             startedAtRaw: attempt.started_at,
             completedAtRaw: attempt.completed_at,
+            report,
           }
         })}
       />
