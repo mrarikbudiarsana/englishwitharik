@@ -7,11 +7,13 @@ import { ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 export default function ListeningTestInterface({
   test,
   answers,
-  onAnswerSelect
+  onAnswerSelect,
+  volume
 }: {
   test: TOEFLListeningTest
   answers: Record<string, string | number>
   onAnswerSelect: (questionId: string, answerIndex: number) => void
+  volume: number
 }) {
   type ListeningSlide =
     | { type: 'instruction'; partName: 'Part A' | 'Part B' | 'Part C'; instructions: string }
@@ -76,7 +78,6 @@ export default function ListeningTestInterface({
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasPlayed, setHasPlayed] = useState<Record<string, boolean>>({})
   const [audioError, setAudioError] = useState<string | null>(null)
-  const [volume, setVolume] = useState(1)
   const [flaggedSlides, setFlaggedSlides] = useState<Record<number, boolean>>({})
   
   const currentSlide = slides[currentSlideIndex]
@@ -253,21 +254,7 @@ export default function ListeningTestInterface({
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label htmlFor="audio-volume-a" className="text-sm font-medium text-gray-700">Volume</label>
-                  <input
-                    id="audio-volume-a"
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onChange={(event) => setVolume(Number(event.target.value))}
-                    className="w-40 accent-blue-600"
-                  />
-                  <span className="text-sm text-gray-500">{Math.round(volume * 100)}%</span>
-                  {audioError && <span className="text-sm text-red-600">{audioError}</span>}
-                </div>
+                {audioError && <div className="text-sm text-red-600">{audioError}</div>}
 
                 <div className="w-full">
                   <div className="space-y-2">
@@ -343,21 +330,7 @@ export default function ListeningTestInterface({
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label htmlFor="audio-volume-bc" className="text-sm font-medium text-gray-700">Volume</label>
-                  <input
-                    id="audio-volume-bc"
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onChange={(event) => setVolume(Number(event.target.value))}
-                    className="w-40 accent-blue-600"
-                  />
-                  <span className="text-sm text-gray-500">{Math.round(volume * 100)}%</span>
-                  {audioError && <span className="text-sm text-red-600">{audioError}</span>}
-                </div>
+                {audioError && <div className="text-sm text-red-600">{audioError}</div>}
 
                 <div className="w-full space-y-8 mt-4">
                   {currentSlide.passage.questions.map((q, qIdx: number) => (

@@ -23,6 +23,7 @@ export default function TestInterface({
   const [timeLeft, setTimeLeft] = useState(template.test.durationMinutes * 60)
   const [answers, setAnswers] = useState<Record<string, string | number>>(attempt.answers || {})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [listeningVolume, setListeningVolume] = useState(1)
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -86,6 +87,22 @@ export default function TestInterface({
           <h1 className="font-bold text-gray-900 text-[15px] sm:text-lg leading-tight">{template.test.title}</h1>
           <p className="text-xs sm:text-sm text-gray-500 truncate">Participant: {attempt.toefl_participants?.name}</p>
           <p className="text-[11px] sm:text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-[#08507f] truncate">{testSetTitle}</p>
+          {template.type === 'listening' && (
+            <div className="mt-2 flex items-center gap-3">
+              <label htmlFor="header-volume" className="text-sm font-semibold text-gray-700">Volume</label>
+              <input
+                id="header-volume"
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={listeningVolume}
+                onChange={(event) => setListeningVolume(Number(event.target.value))}
+                className="w-40 sm:w-56 accent-blue-600"
+              />
+              <span className="text-sm text-gray-500">{Math.round(listeningVolume * 100)}%</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between gap-3 sm:gap-6">
           <div className={`text-3xl sm:text-2xl font-mono font-bold leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
@@ -109,6 +126,7 @@ export default function TestInterface({
               test={template.test} 
               answers={answers} 
               onAnswerSelect={handleAnswerSelect} 
+              volume={listeningVolume}
             />
           </div>
         )}
