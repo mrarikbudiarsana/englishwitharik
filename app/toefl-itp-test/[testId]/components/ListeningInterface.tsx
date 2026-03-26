@@ -180,6 +180,9 @@ export default function ListeningTestInterface({
   }
 
   const answeredCount = allQuestionsData.filter((q) => answers[q.id] !== undefined).length
+  const questionNumberById = useMemo(() => {
+    return new Map(allQuestionsData.map((q) => [q.id, q.number]))
+  }, [allQuestionsData])
 
   return (
     <div className="h-full w-full">
@@ -285,7 +288,7 @@ export default function ListeningTestInterface({
 
             {currentSlide.type === 'part-bc' && (
               <div className="flex flex-col gap-6">
-                <div className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center justify-between shadow-sm sticky top-0 z-10">
+                <div className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-4">
                     <div className="bg-blue-100 p-3 rounded-full text-blue-600">
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
@@ -335,7 +338,7 @@ export default function ListeningTestInterface({
                 <div className="w-full space-y-8 mt-4">
                   {currentSlide.passage.questions.map((q, qIdx: number) => (
                     <div key={q.id} className="bg-white">
-                      <p className="text-lg font-medium text-gray-900 mb-4">{qIdx + 1}. {q.text}</p>
+                      <p className="text-lg font-medium text-gray-900 mb-4">{questionNumberById.get(q.id) ?? qIdx + 1}. {q.text}</p>
                       <div className="space-y-3">
                         {q.options.map((opt: string, optIdx: number) => {
                           const isSelected = answers[q.id] === optIdx
