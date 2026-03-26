@@ -29,6 +29,38 @@ async function main() {
     process.exit(1)
   }
 
+  const { data: targetSets, error: setLookupError } = await supabase
+    .from('toefl_test_sets')
+    .select('id, slug')
+    .in('slug', ['practice-test-1', 'default'])
+
+  if (setLookupError) {
+    console.error('Failed to look up target test sets:', setLookupError.message)
+    process.exit(1)
+  }
+
+  if (targetSets && targetSets.length > 0) {
+    const targetSetIds = targetSets.map((set) => set.id)
+
+    const { error: sectionUpdateError } = await supabase
+      .from('toefl_test_set_sections')
+      .update({
+        test_data: payload,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('section', 'listening')
+      .in('test_set_id', targetSetIds)
+
+    if (sectionUpdateError) {
+      console.error('Failed to update listening section for target test sets:', sectionUpdateError.message)
+      process.exit(1)
+    }
+
+    console.log(`Updated listening test-set sections for slugs: ${targetSets.map((set) => set.slug).join(', ')}`)
+  } else {
+    console.log('No target test sets found for slugs: practice-test-1, default')
+  }
+
   const testData = payload as {
     parts: {
       A: { questions: unknown[] }

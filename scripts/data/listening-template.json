@@ -421,6 +421,56 @@
                 "correctAnswerIndex": 1
               }
             ]
+          },
+          {
+            "id": "l-c-passage-4",
+            "audioUrl": "https://example.com/audio/listening/part-c-passage-4.mp3",
+            "questions": [
+              {
+                "id": "l-c-47",
+                "text": "What is the talk mainly about?",
+                "options": [
+                  "A) How the age of a fossil is determined",
+                  "B) How fossilized impressions were made on the seafloor",
+                  "C) Techniques for excavating fossils from the sea",
+                  "D) Recently discovered fossilized footprints"
+                ],
+                "correctAnswerIndex": 3
+              },
+              {
+                "id": "l-c-48",
+                "text": "According to the professor, what question does the discovery in Canada help answer?",
+                "options": [
+                  "A) When animals first emerged from the sea",
+                  "B) Where fossils are most easily found",
+                  "C) How footprints on the seafloor are preserved",
+                  "D) Why some animals became extinct"
+                ],
+                "correctAnswerIndex": 0
+              },
+              {
+                "id": "l-c-49",
+                "text": "Why does the professor mention stonecutters?",
+                "options": [
+                  "A) To illustrate the variety of stone found in Canada",
+                  "B) To show that the fossils were found by luck",
+                  "C) To explain why sandstone often contains fossils",
+                  "D) To tell why fossils are sometimes damaged"
+                ],
+                "correctAnswerIndex": 1
+              },
+              {
+                "id": "l-c-50",
+                "text": "What evidence is given to show whether the footprints were made by animals on land or underwater?",
+                "options": [
+                  "A) The hardness of the sandstone",
+                  "B) The depth of the footprints",
+                  "C) The type of animal that made the footprints",
+                  "D) The location of the rock layer"
+                ],
+                "correctAnswerIndex": 1
+              }
+            ]
           }
         ]
       },
@@ -574,56 +624,6 @@
                   "D) They knew how to measure angles."
                 ],
                 "correctAnswerIndex": 3
-              }
-            ]
-          },
-          {
-            "id": "l-c-passage-4",
-            "audioUrl": "https://example.com/audio/listening/part-c-passage-4.mp3",
-            "questions": [
-              {
-                "id": "l-c-47",
-                "text": "What is the talk mainly about?",
-                "options": [
-                  "A) How the age of a fossil is determined",
-                  "B) How fossilized impressions were made on the seafloor",
-                  "C) Techniques for excavating fossils from the sea",
-                  "D) Recently discovered fossilized footprints"
-                ],
-                "correctAnswerIndex": 3
-              },
-              {
-                "id": "l-c-48",
-                "text": "According to the professor, what question does the discovery in Canada help answer?",
-                "options": [
-                  "A) When animals first emerged from the sea",
-                  "B) Where fossils are most easily found",
-                  "C) How footprints on the seafloor are preserved",
-                  "D) Why some animals became extinct"
-                ],
-                "correctAnswerIndex": 0
-              },
-              {
-                "id": "l-c-49",
-                "text": "Why does the professor mention stonecutters?",
-                "options": [
-                  "A) To illustrate the variety of stone found in Canada",
-                  "B) To show that the fossils were found by luck",
-                  "C) To explain why sandstone often contains fossils",
-                  "D) To tell why fossils are sometimes damaged"
-                ],
-                "correctAnswerIndex": 1
-              },
-              {
-                "id": "l-c-50",
-                "text": "What evidence is given to show whether the footprints were made by animals on land or underwater?",
-                "options": [
-                  "A) The hardness of the sandstone",
-                  "B) The depth of the footprints",
-                  "C) The type of animal that made the footprints",
-                  "D) The location of the rock layer"
-                ],
-                "correctAnswerIndex": 1
               }
             ]
           }
