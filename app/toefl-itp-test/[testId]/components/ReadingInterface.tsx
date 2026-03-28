@@ -13,7 +13,7 @@ function ReadingPassagePanel({
 }) {
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [lineHeight, setLineHeight] = useState(36)
-  const [lineMarkers, setLineMarkers] = useState<number[]>([])
+  const [lineMarkers, setLineMarkers] = useState<Array<{ line: number; top: number }>>([])
 
   useEffect(() => {
     const element = contentRef.current
@@ -32,11 +32,57 @@ function ReadingPassagePanel({
         return
       }
 
-      const totalLines = Math.max(1, Math.round(element.scrollHeight / computedLineHeight))
-      const nextMarkers: number[] = []
+      const nextMarkers: Array<{ line: number; top: number }> = []
+      const elementRect = element.getBoundingClientRect()
+      const rawLineTops: number[] = []
 
-      for (let line = 5; line <= totalLines; line += 5) {
-        nextMarkers.push(line)
+      const textNodeWalker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(node) {
+            return node.textContent?.trim()
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT
+          }
+        }
+      )
+
+      let currentTextNode = textNodeWalker.nextNode()
+
+      while (currentTextNode) {
+        const range = document.createRange()
+        range.selectNodeContents(currentTextNode)
+
+        const rects = Array.from(range.getClientRects())
+        for (const rect of rects) {
+          if (rect.width > 0 && rect.height > 0) {
+            rawLineTops.push(rect.top - elementRect.top)
+          }
+        }
+
+        currentTextNode = textNodeWalker.nextNode()
+      }
+
+      const uniqueLineTops = rawLineTops
+        .sort((a, b) => a - b)
+        .reduce<number[]>((acc, top) => {
+          const previousTop = acc[acc.length - 1]
+          if (previousTop === undefined || Math.abs(top - previousTop) > 1) {
+            acc.push(top)
+          }
+          return acc
+        }, [])
+
+      if (uniqueLineTops.length > 0) {
+        for (let index = 4; index < uniqueLineTops.length; index += 5) {
+          nextMarkers.push({ line: index + 1, top: uniqueLineTops[index] })
+        }
+      } else {
+        const totalLines = Math.max(1, Math.round(element.scrollHeight / computedLineHeight))
+        for (let line = 5; line <= totalLines; line += 5) {
+          nextMarkers.push({ line, top: (line - 1) * computedLineHeight })
+        }
       }
 
       setLineHeight(computedLineHeight)
@@ -72,11 +118,11 @@ function ReadingPassagePanel({
 
       <div className="relative pl-0 sm:pl-12">
         <div className="pointer-events-none absolute inset-y-0 left-0 w-10 border-r border-gray-100 hidden sm:block">
-          {lineMarkers.map((line) => (
+          {lineMarkers.map(({ line, top }) => (
             <span
               key={line}
               className="absolute right-2 text-xs font-semibold tabular-nums text-gray-400"
-              style={{ top: `${(line - 1) * lineHeight}px` }}
+              style={{ top: `${top}px` }}
             >
               {line}
             </span>
