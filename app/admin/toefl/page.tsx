@@ -6,6 +6,9 @@ import CopyToClipboardButton from '@/components/admin/CopyToClipboardButton'
 import { isTOEFLSection, normalizeTemplateData } from '@/lib/toefl/catalog'
 import type { TOEFLListeningTest, TOEFLReadingTest, TOEFLStructureTest, TOEFLTestSection } from '@/lib/toefl/types'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 type AnswerRecord = Record<string, string | number>
 type SectionQuestionMeta = { id: string; correctAnswerIndex: number }
 

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const { score, total } = calculateScore(answers, templateData)
 
-    const { error } = await supabase
+    const { data: updatedAttempt, error } = await supabase
       .from('toefl_attempts')
       .update({
         answers,
@@ -53,10 +53,17 @@ export async function POST(request: Request) {
         completed_at: new Date().toISOString()
       })
       .eq('id', attempt.id)
+      .is('completed_at', null)
+      .select('id')
+      .maybeSingle()
 
     if (error) {
       console.error('Submit error:', error)
       return NextResponse.json({ error: 'Failed to record submit' }, { status: 500 })
+    }
+
+    if (!updatedAttempt) {
+      return NextResponse.json({ error: 'Attempt already submitted' }, { status: 409 })
     }
 
     return NextResponse.json({ success: true, score, total })

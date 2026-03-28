@@ -77,24 +77,6 @@ export async function POST(request: Request) {
       participantId = newParticipant.id
     }
 
-    const { data: existingAttempt, error: attemptFetchError } = await supabase
-      .from('toefl_attempts')
-      .select('id')
-      .eq('participant_id', participantId)
-      .eq('test_set_id', testSet.id)
-      .eq('section', section)
-      .is('completed_at', null)
-      .limit(1)
-      .maybeSingle()
-
-    if (attemptFetchError) {
-      console.error('Attempt fetch error:', attemptFetchError)
-    }
-
-    if (existingAttempt) {
-      return NextResponse.json({ attemptId: existingAttempt.id })
-    }
-
     const { data: newAttempt, error: attemptError } = await supabase
       .from('toefl_attempts')
       .insert([
