@@ -87,9 +87,11 @@ function downloadCsv(filename: string, rows: ToeflAttemptItem[]) {
 }
 
 export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps) {
+  const PAGE_SIZE = 10
   const router = useRouter()
   const [testSetFilter, setTestSetFilter] = useState('all')
   const [sectionFilter, setSectionFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deletingOneId, setDeletingOneId] = useState<string | null>(null)
   const [bulkDeleting, setBulkDeleting] = useState(false)
@@ -111,21 +113,42 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
     })
   }, [attempts, sectionFilter, testSetFilter])
 
+  const totalPages = Math.max(1, Math.ceil(filteredAttempts.length / PAGE_SIZE))
+  const startIndex = (currentPage - 1) * PAGE_SIZE
+  const paginatedAttempts = filteredAttempts.slice(startIndex, startIndex + PAGE_SIZE)
+
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selectedRows = filteredAttempts.filter((row) => selectedSet.has(row.id))
-  const allSelected = filteredAttempts.length > 0 && selectedRows.length === filteredAttempts.length
+  const allSelected = paginatedAttempts.length > 0 && paginatedAttempts.every((row) => selectedSet.has(row.id))
   const hasSelection = selectedIds.length > 0
 
   useEffect(() => {
     setSelectedIds([])
+    setCurrentPage(1)
   }, [sectionFilter, testSetFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  useEffect(() => {
+    if (expandedAttemptId && !paginatedAttempts.some((attempt) => attempt.id === expandedAttemptId)) {
+      setExpandedAttemptId(null)
+    }
+  }, [expandedAttemptId, paginatedAttempts])
 
   function toggleSelectAll() {
     if (allSelected) {
-      setSelectedIds([])
+      setSelectedIds((current) => current.filter((id) => !paginatedAttempts.some((row) => row.id === id)))
       return
     }
-    setSelectedIds(filteredAttempts.map((row) => row.id))
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      for (const row of paginatedAttempts) next.add(row.id)
+      return Array.from(next)
+    })
   }
 
   function toggleSelect(id: string) {
@@ -268,7 +291,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-orange-50">
-            {filteredAttempts.map((attempt) => (
+            {paginatedAttempts.map((attempt) => (
               <Fragment key={attempt.id}>
                 <tr className="hover:bg-orange-50/30 transition-colors group">
                   <td className="w-12 px-3 py-4 whitespace-nowrap align-middle">
@@ -370,6 +393,35 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
           </tbody>
         </table>
       </div>
+
+      {filteredAttempts.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-orange-100 bg-orange-50/20 px-4 py-3">
+          <p className="text-xs text-gray-600">
+            Showing {startIndex + 1}-{Math.min(startIndex + PAGE_SIZE, filteredAttempts.length)} of {filteredAttempts.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Previous
+            </button>
+            <span className="text-xs font-medium text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage >= totalPages}
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
