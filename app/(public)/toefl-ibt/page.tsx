@@ -244,7 +244,7 @@ export default async function TOEFLIBTPage() {
 
       {/* Bottom CTA */}
       <section className="py-20 bg-[#08507f] text-white text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://englishwitharik.id/wp-content/uploads/2023/08/pattern.png')] opacity-10"></div>
+
         <div className="max-w-4xl mx-auto px-4 relative z-10">
           <h2 className="text-4xl font-bold mb-6">Start Your Journey Today</h2>
           <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
