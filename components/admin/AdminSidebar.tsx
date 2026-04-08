@@ -26,6 +26,7 @@ const navItems = [
   { href: '/admin/stats', label: 'Stats', icon: BarChart2 },
   { href: '/admin/posts', label: 'Posts', icon: FileText },
   { href: '/admin/pages', label: 'Pages', icon: Layers },
+  { href: '/admin/landing-pages', label: 'Landing Pages', icon: Globe },
   { href: '/admin/leads', label: 'Leads', icon: Inbox },
   { href: '/admin/ratings', label: 'Ratings', icon: Star },
   { href: '/admin/share-links', label: 'Share Links', icon: Share2 },

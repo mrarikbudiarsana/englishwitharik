@@ -32,6 +32,15 @@ export default async function TOEFLIBTPage() {
     .order('published_at', { ascending: false })
     .limit(3)
 
+  // Fetch page content override
+  const { data: pageConfig } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'page_toefl_ibt')
+    .single()
+
+  const dynamicHero = pageConfig?.value?.hero || {}
+
   const features = [
     {
       title: "Experienced Instructor",
@@ -132,10 +141,14 @@ export default async function TOEFLIBTPage() {
                 Guaranteed Progress
               </span>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                Reach your target score with a structured and personalized <span className="text-[#08507f]">TOEFL iBT course</span>.
+                {dynamicHero.title ? (
+                  dynamicHero.title
+                ) : (
+                  <>Reach your target score with a structured and personalized <span className="text-[#08507f]">TOEFL iBT course</span>.</>
+                )}
               </h1>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                At English with Arik, our TOEFL iBT Preparation Program is designed to match your level, goal, and schedule, with personal coaching, full materials, and measurable progress.
+                {dynamicHero.description || "At English with Arik, our TOEFL iBT Preparation Program is designed to match your level, goal, and schedule, with personal coaching, full materials, and measurable progress."}
               </p>
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
@@ -159,7 +172,7 @@ export default async function TOEFLIBTPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_jz43sxjz43sxjz43.png"
+                    src={dynamicHero.image || "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_jz43sxjz43sxjz43.png"}
                     alt="TOEFL iBT Preparation"
                     fill
                     className="object-cover"

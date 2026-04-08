@@ -31,6 +31,15 @@ export default async function PTEPage() {
     .order('published_at', { ascending: false })
     .limit(3)
 
+  // Fetch page content override
+  const { data: pageConfig } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'page_pte_academic')
+    .single()
+
+  const dynamicHero = pageConfig?.value?.hero || {}
+
   const features = [
     {
       title: "Certified Trainer",
@@ -141,10 +150,14 @@ export default async function PTEPage() {
                 Guaranteed Progress
               </span>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                Ready to reach your target <span className="text-[#08507f]">PTE score</span>?
+                {dynamicHero.title ? (
+                  dynamicHero.title
+                ) : (
+                  <>Ready to reach your target <span className="text-[#08507f]">PTE score</span>?</>
+                )}
               </h1>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                Unlock opportunities for study, work, or migration abroad. Our PTE Academic Program offers proven strategies, mock tests, and personalised feedback for real weekly progress.
+                {dynamicHero.description || "Unlock opportunities for study, work, or migration abroad. Our PTE Academic Program offers proven strategies, mock tests, and personalised feedback for real weekly progress."}
               </p>
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
@@ -168,7 +181,7 @@ export default async function PTEPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_cnrjcacnrjcacnrj.png"
+                    src={dynamicHero.image || "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_cnrjcacnrjcacnrj.png"}
                     alt="PTE Preparation"
                     fill
                     className="object-cover"
