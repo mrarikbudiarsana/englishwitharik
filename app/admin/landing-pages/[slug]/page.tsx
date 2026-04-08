@@ -20,7 +20,15 @@ export default async function AdminLandingPageEdit({ params }: { params: Promise
     .eq('key', settingsKey)
     .single()
 
-  const initialData = row?.value || { hero: {} }
+  let initialData = row?.value || { hero: {} }
+  if (typeof initialData === 'string') {
+    try {
+      initialData = JSON.parse(initialData)
+    } catch {
+      initialData = { hero: {} }
+    }
+  }
+
 
   return (
     <div className="p-8 max-w-4xl">

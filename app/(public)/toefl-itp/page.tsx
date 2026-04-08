@@ -30,6 +30,25 @@ export default async function TOEFLITPPage() {
     .ilike('title', '%TOEFL%')
     .order('published_at', { ascending: false })
     .limit(3)
+  // Fetch page content override
+  const { data: pageConfig } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'page_toefl_itp')
+    .single()
+
+  let dynamicHero = pageConfig?.value || {}
+  if (typeof dynamicHero === 'string') {
+    try {
+      dynamicHero = JSON.parse(dynamicHero)?.hero || {}
+    } catch {
+      dynamicHero = {}
+    }
+  } else {
+    dynamicHero = dynamicHero.hero || {}
+  }
+
+  const fallbackImage = "https://res.cloudinary.com/english-tests-platform/image/upload/v1775639453/Gemini_Generated_Image_i2b0dti2b0dti2b0_dp4oux.png"
 
   const features = [
     {
@@ -137,12 +156,17 @@ export default async function TOEFLITPPage() {
                 <Trophy className="w-4 h-4" />
                 Guaranteed Progress
               </span>
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                Ready to achieve your target <span className="text-[#08507f]">TOEFL ITP score</span>?
-              </h1>
-              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                At English with Arik, our TOEFL ITP program combines personal coaching, full study materials, and section-focused strategies for Listening, Structure, and Reading success.
-              </p>
+                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
+                  {dynamicHero.title ? (
+                    dynamicHero.title
+                  ) : (
+                    <>Ready to achieve your target <span className="text-[#08507f]">TOEFL ITP score</span>?</>
+                  )}
+                </h1>
+                <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                  {dynamicHero.description || "At English with Arik, our TOEFL ITP program combines personal coaching, full study materials, and section-focused strategies for Listening, Structure, and Reading success."}
+                </p>
+
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
                   className="bg-[#08507f] hover:bg-[#063a5c] text-white font-semibold text-lg py-4 px-8 rounded-2xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
@@ -165,7 +189,7 @@ export default async function TOEFLITPPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/11/gemini_generated_image_56mw6856mw6856mw.png"
+                    src={dynamicHero.image || fallbackImage}
                     alt="TOEFL ITP Preparation"
                     fill
                     className="object-cover"

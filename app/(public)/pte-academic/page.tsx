@@ -38,7 +38,19 @@ export default async function PTEPage() {
     .eq('key', 'page_pte_academic')
     .single()
 
-  const dynamicHero = pageConfig?.value?.hero || {}
+  let dynamicHero = pageConfig?.value || {}
+  if (typeof dynamicHero === 'string') {
+    try {
+      dynamicHero = JSON.parse(dynamicHero)?.hero || {}
+    } catch {
+      dynamicHero = {}
+    }
+  } else {
+    dynamicHero = dynamicHero.hero || {}
+  }
+
+  const fallbackImage = "https://res.cloudinary.com/english-tests-platform/image/upload/v1775639453/Gemini_Generated_Image_i2b0dti2b0dti2b0_dp4oux.png"
+
 
   const features = [
     {
@@ -181,7 +193,7 @@ export default async function PTEPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src={dynamicHero.image || "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_cnrjcacnrjcacnrj.png"}
+                    src={dynamicHero.image || fallbackImage}
                     alt="PTE Preparation"
                     fill
                     className="object-cover"

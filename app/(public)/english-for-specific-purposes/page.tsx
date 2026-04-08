@@ -31,6 +31,26 @@ export default async function ESPPage() {
         .order('published_at', { ascending: false })
         .limit(3)
 
+    // Fetch page content override
+    const { data: pageConfig } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'page_english_for_specific_purposes')
+        .single()
+
+    let dynamicHero = pageConfig?.value || {}
+    if (typeof dynamicHero === 'string') {
+        try {
+            dynamicHero = JSON.parse(dynamicHero)?.hero || {}
+        } catch {
+            dynamicHero = {}
+        }
+    } else {
+        dynamicHero = dynamicHero.hero || {}
+    }
+
+    const fallbackImage = "https://res.cloudinary.com/english-tests-platform/image/upload/v1775639392/unnamed_3_rn69ir.jpg"
+
     const features = [
         {
             title: "Experienced Instructor",
@@ -122,10 +142,14 @@ export default async function ESPPage() {
                                 Specialised Training
                             </span>
                             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                                Learn English Tailored to Your <span className="text-[#08507f]">Profession and Purpose</span>
+                                {dynamicHero.title ? (
+                                    dynamicHero.title
+                                ) : (
+                                    <>Learn English Tailored to Your <span className="text-[#08507f]">Profession and Purpose</span></>
+                                )}
                             </h1>
                             <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                                The English for Specific Purposes (ESP) program at English with Arik helps you master English for your exact needs — whether for tourism, education, healthcare, or any specialised field.
+                                {dynamicHero.description || "The English for Specific Purposes (ESP) program at English with Arik helps you master English for your exact needs — whether for tourism, education, healthcare, or any specialised field."}
                             </p>
                             <div className="flex flex-wrap gap-4">
                                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
@@ -149,7 +173,7 @@ export default async function ESPPage() {
                             <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                                     <Image
-                                        src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_ixu5dbixu5dbixu5.png"
+                                        src={dynamicHero.image || fallbackImage}
                                         alt="English for Specific Purposes"
                                         fill
                                         className="object-cover"

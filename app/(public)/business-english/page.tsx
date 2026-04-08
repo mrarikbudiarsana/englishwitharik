@@ -32,6 +32,26 @@ export default async function BusinessEnglishPage() {
     .order('published_at', { ascending: false })
     .limit(3)
 
+  // Fetch page content override
+  const { data: pageConfig } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'page_business_english')
+    .single()
+
+  let dynamicHero = pageConfig?.value || {}
+  if (typeof dynamicHero === 'string') {
+    try {
+      dynamicHero = JSON.parse(dynamicHero)?.hero || {}
+    } catch {
+      dynamicHero = {}
+    }
+  } else {
+    dynamicHero = dynamicHero.hero || {}
+  }
+
+  const fallbackImage = "https://res.cloudinary.com/english-tests-platform/image/upload/v1775639392/unnamed_3_rn69ir.jpg"
+
   const features = [
     {
       title: "Trainer Experienced in Corporate English",
@@ -133,12 +153,17 @@ export default async function BusinessEnglishPage() {
                 <Briefcase className="w-4 h-4" />
                 Professional Growth
               </span>
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                Communicate <span className="text-[#08507f]">Professionally and Confidently</span> at Work
-              </h1>
-              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                The Business English Program at English with Arik is designed for professionals who want to improve their English for meetings, presentations, emails, negotiations, and daily workplace interactions.
-              </p>
+                 <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
+                  {dynamicHero.title ? (
+                    dynamicHero.title
+                  ) : (
+                    <>Communicate <span className="text-[#08507f]">Professionally and Confidently</span> at Work</>
+                  )}
+                </h1>
+                <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                  {dynamicHero.description || "The Business English Program at English with Arik is designed for professionals who want to improve their English for meetings, presentations, emails, negotiations, and daily workplace interactions."}
+                </p>
+
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
                   className="bg-[#08507f] hover:bg-[#063a5c] text-white font-semibold text-lg py-4 px-8 rounded-2xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
@@ -161,7 +186,7 @@ export default async function BusinessEnglishPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_q9aq28q9aq28q9aq-1.png"
+                    src={dynamicHero.image || fallbackImage}
                     alt="Business English"
                     fill
                     className="object-cover"

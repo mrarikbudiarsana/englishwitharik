@@ -27,7 +27,7 @@ export default function LandingPageEditor({ slug, settingsKey, initialData }: Ed
     const supabase = createClient()
     const { error } = await supabase.from('site_settings').upsert({
       key: settingsKey,
-      value: JSON.stringify(data),
+      value: data,
       updated_at: new Date().toISOString()
     }, { onConflict: 'key' })
 

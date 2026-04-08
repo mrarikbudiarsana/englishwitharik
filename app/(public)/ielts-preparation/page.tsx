@@ -30,6 +30,25 @@ export default async function IELTSPage() {
     .order('published_at', { ascending: false })
     .limit(3)
 
+  const { data: pageConfig } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'page_ielts_preparation')
+    .single()
+
+  let dynamicHero = pageConfig?.value || {}
+  if (typeof dynamicHero === 'string') {
+    try {
+      dynamicHero = JSON.parse(dynamicHero)?.hero || {}
+    } catch {
+      dynamicHero = {}
+    }
+  } else {
+    dynamicHero = dynamicHero.hero || {}
+  }
+
+  const fallbackImage = "https://res.cloudinary.com/english-tests-platform/image/upload/v1775639453/Gemini_Generated_Image_i2b0dti2b0dti2b0_dp4oux.png"
+
   const features = [
     {
       title: "Tailored for You",
@@ -139,12 +158,17 @@ export default async function IELTSPage() {
                 <Trophy className="w-4 h-4" />
                 Guaranteed Progress
               </span>
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-                Ready to reach your target <span className="text-[#08507f]">IELTS band</span> and study or work abroad?
-              </h1>
-              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                At English with Arik, our IELTS Preparation Program is designed to match your level, goal, and schedule, with personal coaching, full materials, and guaranteed progress.
-              </p>
+               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
+                  {dynamicHero.title ? (
+                    dynamicHero.title
+                  ) : (
+                    <>Ready to reach your target <span className="text-[#08507f]">IELTS band</span> and study or work abroad?</>
+                  )}
+                </h1>
+                <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                  {dynamicHero.description || "At English with Arik, our IELTS Preparation Program is designed to match your level, goal, and schedule, with personal coaching, full materials, and guaranteed progress."}
+                </p>
+
               <div className="flex flex-wrap gap-4">
                 <a href="https://wa.me/628214422358" target="_blank" rel="noopener noreferrer"
                   className="bg-[#08507f] hover:bg-[#063a5c] text-white font-semibold text-lg py-4 px-8 rounded-2xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
@@ -168,7 +192,7 @@ export default async function IELTSPage() {
               <div className="relative bg-white p-2 rounded-3xl shadow-2xl border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden relative">
                   <Image
-                    src="https://res.cloudinary.com/english-tests-platform/image/upload/v1771371510/englishwitharik/blog/uiarjwoeckp576hip2xa.jpg"
+                    src={dynamicHero.image || fallbackImage}
                     alt="IELTS Preparation with Arik"
                     fill
                     className="object-cover"
