@@ -56,12 +56,12 @@ export default async function TOEFLIBTPage() {
   const features = [
     {
       title: "Experienced Instructor",
-      description: "Guided by I Putu Arik Budiarsana, who has helped students from all around Indonesia achieve their target scores.",
+      description: "Guided by I Putu Arik Budiarsana, who has helped students across Indonesia achieve their target scores. He personally scored an overall 5.5, with 6.0 in both Reading and Writing",
       icon: <Trophy className="w-6 h-6 text-[#08507f]" />
     },
     {
       title: "All-in-One Learning",
-      description: "Access live classes, recordings, and self-study materials all in one place.",
+      description: "Access live classes, recordings, and self-study materials all in one place through our portal.",
       icon: <Laptop className="w-6 h-6 text-[#08507f]" />
     },
     {
@@ -71,7 +71,7 @@ export default async function TOEFLIBTPage() {
     },
     {
       title: "Full Support",
-      description: "WhatsApp mentoring, vocabulary lists, and error analysis throughout your prep.",
+      description: "Stay on track with guided support, including pre-tests and post-tests (mock exams) to measure your progress and boost your confidence.",
       icon: <Users className="w-6 h-6 text-[#08507f]" />
     }
   ]
@@ -117,6 +117,13 @@ export default async function TOEFLIBTPage() {
       quote: "I was new to TOEFL iBT and my first attempt was quite successful, especially in the speaking section. Thank you for your help in making me familiar with the test format and the strategies that helped me answer the questions.",
       program: "TOEFL iBT Private",
       image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/unnamed-2.png"
+    },
+    {
+      name: "Nurul",
+      role: "Teacher, East Java",
+      quote: "My writing score improved 1.5 points after taking the class. I did a couple of mock test before the class, my writing scores were always very low. Mr Arik pointed out my weaknesses and we worked on them. I'm so grateful for his help.",
+      program: "TOEFL iBT Private",
+      image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/unnamed-2.png"
     }
   ]
 
@@ -138,6 +145,15 @@ export default async function TOEFLIBTPage() {
       bg: "bg-teal-600",
       iconBg: "bg-teal-700",
       price: "From Rp 600.000 (8 Hours)"
+    },
+    {
+      title: "Group Class",
+      subtitle: "8-10 Students",
+      description: "Start every beginning of the month. Every Wednesday and Friday at 18.00-20.00 WIB",
+      icon: <Users className="w-6 h-6 text-white" />,
+      bg: "bg-purple-600",
+      iconBg: "bg-purple-700",
+      price: "Rp 499.000 (20 Hours)"
     }
   ]
 
@@ -150,7 +166,7 @@ export default async function TOEFLIBTPage() {
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 bg-[#08507f]/10 text-[#08507f] text-sm font-bold px-4 py-1.5 rounded-full mb-6">
                 <Trophy className="w-4 h-4" />
-                Guaranteed Progress
+                Now supporting the updated TOEFL iBT & TOEFL iBT for Australia
               </span>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
                 {dynamicHero.title ? (
