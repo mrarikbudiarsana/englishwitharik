@@ -121,7 +121,7 @@ export default async function TOEFLIBTPage() {
     {
       name: "Nurul",
       role: "Teacher, East Java",
-      quote: "My writing score improved 1.5 points after taking the class. I did a couple of mock test before the class, my writing scores were always very low. Mr Arik pointed out my weaknesses and we worked on them. I'm so grateful for his help.",
+      quote: "My writing score improved by 1.5 points after taking this class. Before joining, my mock test results were consistently low. Mr. Arik clearly identified my weaknesses and helped me improve step by step. I’m truly grateful for his support.",
       program: "TOEFL iBT Private",
       image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/unnamed-2.png"
     }
@@ -140,7 +140,7 @@ export default async function TOEFLIBTPage() {
     {
       title: "Semi-Private Class",
       subtitle: "Small Group (2-3)",
-      description: "Learn with friends or peers in a small group setting. Interactive and cost-effective.",
+      description: "Learn with friends or peers in a small group setting. Interactive, flexible, and cost-effective.",
       icon: <Users className="w-6 h-6 text-white" />,
       bg: "bg-teal-600",
       iconBg: "bg-teal-700",
@@ -149,7 +149,7 @@ export default async function TOEFLIBTPage() {
     {
       title: "Group Class",
       subtitle: "8-10 Students",
-      description: "Start every beginning of the month. Every Wednesday and Friday at 18.00-20.00 WIB",
+      description: "New classes start at the beginning of each month, held every Wednesday and Friday from 18:00 to 20:00 WIB.",
       icon: <Users className="w-6 h-6 text-white" />,
       bg: "bg-purple-600",
       iconBg: "bg-purple-700",
@@ -239,7 +239,7 @@ export default async function TOEFLIBTPage() {
             <p className="text-lg text-gray-600">Flexible options tailored to your needs and budget.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {courses.map((course) => (
               <div key={course.title} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col">
                 <div className={`${course.bg} p-6 text-white`}>
