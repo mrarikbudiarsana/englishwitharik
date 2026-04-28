@@ -51,7 +51,7 @@ export default function AboutStory() {
                     >
                         <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10">
                             <Image
-                                src="https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/gemini_generated_image_n3l5dhn3l5dhn3l5-1.png?w=800"
+                                src="https://res.cloudinary.com/english-tests-platform/image/upload/v1771333154/englishwitharik/blog/ielts-reading-listening-does-singular-vs-plural-really-matter-featured.jpg"
                                 alt="Arik Budiarsana Teaching"
                                 fill
                                 sizes="(max-width: 1024px) 100vw, 50vw"
