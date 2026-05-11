@@ -176,7 +176,7 @@ export default async function PTEPage() {
                   className="bg-[#08507f] hover:bg-[#063a5c] text-white font-semibold text-lg py-4 px-8 rounded-2xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   Free Consultation
                 </a>
-                <a href="https://tests.englishwitharik.com" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/628214422358?text=Hi%20Mr%20Arik,%20I'm%20interested%20in%20taking%20a%20free%20PTE%20placement%20test!" target="_blank" rel="noopener noreferrer"
                   className="bg-white border-2 border-gray-100 hover:border-[#08507f]/30 text-gray-700 font-semibold text-lg py-4 px-8 rounded-2xl transition-all hover:bg-gray-50">
                   Take Free Test
                 </a>

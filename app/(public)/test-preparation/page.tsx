@@ -162,7 +162,7 @@ export default async function TestPrepPage() {
                 </a>
                 <a href="https://tests.englishwitharik.com" target="_blank" rel="noopener noreferrer"
                   className="bg-white border-2 border-gray-100 hover:border-[#08507f]/30 text-gray-700 font-semibold text-lg py-4 px-8 rounded-2xl transition-all hover:bg-gray-50">
-                  Take Free Test
+                  Take Free TOEFL ITP Test
                 </a>
               </div>
               <div className="mt-8 flex items-center gap-6 text-sm text-gray-500 font-medium">

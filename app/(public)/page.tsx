@@ -276,16 +276,15 @@ export default async function HomePage() {
               <span className="bg-blue-500/20 text-blue-200 border border-blue-400/30 text-xs font-semibold px-3 py-1 rounded-full mb-6 inline-block">
                 FREE RESOURCES
               </span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Test Your English <br /><span className="text-blue-300">Before You Start</span></h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">Test Your TOEFL ITP <br /><span className="text-blue-300">Before You Start</span></h2>
               <p className="text-blue-100 text-lg mb-8 leading-relaxed">
-                Take our high-quality practice mock tests for IELTS, TOEFL, and PTE Academic.
-                Get instant AI-driven scores and insights to understand your current level.
+                Take our free full-length TOEFL ITP practice tests. Get an authentic scaled score report, detailed section breakdowns, and instant feedback to gauge your readiness.
               </p>
 
               <div className="flex flex-wrap gap-3 mb-10">
-                {['IELTS Academic', 'TOEFL iBT', 'TOEFL ITP', 'PTE Academic'].map(exam => (
-                  <span key={exam} className="bg-white/10 hover:bg-white/20 transition-colors border border-white/10 px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-sm">
-                    {exam}
+                {['Listening Comprehension', 'Structure & Written Expression', 'Reading Comprehension'].map(section => (
+                  <span key={section} className="bg-white/10 hover:bg-white/20 transition-colors border border-white/10 px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-sm">
+                    {section}
                   </span>
                 ))}
               </div>
@@ -302,27 +301,83 @@ export default async function HomePage() {
             </div>
 
             <div className="hidden lg:block relative">
-              {/* Mockup or Illustration Placeholder */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-md">
-                <div className="space-y-4">
-                  <div className="h-4 bg-white/10 rounded w-3/4"></div>
-                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
-                  <div className="h-32 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center">
-                    <BarChart3 className="w-10 h-10 text-white/50" />
+              {/* Premium Glassmorphism TOEFL ITP Score Card Mockup */}
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-lg shadow-2xl relative overflow-hidden">
+                {/* Glowing decorative background bulb */}
+                <div className="absolute -right-20 -bottom-20 w-48 h-48 bg-orange-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div className="space-y-6">
+                  {/* Card Header */}
+                  <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span className="text-xs font-semibold tracking-wider uppercase text-blue-200">ITP Ready Dashboard</span>
+                    </div>
+                    <span className="text-[10px] bg-white/10 text-white/90 border border-white/10 px-2 py-1 rounded font-medium">
+                      Simulated Test
+                    </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="h-20 bg-[#08507f]/20 rounded-lg border border-[#08507f]/30 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-blue-300">7.5</span>
-                      <span className="text-xs text-blue-100">IELTS</span>
+
+                  {/* Circle Score Display */}
+                  <div className="flex items-center gap-6 bg-white/5 border border-white/5 rounded-2xl p-6">
+                    <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shrink-0">
+                      <div className="text-center">
+                        <span className="block text-3xl font-extrabold tracking-tight">567</span>
+                        <span className="text-[9px] uppercase tracking-wider text-blue-100 font-medium">Scaled</span>
+                      </div>
                     </div>
-                    <div className="h-20 bg-blue-500/20 rounded-lg border border-blue-500/30 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-blue-300">92</span>
-                      <span className="text-xs text-blue-100">TOEFL</span>
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-200 uppercase tracking-wide">Total Scaled Score</h4>
+                      <p className="text-2xl font-bold text-white mt-1">567 <span className="text-sm font-normal text-white/50">out of 677</span></p>
+                      <span className="inline-block mt-2 text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">
+                        TOEFL ITP Level 1
+                      </span>
                     </div>
-                    <div className="h-20 bg-purple-500/20 rounded-lg border border-purple-500/30 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-purple-300">65</span>
-                      <span className="text-xs text-purple-100">PTE</span>
+                  </div>
+
+                  {/* Score Bars for Sections */}
+                  <div className="space-y-4">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-blue-200/80">Section Breakdown</h5>
+                    
+                    {/* Listening Section */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/80 font-medium">Listening Comprehension</span>
+                        <span className="font-bold text-blue-300">56 <span className="text-[10px] font-normal text-white/40">/ 68</span></span>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: '82%' }}></div>
+                      </div>
                     </div>
+
+                    {/* Structure Section */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/80 font-medium">Structure & Written Expression</span>
+                        <span className="font-bold text-blue-300">58 <span className="text-[10px] font-normal text-white/40">/ 68</span></span>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                    </div>
+
+                    {/* Reading Section */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/80 font-medium">Reading Comprehension</span>
+                        <span className="font-bold text-blue-300">55 <span className="text-[10px] font-normal text-white/40">/ 67</span></span>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: '80%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer */}
+                  <div className="text-center pt-2 border-t border-white/5">
+                    <p className="text-[11px] text-white/40 italic">
+                      Practice result • TOEFL ITP Level 1 Simulation
+                    </p>
                   </div>
                 </div>
               </div>

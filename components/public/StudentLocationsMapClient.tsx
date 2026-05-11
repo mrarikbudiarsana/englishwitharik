@@ -55,6 +55,8 @@ const internationalLocations: InternationalLocation[] = [
   { city: 'Istanbul', country: 'Turkey', countryCode: 'TR', lat: 41.0082, lng: 28.9784 },
   // USA
   { city: 'Arkansas', country: 'USA', countryCode: 'US', lat: 34.7465, lng: -92.2896 },
+  // Japan
+  { city: 'Tokyo', country: 'Japan', countryCode: 'JP', lat: 35.6762, lng: 139.6503 },
 ]
 
 const baliAreas = [
