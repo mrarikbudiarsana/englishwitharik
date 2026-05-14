@@ -106,9 +106,11 @@ function GiftIcon() {
 function PriceCard({
     pkg,
     sessionType,
+    programmeName,
 }: {
     pkg: HourPackage
     sessionType: SessionType
+    programmeName: string
 }) {
     const price = sessionType === 'private' ? pkg.pricePrivate : pkg.priceSemi
     const perHour =
@@ -141,7 +143,7 @@ function PriceCard({
             </div>
 
             <a
-                href={`${WA_LINK}?text=Hi%2C+I%27m+interested+in+the+${pkg.hours}-hour+package`}
+                href={`${WA_LINK}?text=${encodeURIComponent(`Hi Arik, I'm interested in the ${pkg.hours}-hour ${sessionType === 'private' ? 'Private' : 'Semi-Private'} ${programmeName} package`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-auto block text-center py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${pkg.popular
@@ -274,7 +276,7 @@ export default function PricingPageClient({ tabs }: { tabs: Tab[] }) {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                             {section.packages.map((pkg) => (
-                                <PriceCard key={pkg.hours} pkg={pkg} sessionType={sessionType} />
+                                <PriceCard key={pkg.hours} pkg={pkg} sessionType={sessionType} programmeName={tab.label} />
                             ))}
                         </div>
                     </div>
@@ -292,7 +294,7 @@ export default function PricingPageClient({ tabs }: { tabs: Tab[] }) {
                     Book a single casual session for Rp 150,000 (1 hour) — no package required.
                 </p>
                 <a
-                    href={`${WA_LINK}?text=Hi%2C+I'd+like+to+book+a+single+casual+session`}
+                    href={`${WA_LINK}?text=${encodeURIComponent(`Hi Arik, I'd like to book a single casual session for ${tab.label}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-[#F5A623] hover:bg-[#d48f1e] text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors cursor-pointer shadow"
