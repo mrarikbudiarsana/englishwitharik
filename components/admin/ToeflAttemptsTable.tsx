@@ -91,6 +91,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   const router = useRouter()
   const [testSetFilter, setTestSetFilter] = useState('all')
   const [sectionFilter, setSectionFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deletingOneId, setDeletingOneId] = useState<string | null>(null)
@@ -109,9 +110,10 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
     return attempts.filter((attempt) => {
       if (testSetFilter !== 'all' && attempt.testSetId !== testSetFilter) return false
       if (sectionFilter !== 'all' && attempt.section.toLowerCase() !== sectionFilter) return false
+      if (dateFilter && !attempt.startedAtRaw.startsWith(dateFilter)) return false
       return true
     })
-  }, [attempts, sectionFilter, testSetFilter])
+  }, [attempts, sectionFilter, testSetFilter, dateFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredAttempts.length / PAGE_SIZE))
   const startIndex = (currentPage - 1) * PAGE_SIZE
@@ -125,7 +127,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   useEffect(() => {
     setSelectedIds([])
     setCurrentPage(1)
-  }, [sectionFilter, testSetFilter])
+  }, [sectionFilter, testSetFilter, dateFilter])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -204,7 +206,7 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
   }
 
   const dateSuffix = new Date().toISOString().slice(0, 10)
-  const filenameSuffix = `${testSetFilter === 'all' ? 'all-sets' : testSetFilter}-${sectionFilter === 'all' ? 'all-sections' : sectionFilter}`
+  const filenameSuffix = `${testSetFilter === 'all' ? 'all-sets' : testSetFilter}-${sectionFilter === 'all' ? 'all-sections' : sectionFilter}${dateFilter ? `-${dateFilter}` : ''}`
   const formatNumberList = (values: number[]) => (values.length > 0 ? values.join(', ') : '-')
 
   return (
@@ -236,6 +238,16 @@ export default function ToeflAttemptsTable({ attempts }: ToeflAttemptsTableProps
               <option key={section} value={section}>{TOEFL_SECTION_LABELS[section]}</option>
             ))}
           </select>
+        </label>
+
+        <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-700">
+          <span>Date</span>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#08507f]"
+          />
         </label>
 
         <button
