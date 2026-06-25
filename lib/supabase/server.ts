@@ -27,6 +27,24 @@ export async function createClient() {
   )
 }
 
+// Cookie-less anon client for reading PUBLIC data (published posts, pricing,
+// site settings, etc.). Because it never touches cookies(), pages that use it
+// can be statically generated / ISR-cached instead of being forced into
+// per-request dynamic rendering. Same anon key => identical RLS access as an
+// anonymous visitor.
+export function createPublicClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+}
+
 export async function createAdminClient() {
   // Using the vanilla JS client instead of SSR prevents any incoming 
   // auth cookies from unintentionally overriding the Service Role Key

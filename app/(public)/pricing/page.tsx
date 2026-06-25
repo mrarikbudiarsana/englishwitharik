@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { buildPageMetadata } from '@/lib/seo'
 import PricingPageClient from '@/components/public/PricingPageClient'
 
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Pricing',
@@ -27,7 +27,7 @@ interface PricingSectionView {
 }
 
 export default async function PricingPage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const [programsRes, packagesRes, perksRes] = await Promise.all([
     supabase.from('pricing_programs').select('*').order('sort_order', { ascending: true }),

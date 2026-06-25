@@ -1,5 +1,5 @@
 
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -19,7 +19,7 @@ export const metadata: Metadata = buildPageMetadata({
 export const revalidate = 3600
 
 export default async function TestPrepPage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const nowIso = new Date().toISOString()
 
   // Fetch latest blog posts related to test prep

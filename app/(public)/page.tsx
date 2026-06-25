@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import PostCard from '@/components/public/PostCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import StudentLocationsMap from '@/components/public/StudentLocationsMap'
@@ -65,7 +65,7 @@ const courses = [
 ]
 
 export default async function HomePage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const nowIso = new Date().toISOString()
   const { data: rawPosts } = await supabase
     .from('posts')

@@ -3,6 +3,17 @@ import { createAdminClient } from '@/lib/supabase/server'
 import QuizPlayer from '@/components/public/quiz/QuizPlayer'
 import type { Quiz } from '@/lib/quiz/types'
 
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const supabase = await createAdminClient()
+  const { data } = await supabase
+    .from('practice_quizzes')
+    .select('slug')
+    .eq('is_published', true)
+  return (data ?? []).map((q) => ({ slug: q.slug }))
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createAdminClient()

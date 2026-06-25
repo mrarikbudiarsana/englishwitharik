@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { unstable_cache } from 'next/cache'
+import { createPublicClient } from '@/lib/supabase/server'
 
 export interface SiteSettings {
   // Contact
@@ -29,23 +30,30 @@ const defaults: SiteSettings = {
   business_hours: '7:00 AM - 11:00 PM (GMT+8)',
 }
 
-export async function getSettings(): Promise<SiteSettings> {
-  const supabase = await createClient()
-  const { data: rows } = await supabase.from('site_settings').select('key, value')
+// Cached cross-request: the footer settings change rarely, so there's no need
+// to hit Supabase on every render. Uses a cookie-less client so callers (e.g.
+// the footer in the shared layout) don't force every page into dynamic rendering.
+export const getSettings = unstable_cache(
+  async (): Promise<SiteSettings> => {
+    const supabase = createPublicClient()
+    const { data: rows } = await supabase.from('site_settings').select('key, value')
 
-  const settings = { ...defaults }
+    const settings = { ...defaults }
 
-  for (const row of rows ?? []) {
-    if (row.key in settings) {
-      const value = typeof row.value === 'string'
-        ? row.value.replace(/^"|"$/g, '')
-        : row.value
-      ;(settings as Record<string, string>)[row.key] = value || defaults[row.key as keyof SiteSettings]
+    for (const row of rows ?? []) {
+      if (row.key in settings) {
+        const value = typeof row.value === 'string'
+          ? row.value.replace(/^"|"$/g, '')
+          : row.value
+        ;(settings as Record<string, string>)[row.key] = value || defaults[row.key as keyof SiteSettings]
+      }
     }
-  }
 
-  return settings
-}
+    return settings
+  },
+  ['site-settings'],
+  { revalidate: 3600, tags: ['site-settings'] }
+)
 
 export function formatWhatsAppLink(number: string): string {
   // Remove all non-digits except leading +

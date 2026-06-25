@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -94,27 +94,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `https://${process.env.NEXT_PUBLIC_SITE_URL}`)
     : 'https://englishwitharik.com'
   const canonicalPath = `/blog/${slug}`
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
-  // Allow previewing drafts for authenticated users, but don't crash if cookies aren't available (e.g. scrapers)
-  let isAuthorized = false
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    isAuthorized = !!user
-  } catch {
-    // Ignore auth errors during static generation or crawler visits
-  }
-
-  let query = supabase
+  const { data: post } = await supabase
     .from('posts')
     .select('title, excerpt, seo_title, seo_description, featured_image_url')
     .eq('slug', slug)
-
-  if (!isAuthorized) {
-    query = query.eq('status', 'published').lte('published_at', nowIso)
-  }
-
-  const { data: post } = await query.single()
+    .eq('status', 'published')
+    .lte('published_at', nowIso)
+    .single()
 
   if (!post) return {}
 
@@ -163,18 +151,9 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params
   const nowIso = new Date().toISOString()
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
-  // Allow previewing drafts for authenticated users (admins)
-  let isAuthorized = false
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    isAuthorized = !!user
-  } catch {
-    // Ignore auth errors during crawler visits
-  }
-
-  let query = supabase
+  const { data: post } = await supabase
     .from('posts')
     .select(`
       *,
@@ -182,12 +161,9 @@ export default async function BlogPostPage({ params }: Props) {
       post_tags(tag_id, tags(id, name, slug))
     `)
     .eq('slug', slug)
-
-  if (!isAuthorized) {
-    query = query.eq('status', 'published').lte('published_at', nowIso)
-  }
-
-  const { data: post } = await query.single()
+    .eq('status', 'published')
+    .lte('published_at', nowIso)
+    .single()
 
   if (!post) notFound()
 

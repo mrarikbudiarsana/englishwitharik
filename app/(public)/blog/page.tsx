@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import PostCard from '@/components/public/PostCard'
 import BlogFilters from '@/components/public/blog/BlogFilters'
 import Link from 'next/link'
@@ -71,7 +71,7 @@ export default async function BlogPage({
   const to = from + PAGE_SIZE - 1
   const nowIso = new Date().toISOString()
 
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   // Fetch categories for the filter
   const { data: categories } = await supabase

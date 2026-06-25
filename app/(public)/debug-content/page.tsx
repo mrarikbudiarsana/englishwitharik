@@ -1,5 +1,5 @@
 
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = buildPageMetadata({
 export const revalidate = 0
 
 export default async function DebugContentPage() {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data, error } = await supabase
         .from('blog_pages')
         .select('*')
