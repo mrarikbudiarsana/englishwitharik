@@ -23,7 +23,7 @@ export async function GET(
   const { id } = await params
   const supabase = await createAdminClient()
   const { data, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('*')
     .eq('id', id)
     .single()
@@ -70,7 +70,7 @@ export async function PATCH(
 
   const supabase = await createAdminClient()
   const { error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .update({
       slug,
       title: body.title,
@@ -103,7 +103,7 @@ export async function DELETE(
   const { id } = await params
   const supabase = await createAdminClient()
   const { error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .delete()
     .eq('id', id)
 

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
   const supabase = await createAdminClient()
   const { data: newQuiz, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .insert({
       slug,
       title: body.title,

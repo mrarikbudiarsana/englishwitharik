@@ -39,7 +39,7 @@ const TYPE_ICONS: Record<QuizType, string> = {
 export default async function PracticeQuizCatalogPage() {
   const supabase = await createAdminClient()
   const { data: quizzes, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('id, slug, title, description, type, cover_image_url, questions, updated_at')
     .eq('is_published', true)
     .order('updated_at', { ascending: false })

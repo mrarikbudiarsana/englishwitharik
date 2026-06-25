@@ -18,7 +18,7 @@ export default async function QuizzesAdminPage() {
   const supabase = await createAdminClient()
 
   const { data: quizzes, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('id, slug, title, description, type, is_published, cover_image_url, passage, audio_url, questions, created_at, updated_at')
     .order('updated_at', { ascending: false })
 

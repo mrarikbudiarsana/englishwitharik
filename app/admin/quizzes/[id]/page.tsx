@@ -30,7 +30,7 @@ export default async function QuizEditorPage({
 
   const supabase = await createAdminClient()
   const { data: quiz, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('id, slug, title, description, type, is_published, cover_image_url, passage, audio_url, questions')
     .eq('id', id)
     .single()

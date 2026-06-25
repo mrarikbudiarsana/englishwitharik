@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const supabase = await createAdminClient()
   const { data } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('title, description')
     .eq('slug', slug)
     .single()
@@ -32,7 +32,7 @@ export default async function PracticeQuizPage({
   const supabase = await createAdminClient()
 
   const { data: quiz, error } = await supabase
-    .from('quizzes')
+    .from('practice_quizzes')
     .select('*')
     .eq('slug', slug)
     .eq('is_published', true)
