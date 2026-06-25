@@ -18,7 +18,8 @@ import {
   Star,
   Share2,
   DollarSign,
-  GraduationCap
+  GraduationCap,
+  BookOpen
 } from 'lucide-react'
 
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/admin/categories', label: 'Categories', icon: Tag },
   { href: '/admin/pricing', label: 'Pricing', icon: DollarSign },
   { href: '/admin/toefl', label: 'TOEFL Tests', icon: GraduationCap },
+  { href: '/admin/quizzes', label: 'Practice Quizzes', icon: BookOpen },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

@@ -102,6 +102,13 @@ export default function Navbar() {
           </Link>
 
           <Link
+            href="/practice"
+            className="px-3 py-2 text-sm text-gray-700 hover:text-[#08507f] rounded-lg hover:bg-[#08507f]/10 transition-colors"
+          >
+            Practice
+          </Link>
+
+          <Link
             href="/about"
             className="px-3 py-2 text-sm text-gray-700 hover:text-[#08507f] rounded-lg hover:bg-[#08507f]/10 transition-colors"
           >
@@ -185,6 +192,14 @@ export default function Navbar() {
             className="block px-3 py-2.5 text-sm text-gray-700 hover:text-[#08507f] hover:bg-[#08507f]/10 rounded-lg"
           >
             Blog
+          </Link>
+
+          <Link
+            href="/practice"
+            onClick={() => setMobileOpen(false)}
+            className="block px-3 py-2.5 text-sm text-gray-700 hover:text-[#08507f] hover:bg-[#08507f]/10 rounded-lg"
+          >
+            Practice
           </Link>
 
           <Link
