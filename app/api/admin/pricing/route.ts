@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireAdminJson } from '@/lib/admin/auth'
 
 interface PricingPayload {
     tabs: Array<{
@@ -23,20 +24,13 @@ interface PricingPayload {
 
 // The incoming payload shape matches what PricingEditor sends
 export async function POST(request: Request) {
-    const supabase = await createAdminClient()
+    const { error: authError } = await requireAdminJson()
+    if (authError) return authError
 
-    // Authenticate user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createAdminClient()
 
     try {
         const payload = await request.json() as PricingPayload
-
-        // 1. Delete all existing packages and perks to replace them cleanly
-        // Wait, it's safer to just delete and insert to handle removed items.
-        // Or we can just upsert. But since we might delete perks/packages, a clean wipe of packages/perks per program is easier.
         // Wait, if we wipe and recreate, we lose the IDs of packages, but they are just UUIDs not referenced elsewhere.
 
         for (const tab of payload.tabs) {
