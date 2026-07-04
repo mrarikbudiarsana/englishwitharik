@@ -116,6 +116,34 @@ export default function QuizEditor({ mode, initialValue }: QuizEditorProps) {
     }
   }
 
+  async function handleDelete() {
+    if (!initialValue?.id) return
+    if (!window.confirm(`Are you sure you want to delete the quiz "${form.title}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch(`/api/admin/quizzes/${initialValue.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error ?? 'Failed to delete quiz.')
+      }
+
+      router.push('/admin/quizzes')
+      router.refresh()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete quiz.')
+      setSaving(false)
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       {error ? (
@@ -235,11 +263,21 @@ export default function QuizEditor({ mode, initialValue }: QuizEditorProps) {
         />
       </label>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center gap-4">
+        {mode === 'edit' && initialValue?.id && (
+          <button
+            type="button"
+            disabled={saving}
+            onClick={handleDelete}
+            className="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-200"
+          >
+            Delete quiz
+          </button>
+        )}
         <button
           type="submit"
           disabled={saving}
-          className="rounded-xl bg-[#08507f] px-5 py-3 text-sm font-semibold text-white hover:bg-[#063a5c] disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-xl bg-[#08507f] px-5 py-3 text-sm font-semibold text-white hover:bg-[#063a5c] disabled:cursor-not-allowed disabled:opacity-60 ml-auto"
         >
           {saving ? 'Saving...' : mode === 'create' ? 'Create quiz' : 'Save changes'}
         </button>

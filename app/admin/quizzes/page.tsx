@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
 import { QUIZ_TYPE_LABELS } from '@/lib/quiz/types'
 import type { QuizType } from '@/lib/quiz/types'
+import DeleteQuizButton from '@/components/admin/DeleteQuizButton'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -88,21 +89,24 @@ export default async function QuizzesAdminPage() {
                 <p className="mt-4 text-sm text-slate-500">
                   Last updated: {format(new Date(quiz.updated_at), 'dd MMM yyyy, HH:mm')}
                 </p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <Link
-                    href={`/admin/quizzes/${quiz.id}`}
-                    className="inline-flex items-center rounded-md bg-[#08507f] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#063a5c]"
-                  >
-                    Edit Quiz
-                  </Link>
-                  <a
-                    href={`/practice/${quiz.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    Open Public Page
-                  </a>
+                <div className="mt-6 flex flex-wrap items-center gap-2 justify-between">
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/admin/quizzes/${quiz.id}`}
+                      className="inline-flex items-center rounded-md bg-[#08507f] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#063a5c]"
+                    >
+                      Edit Quiz
+                    </Link>
+                    <a
+                      href={`/practice/${quiz.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Open Public Page
+                    </a>
+                  </div>
+                  <DeleteQuizButton quizId={quiz.id} quizTitle={quiz.title} />
                 </div>
               </div>
             )
