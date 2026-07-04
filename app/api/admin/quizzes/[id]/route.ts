@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireAdminJson } from '@/lib/admin/auth'
 import { QUIZ_TYPES } from '@/lib/quiz/types'
@@ -90,6 +91,14 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update quiz.' }, { status: 500 })
   }
 
+  // Purge the Next.js cache so changes are immediately visible
+  try {
+    revalidatePath('/practice')
+    revalidatePath(`/practice/${slug}`)
+  } catch (revalError) {
+    console.error('Revalidation error:', revalError)
+  }
+
   return NextResponse.json({ ok: true })
 }
 
@@ -102,6 +111,14 @@ export async function DELETE(
 
   const { id } = await params
   const supabase = await createAdminClient()
+
+  // Fetch the slug before deleting to revalidate the cache
+  const { data: quizData } = await supabase
+    .from('practice_quizzes')
+    .select('slug')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase
     .from('practice_quizzes')
     .delete()
@@ -110,6 +127,16 @@ export async function DELETE(
   if (error) {
     console.error('Delete quiz error:', error)
     return NextResponse.json({ error: 'Failed to delete quiz.' }, { status: 500 })
+  }
+
+  // Purge cache
+  if (quizData?.slug) {
+    try {
+      revalidatePath('/practice')
+      revalidatePath(`/practice/${quizData.slug}`)
+    } catch (revalError) {
+      console.error('Revalidation error:', revalError)
+    }
   }
 
   return NextResponse.json({ ok: true })

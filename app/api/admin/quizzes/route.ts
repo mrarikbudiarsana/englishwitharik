@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireAdminJson } from '@/lib/admin/auth'
 import { QUIZ_TYPES } from '@/lib/quiz/types'
@@ -62,6 +63,14 @@ export async function POST(request: Request) {
   if (error || !newQuiz) {
     console.error('Create quiz error:', error)
     return NextResponse.json({ error: 'Failed to create quiz.' }, { status: 500 })
+  }
+
+  // Purge the Next.js cache so the new quiz is immediately visible in the list
+  try {
+    revalidatePath('/practice')
+    revalidatePath(`/practice/${slug}`)
+  } catch (revalError) {
+    console.error('Revalidation error:', revalError)
   }
 
   return NextResponse.json({ ok: true, id: newQuiz.id })
