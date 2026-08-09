@@ -8,6 +8,7 @@ import { CheckCircle2, Users, Trophy, ArrowRight, Laptop } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import { getTestimonials } from '@/lib/testimonials'
 import PostCard from '@/components/public/PostCard'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -124,7 +125,8 @@ export default async function TOEFLIBTPage() {
       quote: "My writing score improved by 1.5 points after taking this class. Before joining, my mock test results were consistently low. Mr. Arik clearly identified my weaknesses and helped me improve step by step. I’m truly grateful for his support.",
       program: "TOEFL iBT Private",
       image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/unnamed-2.png"
-    }
+    },
+    ...getTestimonials('toefl-ibt'),
   ]
 
   const courses = [

@@ -8,6 +8,7 @@ import { CheckCircle2, BookOpen, Users, Trophy, Target, ArrowRight, Laptop, Grad
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import { getTestimonials } from '@/lib/testimonials'
 import PostCard from '@/components/public/PostCard'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -112,7 +113,8 @@ export default async function TestPrepPage() {
       role: "Data Specialist",
       quote: "Five star obviously for Mas Arik. He teaches with patience, ensuring that I fully understand the material. I have a much better grasp on IELTS and its strategies.",
       program: "IELTS Private",
-    }
+    },
+    ...getTestimonials('ielts', 'toefl-ibt', 'pte'),
   ]
 
   const faqItems = [

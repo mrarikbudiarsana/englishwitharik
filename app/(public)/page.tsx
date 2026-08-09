@@ -2,6 +2,7 @@ import { createPublicClient } from '@/lib/supabase/server'
 import PostCard from '@/components/public/PostCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
 import StudentLocationsMap from '@/components/public/StudentLocationsMap'
+import { testimonials as sharedTestimonials } from '@/lib/testimonials'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -444,6 +445,7 @@ export default async function HomePage() {
                 program: 'IELTS Academic',
                 quote: "The instructor's patient approach and emphasis on students' understanding made all the differences. My IELTS strategies improved significantly through consistent practice exercises.",
               },
+              ...sharedTestimonials,
             ]}
           />
         </div>

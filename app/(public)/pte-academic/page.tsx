@@ -7,6 +7,7 @@ import { CheckCircle2, Users, Trophy, ArrowRight, Laptop } from 'lucide-react'
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import { getTestimonials } from '@/lib/testimonials'
 import PostCard from '@/components/public/PostCard'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -126,7 +127,8 @@ export default async function PTEPage() {
       quote: "Highly recommended for PTE preparation! ka Arik is very patient, supportive, and really knows the exam strategies for all sections (Speaking, Writing, Reading, Listening). thankss a lot ka Arikk for the guidance, it really boosted my confidence for the PTE test",
       program: "PTE Private",
       image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/untitled-design-59.png"
-    }
+    },
+    ...getTestimonials('pte'),
   ]
 
   const courses = [

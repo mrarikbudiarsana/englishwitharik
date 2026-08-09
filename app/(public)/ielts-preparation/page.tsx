@@ -7,6 +7,7 @@ import { CheckCircle2, BookOpen, Users, Trophy, Target, ArrowRight, Laptop } fro
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import { getTestimonials } from '@/lib/testimonials'
 import PostCard from '@/components/public/PostCard'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -125,7 +126,8 @@ export default async function IELTSPage() {
       role: "Heavy Equipment Operator",
       quote: "I took the IELTS General course with Mr. Arik and achieved a band score of 6.5. The course was very helpful and I would recommend it to anyone who wants to improve their English skills. ",
       program: "IELTS General",
-    }
+    },
+    ...getTestimonials('ielts'),
   ]
 
   const courses = [

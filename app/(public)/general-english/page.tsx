@@ -8,6 +8,7 @@ import { CheckCircle2, Users, Trophy, ArrowRight, MessageCircle, GraduationCap }
 import FAQ from '@/components/public/FAQ'
 import FeatureCard from '@/components/public/FeatureCard'
 import TestimonialsCarousel from '@/components/public/TestimonialsCarousel'
+import { getTestimonials } from '@/lib/testimonials'
 import PostCard from '@/components/public/PostCard'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -115,7 +116,8 @@ export default async function GeneralEnglishPage() {
       quote: "Very good. The material was well-structured and easy to understand. The instructor was very professional. Thank you, Kak Arik.",
       program: "General English Private",
       image: "https://englishwitharik.wordpress.com/wp-content/uploads/2025/10/unnasssssmed-1.png"
-    }
+    },
+    ...getTestimonials('general-english'),
   ]
 
   const courses = [
