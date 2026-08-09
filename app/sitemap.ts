@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/id/kursus-toefl-ibt-online-indonesia',
     '/id/kursus-pte-academic-indonesia',
     '/id/kursus-business-english-indonesia',
+    '/id/toefl-ibt-private',
   ]
 
   const entries: MetadataRoute.Sitemap = staticRoutes.map((path) => ({
